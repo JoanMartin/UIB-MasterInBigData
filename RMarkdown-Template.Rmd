@@ -1,0 +1,82 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+<style type="text/css">
+    body {
+        background-color: #f6f7fd;
+    }
+    
+    p {
+        text-align: justify;
+        text-indent: 1cm;
+    }
+    
+    li p {
+        text-indent: 0cm;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        color: #737aaa;
+        text-decoration: underline;
+    }
+    
+    th {  
+        background-color:#737aaa;
+        color: white;
+        padding:5px;
+    }
+    
+    tr:nth-child(even){
+		    background: #dae5f4;
+	  }
+	  
+	  tr:nth-child(odd){ 
+		    background: #b8d1f3;
+	  }
+</style>
+
+---
+title: "RMarkdown Template"
+author: "Author name"
+output: html_document
+---
+    
+***       
+
+<br/>    
+
+### Section title
+
+Text
+
+<br/>   
+
+```{r}
+library(knitr)
+library(ggvis)
+
+summary(iris)
+
+kable(head(iris))
+```
+
+<br/> 
+
+#### Handmade table example
+
+x  | 1  | 3 | 5 | 7 | 9 | 11 | 13 | 
+:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+y  | 75 | 92 | 108 | 121 | 130 | 142 | 155 |
+
+<br/> 
+
+#### Formula example
+$$
+\sum_{i=1}^{k}(ax_i + b + y_i)^2
+$$
+
+

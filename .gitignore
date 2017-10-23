@@ -112,5 +112,5 @@ ENV/
 ######################################
 
 # RMarkdown files generated
-.html
-.doc
+*.html
+*.doc
