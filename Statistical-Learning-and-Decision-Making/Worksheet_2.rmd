@@ -1,15 +1,28 @@
 ---
+title: "Hoja de Ejercicios 2"
+subtitle: '**Aprendizaje Estadístico y Toma de Decisiones.**'
+author: "Juan José Martín, Marina Moreno, Christian Strasser, Maria del Mar Bibiloni."
 output:
-  html_document: default
-  pdf_document: default
-  word_document: default
+  html_document:
+    number_sections: false
+    highlight: tango
+    toc: yes
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
 ---
 
+
+
 <style type="text/css">
-    body {
-        background-color: #f6f7fd;
-    }
-    
+
+a:link {color: #0174DF;}
+div pre { background-color:#E0ECF8;}
+body { background-color: #f6f7fd; }, td { font-size: 11.5pt; } code.r{ font-size: 14px; } pre { font-size: 14px }
+ 
+p {text-align: justify;}
+
+<!---   
     p {
         text-align: justify;
         text-indent: 1cm;
@@ -18,42 +31,38 @@ output:
     li p {
         text-indent: 0cm;
     }
+ -->
+ 
     
-    h1, h2, h3, h4, h5, h6 {
+   h1, h2, h3, h4, h5, h6 {
         color: #737aaa;
-        text-decoration: underline;
     }
-    
+
     th {  
         background-color:#737aaa;
-        color: white;
+        color: #FAFAFA;
         padding:5px;
     }
     
     tr:nth-child(even){
-		    background: #dae5f4;
+		    background: white;
 	  }
 	  
 	  tr:nth-child(odd){ 
-		    background: #b8d1f3;
+		    background-color: #EFF8FB;
 	  }
 </style>
 
----
-title: "Hoja de ejercicios 2"
-author: "Author name"
-output: html_document
----
-    
 ***       
 
-<br/>    
 
 ```{r}
-setwd("C:/Users/Marina/Google Drive/master/Aprenentatge")
+#setwd("C:/Users/Marina/Google Drive/master/Aprenentatge")
+setwd("C:/Users/maria/Documents/UIB/MADM/1rSemestre/AprenentatgeEstadisticPresaDecisions/Full2")
+#setwd("C:/Users/Christian/Documents/Master/Aprendizaje Estadistico y Toma de Decisiones/Practica 2")
 ```
 
-#Exercice 3
+##Exercice 3
 
 **This exercise relates to the College data set, which can be found in the file College.csv. It contains a number of variables for 777 different universities and colleges in the US. The variables are:**
 
@@ -97,17 +106,24 @@ setwd("C:/Users/Marina/Google Drive/master/Aprenentatge")
 
 (a) **Use the read.csv() function to read the data into R. Call the loaded data college. Make sure that you have the directory set to the correct location for the data.**
 
+<ul> 
+
 ```{r }
 college=read.csv("College.csv", header = TRUE, sep = ",") 
 ```
 
+</ul> 
+
 (b) **Look at the data using the fix() function. You should notice that the first column is just the name of each university.We don’t really want R to treat this as data. However, it may be handy to have these names for later. Try the following commands:**
 
+<ul> 
  
 ```{r eval=FALSE}
 rownames (college)=college [,1]
 fix (college)
 ``` 
+
+
 **You should see that there is now a row.names column with the name of each university recorded. This means that R has given each row a name corresponding to the appropriate university. R will not try to perform calculations on the row names. However, we still need to eliminate the first column in the data where the names are stored. Try:**
 
 ```{r eval=FALSE}
@@ -117,23 +133,33 @@ fix (college )
 
 **Now you should see that the first data column is Private. Note that another column labeled row.names now appears before the Private column. However, this is not a data column but rather the name that R is giving to each row.**
 
+</ul> 
+
 (c)
 
+<ul> 
+
   i) **Use the summary() function to produce a numerical summary of the variables in the data set.**
+  
+  <ul> 
   
 ```{r}
 summary(college)
 ```
+  </ul> 
 
-  ii) **Use the pairs() function to produce a scatterplot matrix of the first ten columns or variables of the data. Recall that you can reference the first ten columns of a matrix A using A[,1:10]. **
-
-```{r}
+  ii) **Use the pairs() function to produce a scatterplot matrix of the first ten columns or variables of the data. Recall that you can reference the first ten columns of a matrix A using A[,1:10].**
+  
+  <ul> 
+```{r, fig.align='center'}
 pairs(college[,1:10])
 ```
+  </ul> 
 
   iii) **Use the plot() function to produce side-by-side boxplots of Outstate versus Private.**
-
-```{r}
+  
+  <ul> 
+```{r, fig.align='center'}
 attach(college)
 Private=as.factor(Private)
 
@@ -141,9 +167,11 @@ plot(Private, Outstate)
 ```
 
 En el box plot anterior, podemos observar que el coste de la matrícula para las universidades privadas, son mucho mayor que las universidades que no lo son. De hecho, el 25% de univesidades privadas más económicas son más costosas que el 75% más económicas públicas, en consecuencia, la mediana del coste de la matrícula en una universidad privada es muy superior a la de una universidad pública.
-
+  </ul> 
+  
   iv) **Create a new qualitative variable, called Elite, by binning the Top10perc variable. We are going to divide universities into two groups based on whether or not the proportion of students coming from the top 10% of their high school classes exceeds 50%. **
-
+  
+  <ul> 
 ```{r}
 Elite =rep ("No",nrow(college ))
 
@@ -156,6 +184,7 @@ college = data.frame(college,Elite)
 attach(college)
 detach(college)
 ```
+
 **Use the summary() function to see how many elite universities there are. Now use the plot() function to produce side-by-side boxplots of Outstate versus Elite.**
 
 ```{r}
@@ -164,18 +193,21 @@ colnames(college)
 ```
 Como podemos observar en el último elemento del summary podemos observar los datos de la muestra para la variable Elite. Ésta nos indica que hay 78 universidades de élite.
 
-```{r fig.width=10}
+```{r, fig.width=10, fig.align='center'}
 plot(college$Elite, college$Outstate)
 ```
 
 En el box plot anterior, podemos observar que el coste de la matrícula para las universidades que podemos considerar de élite, son mucho mayor que las universidades que no lo son. De hecho, el 25% de univesidades de élite más económicas son más costosas que el 75% más ecónomicas de las que no son de élite, en consecuencia, la mediana del coste de la matrícula en una universidade de élite es muy superior a la de una universidad que no es de élite.
 
+  </ul>
+
   v) **Use the hist() function to produce some histograms with differing numbers of bins for a few of the quantitative variables. You may find the command par(mfrow=c(2,2)) useful: it will divide the print window into four regions so that four plots can be made simultaneously. Modifying the arguments to this function will divide the screen in other ways.**
  
+  <ul>
 
 En este ejercicio jugaremos con el parámetro *breaks* de la función histograma, para ver como varia la información captada por cada histograma en función de la anchura de las barras. En primer lugar lo realizaremos con la variable *Outstate*:
 
-```{r  fig.width=12, fig.height=8}
+```{r  fig.width=12, fig.height=8, fig.align='center'}
  par(mfrow=c(2,2))
 col=topo.colors(4,alpha =0.4)
 hist(college$Outstate,breaks=40,col=col[1]) #40 barras
@@ -184,22 +216,12 @@ hist(college$Outstate,breaks=10,col=col[3]) #10 barras
 hist(college$Outstate,breaks=5,col=col[4]) #5 barras
 ```
 
-<br/>   
+  </ul>
+  
+</ul>  
 
-<br/>    
 
-### Problema 2
-
-Enunciado
-
-<br/>   
-
-```{r}
-```      
-
-<br/>    
-
-### Problema 3
+##Exercice 4
 
 Enunciado
 
@@ -210,34 +232,465 @@ Enunciado
 
 <br/>    
 
-### Problema 4
+##Exercice 5
 
-Enunciado
+**This exercise involves the <font color='brown'>Boston</font> housing data set.**
 
-<br/>   
+a) **To begin, load in the <font color='brown'>Boston</font> data set. The <font color='brown'>Boston</font> data set is part of the <font color='brown'>MASS</font> library in R.** 
 
-```{r}
-```      
-
-<br/>    
-
-### Problema 5
-
-Enunciado
-
-<br/>   
+<ul>
 
 ```{r}
-```      
-
-<br/>    
-
-### Problema 6
-
-Enunciado
-
-<br/>   
-
-```{r}
+library(MASS)
 ```
 
+**Now the data set is contained in the object <font color='brown'>Boston</font>.**
+
+```{r}
+Boston
+```
+
+**Read about the data set:**
+
+```{r}
+#?Boston
+```
+
+**How many rows are in this data set? How many columns? What do the rows and columns represent?**
+
+Para conocer el número de filas y columnas del conjunto de datos **Boston** basta ejecutar las siguientes instrucciones de **R**.
+
+```{r}
+rows=nrow(Boston)
+rows
+cols=ncol(Boston)
+cols
+```
+
+Como podemos observar hay `r rows` filas y `r cols` columnas, es decir, tenemos `r rows` observaciones y `r cols` variables.
+
+Tal como indica la documentación de **R**, cada fila del *data frame* **Boston** contiene información sobre las viviendas de cada uno de los barrios de Boston. Así, en la columna *medv* se recoge el valor de la vivienda en ese barrio (fila) y en las otras columnas características sobre el barrio o la vivienda, en promedio. A continuación se describen cada una de las características.
+
+* *crim:* tasa de criminalidad per cápita, por ciudad.
+
+* *zn:* proporción de terreno residencial divido en regiones de más de 25000 sq.ft.
+
+* *indus:* proporción en acres de negocios no minoristas, por ciudad.
+
+* *chas:* variable binária que toma el valor 1 si el rio Charles delimita el barrio y 0 si no.
+
+* *nox:* concentración de óxido de nitrogeno (en decenas de millones).
+
+* *rm:* promedio de habitaciones por vivienda.
+
+* *age:* proporción de viviendas ocupadas construidas antes de 1940.
+
+* *dis:* media ponderada de las distancias del barrio a cinco centros de empleo de Boston.
+
+* *rad:* índice de accesibilidad a las carreteras radiales.
+
+* *tax:* valor total de la tasa de impuestos a la propiedad (en decenas de miles de $).
+
+* *ptratio:* proporción de alumno-maestro por ciudad.
+
+* *black:* sea *Bk* la proporción de personas negras por ciudad, $black= 1000(Bk-0.63)^2.$
+
+* *lstat:* inferior estatus o nivel de la población (%).
+
+* *medv:* valor medio de las viviendas ocupadas (en miles).
+
+Consideramos *medv* la variable dependiente. Así, en el siguiente apartado trataremos de analizar que variables explicativas afectan, y como, al valor de la vivienda.
+
+</ul>
+
+b) **Make some pairwise scatterplots of the predictors (columns) in
+this data set. Describe your findings.**
+
+<ul>
+
+Como se ha dicho en el apartado anterior, hemos considerado *medv* la variable depenediente. Para tener una idea inicial de que variables pueden afectar al valor de *medv* podemos dibujar varias gráficas dos a dos del valor de la vivienda *vs* las demás variables.
+
+
+
+```{r, fig.align = "center"}
+par(mfrow=c(2,3))
+set.seed(5)
+colours= sample(rainbow(13,s=0.8))
+predictors=names(Boston)
+
+for(i in 1:6){
+  plot(Boston[,i],Boston[,14],xlab=predictors[i],ylab = "medv",pch=21,col='black',   
+       bg=colours[i], main=paste("(",letters[i],")"))
+}
+```
+
+
+
+```{r, fig.align = "center"}
+par(mfrow=c(2,3))
+for(i in 7:12){
+  plot(Boston[,i],Boston[,14],xlab=predictors[i],ylab = "medv",pch=21,col='black',   
+       bg=colours[i], main=paste("(",letters[i],")"))
+}
+```
+
+
+```{r,fig.height = 3.5, fig.width = 3, fig.align = "center"}
+par(mfrow=c(1,1))
+plot(Boston[,13],Boston[,14], xlab=predictors[13],ylab = "medv",pch=21,col='black',   
+       bg=colours[13], main=paste("(",letters[13],")"))
+```
+
+
+Si analizamos las gráficas obtenidas, hay variables que parecen afectar al valor de la variable *medv*. Por ejemplo, en **(f)** *rm* parece que una función lineal podría ajustar bien la nube de puntos, mientras que en  **(a)** *crim* y **(m)** *Istat* sería mejor usar una función cuadrática. Por otra parte, las gráficas **(e)** *nox*, **(i)** *rad*, **(j)** *tax* y **(k)** *ptratio* indican que no hay relación entre estas variables con *medv*, al menos por separado. Notemos que las gráficas sólo nos dan una idea, que debe ser contrastada.
+
+</ul>
+
+c) **Are any of the predictors asociated with per capita crime rate? If so, explain the relationship.**
+
+<ul>
+
+En este apartado se pretenden analizar asociaciones de variables con la variable *crime rate*, por tanto, consideramos *crime rate* la variable dependiente. Para determinar los predictores podemos hacer unas gráficas iniciales, y así observar el comportamiento entre las variables. 
+
+```{r, fig.align = "center"}
+par(mfrow=c(2,3))
+set.seed(7)
+colours= sample(rainbow(13,s=0.8))
+for(i in 2:7){
+  plot(Boston[,i],Boston[,1],xlab=predictors[i],ylab = "crim",pch=21,col='black',   
+       bg=colours[i], main=paste("(",letters[i-1],")"))
+}
+```
+
+
+
+```{r, fig.align = "center"}
+par(mfrow=c(2,3))
+for(i in 8:13){
+  plot(Boston[,i],Boston[,1],xlab=predictors[i],ylab = "crim",pch=21,col='black',   
+       bg=colours[i], main=paste("(",letters[i-1],")"))
+}
+```
+
+
+Notemos que no se ha dibujado la gráfica *crim* vs *medv*, ya que se corresponde con la gráfica **(a)** del apartado anterior. Como se ha comentado, sí parece haber relación entre estas variables. Por otra parte, la variable *crim* también se podría asociar con **(g)** *dis*.
+
+Así, primero vamos a realizar una regresión cuadrática, con *medv* la variable predictora.
+
+```{r}
+lm_medv=lm(crim~poly(medv ,2),data=Boston)
+summary(lm_medv)
+```
+
+Sean $H_0: \beta_i =0$, $i=0,1,2$, los contrastes de hipótesis para los coeficientes $\beta_0$, $\beta_1$ y $\beta_2$ de la regresión cuadrática, tenemos que el p-valor asociado a cada contraste es muy pequeño. Por tanto, rechazamos la hipótesis nula y decimos que los coeficientes estimados son significativamente diferentes de cero. A continuación, tenemos la función del modelo estimada.
+
+
+```{r,fig.align="center"}
+par(mfrow=c(1,1))
+attach(Boston)
+plot(Boston$medv, Boston$crim, xlab = "medv", ylab = "crim", pch=21, 
+     col ="black",bg='yellow')
+curve(predict(lm_medv,data.frame(medv=x)),col='blue',lwd=3,add=TRUE)
+legend("topright",legend="Polynomial regression, deg=2",col="blue",lty =1,bty ="n")
+```
+
+La función del modelo estimada sugiere que la tasa de criminalidad disminuye a medida que aumenta el valor medio de las viviendas, aunque a partir de cierto valor cercano a 35000 la tasa se incrementa. 
+
+Para la variable **(g)** *dis* también podemos realizar regresión cuadrática. 
+
+```{r}
+lm_dis=lm(crim~poly(dis ,2))
+summary(lm_dis)
+```
+
+De nuevo, mirando el p-valor, obtenemos que los coeficientes són diferentes de cero significativamente. La función de aproximación en este caso es la siguiente.
+
+```{r,fig.align="center"}
+plot(Boston$dis, Boston$crim, xlab = "dis", ylab = "crim", pch=21, 
+     col ="black",bg='green')
+curve(predict(lm_dis,data.frame(dis=x)),col='blue',lwd=3,add=TRUE)
+legend("topright",legend="Polynomial regression, deg=2",col="blue",lty =1,bty ="n")
+```
+
+Probemos con un polinomio de grado 3.
+
+```{r}
+lm_dis3=lm(crim~poly(dis ,3))
+summary(lm_dis3)
+```
+
+```{r, fig.align="center"}
+plot(Boston$dis, Boston$crim, xlab = "dis", ylab = "crim", pch=21, 
+     col ="black",bg='green')
+curve(predict(lm_dis3,data.frame(dis=x)),col='blue',lwd=3,add=TRUE)
+legend("topright",legend="Polynomial regression, deg=3",col="blue",lty =1,bty ="n")
+```
+
+Comparemos los errores cuadráticos medios.
+
+```{r}
+MSE_dis2=mean(lm_dis$residuals^2)
+MSE_dis3=mean(lm_dis3$residuals^2)
+
+MSE_dis2
+MSE_dis3
+```
+
+El error cuadrático es menor usando un polinomio de grado 3, aunque con poca diferencia. Cuanto a los coeficientes, de nuevo estan asociados con un p-valor muy pequeño. Además, los resultados parecen indicar que la tasa de criminalidad es mayor cerca de los cinco centros de empleo de Boston.
+
+Una vez observadas algunas relaciones por pares, vamos a realizar regresión lineal de *crim* con todas las demás variables.
+
+```{r}
+lm_all=lm(crim~., data=Boston)
+summary(lm_all)
+```
+
+Notemos que los p-valores más pequeños corresponden precisamente con las variables *dis* y *medv*, que hemos estudiado anteriormente por separado, y la variable *rad*. También parecen afectar significativamente *zn* y *black*. Así, se observa una relación lineal de *crim* con estas variables.
+
+</ul>
+
+d) **Do any of the suburbs of Boston appear to have particularly high crime rates? Tax rates? Pupil-teacher ratios? Comment on the range of each predictor.**
+
+<ul>
+
+Para responder estas preguntas hacemos *summary* de las variables *crim*, *tax* y *ptratio*.
+
+```{r}
+summary(Boston[,c("crim","tax","ptratio")])
+```
+
+Esta información se puede representar en un diagrama de cajas, tal como sigue.
+
+```{r, fig.align="center"}
+par(mfrow=c(1,3))
+boxplot(Boston[,c("crim")],ylab="crim",col="deepskyblue")
+boxplot(Boston[,c("tax")],ylab="tax",col="seagreen3")
+boxplot(Boston[,c("ptratio")],ylab="ptratio",col="lightcoral")
+```
+
+
+Si nos fijamos en el intervalo de valores que toman cada una de las variables, vemos que la tasa de criminalidad de los barrios varia mucho, de $0$ a $90$ aproximadamente. Los valores de *tax* y *ptratio* también varian aunque tienen un valor mínimo más elevado, 127.0 i 12.60 respectivamente. Esto nos indica que los barrios tienen almenos una tasa de impuesto de 187000$ y 12 alumnos por profesor. 
+
+Por otra parte, no hay ninguna tasa de impuesto o proporción profesor-alumno que supere el valor $Q_3+1.5\cdot IQR$. Esto no ocurre con la tasa de criminalidad, así, seleccionamos los barrios que tienen una tasa mayor que este valor.
+
+```{r}
+high_crime=Boston[,c("crim")]>3.67700+(3.67700-0.08204)*1.5
+high_crime=Boston[high_crime,]
+high_crime
+```
+
+Dada la gran cantidad de barrios seleccionados, supongamos que sólo nos interesa conocer los 10 barrios con una mayor tasa de criminalidad. De esta manera, basta obtener los índices del *data frame* high_crime ordenado por *crim*.
+
+```{r}
+idx=order(high_crime$crim, decreasing = TRUE)
+high_crime[idx[1:10],]
+```
+
+</ul>
+
+e) **How many of the suburbs in this data set bound the Charles river?**
+
+<ul>
+
+La variable *chas* toma valores en $\{0,1\}$, donde $1$ denota que el barrio correspondiente está delimitado por el rio Charles. Por tanto, para conocer el número de barrios que lindan con éste rio basta contar los unos.
+
+```{r}
+sum(Boston$chas)
+```
+
+Así, hay 35 barrios que lindan con el rio Charles.
+
+</ul>
+
+f) **What is the median pupil-teacher ratio among the towns in this data set?**
+
+<ul>
+
+La función  *mean* de **R** permite calcular la media de la columna *ptratio*, tal como sigue.
+
+
+```{r}
+mean(Boston$ptratio)
+```
+
+Entonces, la media de alumno por profesor es de 18.45553 alumnos.
+
+</ul>
+
+g) **Which suburb of Boston has lowest median value of owneroccupied homes? What are the values of the other predictors for that suburb, and how do those values compare to the overall ranges for those predictors? Comment on your findings.**
+
+<ul>
+
+Para conocer el mínimo de *medv*, el valor medio de las viviendas ocupadas, podemos usar la función *min*.
+
+```{r}
+min_medv=min(Boston$medv)
+min_medv
+```
+
+Así, para conocer que barrios tienen este valor medio, basta seleccionar las filas con $medv$=`r min_medv`.
+
+```{r}
+Boston[Boston$medv == min_medv,]
+```
+
+A continuación hacemos *summary* de *medv* para comparar el valor de las variables para estos dos barrios con los demás.
+
+```{r}
+summary(Boston$medv)
+```
+
+Como podemos observar, los valores estan en el intervalo $[5,50]$. Este intevalo es muy amplio, por lo que el mínimo y el máximo estan muy alejados. De hecho, el valor medio de las viviendas ocupadas en estos barrios se aleja mucho de la media. Aún así, el valor mínimo no excede $Q_2-1.5\cdot IQR$. Veamos el diagrama de cajas.
+
+```{r, fig.align="center", fig.width=4, fig.height=6.5}
+par(mfrow=c(1,1))
+boxplot(Boston[,c("medv")],ylab="medv",col="gold")
+```
+
+
+</ul>
+
+h) **In this data set, how many of the suburbs average more than seven rooms per dwelling? More than eight rooms per dwelling? Comment on the suburbs that average more than eight rooms per dwelling.**
+
+<ul>
+Veamos cuantas filas, es decir, que barrios, tienen más de 7 habitaciones por vivienda en promedio.
+
+```{r}
+dim(Boston[Boston$rm>7,])[1]
+```
+
+Si queremos ver la información correspondiente a estos 64 barrios, basta ejecutar la siguiente instrucción.
+
+```{r}
+Boston[Boston$rm>7,]
+```
+
+Ahora, veamos cuantos barrios tienen un valor de $rm$ mayor que $8$.
+
+```{r}
+dim(Boston[Boston$rm>8,])[1]
+```
+
+Y la información de los 13 barrios.
+
+```{r}
+Boston[Boston$rm>8,]
+```
+
+Para comparar la información, calculemos los intervalos de las variables y la media de los valores que toman las variables de los barrios seleccionados.
+
+```{r}
+sapply(Boston, range)
+sapply (Boston[Boston$rm>8,], mean)
+```
+
+
+Notemos que los barrios seleccionados por un número de habitaciones mayor que 8 en promedio, tienen un valor medio de las viviendas ocupadas elevado, en general. Lo mismo ocurre con la proporción de viviendas ocupadas construidas antes de 1940 (*age*).
+
+En el apartado **(b)** hay una gráfica, **(f)**, que muestra la aparente relación lineal entre *medv* y *rm*. Así, podemos realizar regressión lineal entre estas variables.
+
+
+```{r}
+lm_rm=lm(medv~rm)
+summary(lm_rm)
+```
+
+Notemos que el p-valor asociado a cada coeficiente permite rechazar la hipòtesis nula, y por tanto decimos que hay una relación lineal entre ambas variables. 
+
+```{r, fig.align="center"}
+plot(Boston$rm, Boston$medv, xlab = "rm", ylab = "medv", pch=21, 
+     col ="black",bg='chartreuse2')
+curve(predict(lm_rm,data.frame(rm=x)),col='blue',lwd=3,add=TRUE)
+legend("topleft",legend="Linear regression",col="blue",lty =1,bty ="n")
+```
+
+Ahora, veamos como es la grafica de *rm* vs *age*.
+
+```{r, fig.align="center"}
+plot(Boston$rm, Boston$age, xlab = "rm", ylab = "age", pch=21, 
+     col ="black",bg='deepskyblue')
+```
+
+En este caso, no parece haber ningúna relación entre las variables. Si calculamos el coeficiente de correlación, vemos que éste es pequeño en términos absolutos.
+
+```{r}
+cor(Boston$rm,Boston$age)
+```
+
+</ul>
+
+##Exercice 6
+
+**Vamos a utilizar un conjunto de datos de 100 pacientes para implementar el algoritmo KNN. El conjunto de datos se ha elaborado teniendo en cuenta los resultados obtenidos generalmente por el examen rectal digital. Utilice los datos Pro.csv. Proporcione el código y los resultados de los siguientes apartados:**
+
+(i) **Cargue los datos y analícelos. Haz una tabla con los pacientes que tuvieron un resultado Malignant (M) y Benign (B).**
+
+<ul>
+
+```{r}
+rm(list = ls())
+Pro = read.csv("Pro.csv")
+
+Pro_Malignant = Pro[Pro$diagnosis_result == "M", ]
+Pro_Benign = Pro[Pro$diagnosis_result == "B", ]
+head(Pro_Malignant)
+head(Pro_Benign)
+```
+
+</ul>
+
+(ii) **Separe la muestra entre datos de entrenamiento y de prueba para predecir el resultado del tratamiento.**
+
+<ul>
+
+```{r}
+library(class)
+set.seed(1234)
+ind <- sample(2, nrow(Pro), replace=TRUE, prob=c(0.67, 0.33))
+Pro.training <- Pro[ind==1,3:8]
+Pro.test <- Pro[ind==2,3:8]
+
+Pro.trainLabels <- Pro[ind==1,2]
+Pro.testLabels <- Pro[ind==2,2]
+
+```
+
+</ul>
+
+(iii) **Ajuste un modelo KNN y evalúe su desempeño.**
+
+<ul>
+```{r}
+Pro_pred <- knn(train = Pro.training, test = Pro.test, cl = Pro.trainLabels, k=3)
+library('gmodels')
+ct = CrossTable(x = Pro.testLabels, y = Pro_pred, prop.chisq=FALSE)
+
+n_error = ct$t[2] + ct$t[3]
+n_total = ct$t[1] + n_error + ct$t[4]
+{ # Solo para que el HTML o PDF no genere un campo para cada línea de código
+cat("Modelo KNN para K=3 \n")
+cat("Nº de Error: ",n_error,"\n")
+cat("Nº Total: ",n_total,"\n")
+cat("Error de Prueba: ",n_error/n_total)
+}
+```
+De la tabla podemos obtener que el error es de 2/24 = 0.08333333
+
+</ul>
+
+(iv) **Repite el apartado (iii) para descubrir cúal elección de k en el KNN genera el menor error de prueba (con el k 2 [1; 12]).**
+
+<ul>
+
+```{r}
+cat("-----------------------------\n")
+for(i in 1:12){
+  Pro_pred <- knn(train = Pro.training, test = Pro.test, cl = Pro.trainLabels, k=i)
+  n_total = length(Pro_pred)
+  n_error = length(which(c(Pro_pred==Pro.testLabels)==FALSE))
+  cat("Prueba K:",i,"\n")
+  cat("Error de Prueba: ",n_error/n_total,"\n-----------------------------\n")
+  
+}
+```
+</ul>
