@@ -66,8 +66,8 @@ editor_options:
 ***       
 
 
-```{r, echo=FALSE}
-setwd("")
+```{r, echo=FALSE,include=FALSE}
+setwd("C:/Users/Marina/Google Drive/master/Aprenentatge")
 ```
 
 ##Exercice 3
@@ -238,6 +238,83 @@ hist(college$Outstate,breaks=20,col=col[2]) #20 barras
 hist(college$Outstate,breaks=10,col=col[3]) #10 barras
 hist(college$Outstate,breaks=5,col=col[4]) #5 barras
 ```
+
+
+
+Como habíamos dicho anteriormente, cuantas más barras disponga el hsitograma se nos va a mostrar una informción más precisa y detallada, pero a su vez, como las barras van a ser más estrechas, nos van a dificultar su lectura.
+
+  vi) **Continue exploring the data, and provide a brief summary of what you discover.**
+
+
+En primer lugar compararemos la diferencia entre universidades privadas y no privadas de nuevos estudiantes que han pertenecido al Top 10 en High School.
+```{r fig.width=10}
+
+
+par(mfrow=c(1,3))
+col=topo.colors(3,alpha =0.4)
+hist( Apps, xlab="Number of applications received",ylim=c(0,700),breaks=10,col=col[1])
+hist( Accept, xlab="Number of applicants accepted",ylim=c(0,700),breaks=10,col=col[2])
+hist( Enroll, xlab="Number of new students enrolled",ylim=c(0,700),breaks=10,col=col[3])
+
+```
+
+Como podemos observar, hay alrededor de unas 650 universidades que reciben un total de 5000 solucitudes y muy pocas que reciben unas 50000. La mayor parte de las universidades (un total de unos 550) aceptan unos 2500 estudiantes, pero al final solo se inscriben en mayor parte unos 500 estudiantes por universidad. Como podemos obervar en la gráfica en amarillo, en 450 universidades se aceptan a 500 estudiantes por curso.
+
+En segundo lugar, vamos a estudiar un poco algunas variables del Data Frame y miraremos si podemos establecer alguna relación lineal entre ellas:
+
+```{r fig.width=10}
+plot(Grad.Rate~Top10perc, data = college)
+abline(lm(Grad.Rate~Top10perc, data = college))
+summary(lm(Grad.Rate~Top10perc, data = college))$adj.r.squared
+# summary(lm(Grad.Rate~Top10perc+, data = college))
+```
+
+Como podemos apreciar en la nube de puntos, a regresión lineal no explica demasiado bien la relación entre las variables *Grad.Rate* y *Top10perc*. El coeficiente de ajuste nos confirma nuestra sopecha, que obtenemos un valor muy bajo. En definitiva la variable que indica el nombre de alumnos matriculados que pertenecian al Top10 en High school no explica demasiado bien linealmente el comportamiendo del número de graduados. 
+
+
+Probemos con otra regresión:
+
+```{r fig.width=10}
+plot(college$Enroll, college$F.Undergrad)
+abline(lm(college$F.Undergrad~ college$Enroll))
+summary(lm(college$F.Undergrad~ college$Enroll))$adj.r.squared
+```
+
+Como podemos observar, con el coefiente de correlación es muy cercano a uno, lo que significa que la recta ajusta bastante bien los datos. Este hecho ya se podría apreciar en la nube de puntos.
+
+En tercer lugar, estudiemos un poco las universidades privadas y la relación entre los estudiantes que perteneces al Top10 de HighSchool. 
+
+```{r fig.width=10}
+plot(college$Private, col='lightgreen')
+```
+
+Como podemos apreciar, en los datos del dataset, predominan las universidades privadas que públicas. Hagamos un pequeño estudio sobre cantidad de estudiantes que pertenecían al Top10 del High School que decidieron matricularse en universidades públicas o privadas:
+
+```{r fig.width=10} 
+attach(college)
+Top10_Private = Top10perc[college$Private=="Yes"]
+Top10_Public = Top10perc[college$Private=="No"]
+par(mfrow=c(1,2))
+col=topo.colors(2,alpha =0.4)
+hist( Top10_Private, xlab="% alumnos Top 10 uni. Privadas",ylim=c(0,180),breaks=10,col=col[1])
+hist( Top10_Public, xlab="% alumnos Top 10 uni. Publicas",ylim=c(0,180),breaks=10,col=col[2])
+
+
+```
+Podemos apreciar que debido a la diferencia de universidades privadas y públicas de la muestra, obtenemos un gráfico no muy representativo de la población, ya que hay mucha diferencia en cuanto a frecuencia absoluta. Vamos a analizar si la media de alumnos de primer curso maticulados que pertenecían al Top10 del High School es mayor para las universisades privadas. Para ello, realizaremos el siguiente contraste de hipótesis:
+
+$$\left\lbrace\begin{array}{r l}
+\text{H}_0: \mu_{\text{Private}}\leq \mu_{\text{Public}}\\
+\text{H}_1: \mu_{\text{Private}}> \mu_{\text{Public}}
+\end{array}\right.$$
+
+```{r}
+t.test(Top10_Private , Top10_Public , alternative="greater",
+paired=FALSE , var.equal=FALSE)
+```
+
+Como podemos observar, el pvalor toma un valor extremadamente pequeño, en consecuencia podemos rechazar la hipótesis nula, ya que encontramos evidencias de que la media de alumnos de nuevo curso que pertenecen al Top10 en las universidades privadas es mayor que en las universidades públicas.
+
 
   </ul>
   
