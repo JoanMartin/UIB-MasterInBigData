@@ -16,91 +16,101 @@ editor_options:
 
 <style type="text/css">
 
-a:link {color: #0174DF;}
-div pre { background-color:#E0ECF8;}
-body { background-color: #f6f7fd; }, td { font-size: 11.5pt; } code.r{ font-size: 14px; } pre { font-size: 14px }
+  body {
+    background-color: #f6f7fd; 
+  }
+  
+  a:link {
+    color: #0174DF;
+  }
+  
+  code.r {
+    font-size: 14px;
+  } 
+  
+  div pre {
+    background-color:#E0ECF8;
+  }
+  pre {
+    font-size: 14px 
+  }
  
-p {text-align: justify;}
-
-<!---   
-    p {
-        text-align: justify;
-        text-indent: 1cm;
-    }
-    
-    li p {
-        text-indent: 0cm;
-    }
- -->
+  p {
+    text-align: justify;
+  }
  
     
-   h1, h2, h3, h4, h5, h6 {
-        color: #737aaa;
-    }
+  h1, h2, h3, h4, h5, h6 {
+    color: #737aaa;
+  }
 
-    th {  
-        background-color:#737aaa;
-        color: #FAFAFA;
-        padding:5px;
-    }
-    
-    tr:nth-child(even){
-		    background: white;
-	  }
-	  
-	  tr:nth-child(odd){ 
-		    background-color: #EFF8FB;
-	  }
+  th {  
+    background-color:#737aaa;
+    color: #FAFAFA;
+    padding:5px;
+  }
+  
+  td {
+    font-size: 11.5pt;
+  } 
+  
+  tr:nth-child(even){
+    background: white;
+  }
+  
+  tr:nth-child(odd){ 
+    background-color: #EFF8FB;
+  }
 </style>
 
 ***       
 
 
-```{r}
-#setwd("C:/Users/Marina/Google Drive/master/Aprenentatge")
-setwd("C:/Users/maria/Documents/UIB/MADM/1rSemestre/AprenentatgeEstadisticPresaDecisions/Full2")
-#setwd("C:/Users/Christian/Documents/Master/Aprendizaje Estadistico y Toma de Decisiones/Practica 2")
+```{r, echo=FALSE}
+setwd("")
 ```
 
 ##Exercice 3
 
 **This exercise relates to the College data set, which can be found in the file College.csv. It contains a number of variables for 777 different universities and colleges in the US. The variables are:**
 
-• Private : Public/private indicator
+* Private : Public/private indicator
 
-• Apps : Number of applications received
+* Apps : Number of applications received
 
-• Accept : Number of applicants accepted
+* Accept : Number of applicants accepted
 
-• Enroll : Number of new students enrolled
+* Enroll : Number of new students enrolled
 
-• Top10perc : New students from top 10% of high school class
+* Top10perc : New students from top 10% of high school class
 
-• Top25perc : New students from top 25% of high school class
+* Top25perc : New students from top 25% of high school class
 
-• F.Undergrad : Number of full-time undergraduates
+* F.Undergrad : Number of full-time undergraduates
 
-• P.Undergrad : Number of part-time undergraduates
+* P.Undergrad : Number of part-time undergraduates
 
-• Outstate : Out-of-state tuition
+* Outstate : Out-of-state tuition
 
-• Room.Board : Room and board costs
+* Room.Board : Room and board costs
 
-• Books : Estimated book costs
+* Books : Estimated book costs
 
-• Personal : Estimated personal spending
+* Personal : Estimated personal spending
 
-• PhD : Percent of faculty with Ph.D.’s
+* PhD : Percent of faculty with Ph.D.’s
 
-• Terminal : Percent of faculty with terminal degree
+* Terminal : Percent of faculty with terminal degree
 
-• S.F.Ratio : Student/faculty ratio
+* S.F.Ratio : Student/faculty ratio
 
-• perc.alumni : Percent of alumni who donate
+* perc.alumni : Percent of alumni who donate
 
-• Expend : Instructional expenditure per student
+* Expend : Instructional expenditure per student
 
-• Grad.Rate : Graduation rate
+* Grad.Rate : Graduation rate
+
+<br>
 
 **Before reading the data into R, it can be viewed in Excel or a text editor.**
 
@@ -113,6 +123,7 @@ college=read.csv("College.csv", header = TRUE, sep = ",")
 ```
 
 </ul> 
+<br>
 
 (b) **Look at the data using the fix() function. You should notice that the first column is just the name of each university.We don’t really want R to treat this as data. However, it may be handy to have these names for later. Try the following commands:**
 
@@ -134,6 +145,7 @@ fix (college )
 **Now you should see that the first data column is Private. Note that another column labeled row.names now appears before the Private column. However, this is not a data column but rather the name that R is giving to each row.**
 
 </ul> 
+<br>
 
 (c)
 
@@ -146,19 +158,25 @@ fix (college )
 ```{r}
 summary(college)
 ```
+  
   </ul> 
+  <br>
 
   ii) **Use the pairs() function to produce a scatterplot matrix of the first ten columns or variables of the data. Recall that you can reference the first ten columns of a matrix A using A[,1:10].**
   
   <ul> 
+  
 ```{r, fig.align='center'}
 pairs(college[,1:10])
 ```
+  
   </ul> 
+  <br>
 
   iii) **Use the plot() function to produce side-by-side boxplots of Outstate versus Private.**
   
   <ul> 
+  
 ```{r, fig.align='center'}
 attach(college)
 Private=as.factor(Private)
@@ -167,11 +185,14 @@ plot(Private, Outstate)
 ```
 
 En el box plot anterior, podemos observar que el coste de la matrícula para las universidades privadas, son mucho mayor que las universidades que no lo son. De hecho, el 25% de univesidades privadas más económicas son más costosas que el 75% más económicas públicas, en consecuencia, la mediana del coste de la matrícula en una universidad privada es muy superior a la de una universidad pública.
+  
   </ul> 
+  <br>
   
   iv) **Create a new qualitative variable, called Elite, by binning the Top10perc variable. We are going to divide universities into two groups based on whether or not the proportion of students coming from the top 10% of their high school classes exceeds 50%. **
   
   <ul> 
+  
 ```{r}
 Elite =rep ("No",nrow(college ))
 
@@ -191,6 +212,7 @@ detach(college)
 summary(college)
 colnames(college)
 ```
+
 Como podemos observar en el último elemento del summary podemos observar los datos de la muestra para la variable Elite. Ésta nos indica que hay 78 universidades de élite.
 
 ```{r, fig.width=10, fig.align='center'}
@@ -200,6 +222,7 @@ plot(college$Elite, college$Outstate)
 En el box plot anterior, podemos observar que el coste de la matrícula para las universidades que podemos considerar de élite, son mucho mayor que las universidades que no lo son. De hecho, el 25% de univesidades de élite más económicas son más costosas que el 75% más ecónomicas de las que no son de élite, en consecuencia, la mediana del coste de la matrícula en una universidade de élite es muy superior a la de una universidad que no es de élite.
 
   </ul>
+  <br>
 
   v) **Use the hist() function to produce some histograms with differing numbers of bins for a few of the quantitative variables. You may find the command par(mfrow=c(2,2)) useful: it will divide the print window into four regions so that four plots can be made simultaneously. Modifying the arguments to this function will divide the screen in other ways.**
  
@@ -219,18 +242,147 @@ hist(college$Outstate,breaks=5,col=col[4]) #5 barras
   </ul>
   
 </ul>  
+<br>
 
 
 ##Exercice 4
 
-Enunciado
+**This exercise involves the Auto data set studied in the lab. Make sure that the missing values have been removed from the data.**
+```{r}
+auto = read.csv("Auto.csv")
+```
 
-<br/>   
+<br>
+  
+Después de importar los datos del fichero, realizamos un pequeño análisis de los datos mediante:
 
 ```{r}
+summary(auto)
+names(auto)
+head(auto, 100)
+```
+
+<br>
+
+(a) **Which of the predictors are quantitative, and which are qualitative?**  
+
+<ul> 
+
+```{r}
+str(auto)
+```
+
+Las variables cuantitativas son:
+
+* mpg
+* cylinders
+* displacement
+* weight
+* acceleration
+* horsepower
+
+<br>
+
+Las variables cualitativas son:
+
+* year
+* origin
+* name
+
+<br>
+
+Hay que cambiar la variable *horsepower* para que sea una variable numérica en lugar de un factor. Debido a que en los siguientes apartados hay que usar las únicamente las variables cuantitativas, se crea un dataframe con solo dichas variables:
+
+```{r}
+auto$horsepower = as.numeric(auto$horsepower )
+auto_quantit = auto[c('mpg', 'cylinders', 'displacement', 'weight', 'acceleration', 'horsepower')]
+```
+
+</ul> 
+<br>
+
+(b) **What is the range of each quantitative predictor? You can answer this using the range() function.**
+
+<ul> 
+
+El rango de las variables cuantitativas es:
+
+```{r}
+apply(auto_quantit, 2, range)
 ```      
 
-<br/>    
+</ul>
+<br>
+
+(c) **What is the mean and standard deviation of each quantitative predictor?**
+
+<ul> 
+
+La media de las variables cuantitativas es:
+
+```{r}
+colMeans(auto_quantit)
+```      
+
+La desviación estándar de las variables cuantitativas es:
+
+```{r}
+apply(auto_quantit, 2, sd)
+```      
+
+</ul> 
+<br>
+
+(d) **Now remove the 10th through 85th observations. What is the range, mean, and standard deviation of each predictor in the subset of the data that remains?**
+
+<ul> 
+
+```{r}
+new_auto_data = auto_quantit[-c(10:85), ]
+
+apply(new_auto_data, 2, range)
+colMeans(new_auto_data)
+apply(new_auto_data, 2, sd)
+```      
+
+</ul> 
+<br>
+
+(e) **Using the full data set, investigate the predictors graphically, using scatterplots or other tools of your choice. Create some plots highlighting the relationships among the predictors. Comment on your findings**
+
+<ul> 
+
+```{r, fig.align = "center"}
+pairs(auto_quantit)
+
+cor(auto_quantit)
+```      
+La variable *mpg* parece estar correlacionada con los cilindros, el desplazamiento y el peso (negativamente correlacionadas). Por otra parte, el desplazamiento para estar fuertemente correlacionado con los cilindros y el peso. No obstante, la variable que parece explicar menos las otras variables es la aceleración debido a su baja correlación.
+
+</ul> 
+<br>
+
+(f) **Suppose that we wish to predict gas mileage (mpg) on the basis of the other variables. Do your plots suggest that any of the other variables might be useful in predicting mpg? Justify your answer.**
+
+<ul> 
+
+Para predecir *mpg* basándonos en las otras variables, podemos utilizar un modelo de regresión lineal.
+
+```{r}
+lin_reg = lm(mpg ~ cylinders+weight+displacement+acceleration+horsepower, data = auto_quantit)
+lin_reg
+```        
+
+Este resultado no nos da una clara evidencia de qué variables explican mejor *mpg*, por lo que calculamos la _anova_:
+
+```{r}
+anova(lin_reg)
+```        
+
+La _anova_ nos está indicando que las variables que mejor explican *mpg* son los cilindros y el peso. No obstante, en el apartado anterior se ha comentado que el desplazamiento estaba altamente correlacionado con *mpg* pero, en este caso, no es una buena variable para predecir *mpg*. La aceleración y los caballos también se descartarían para esta predicción.
+
+</ul> 
+<br>
 
 ##Exercice 5
 
@@ -302,6 +454,7 @@ Tal como indica la documentación de **R**, cada fila del *data frame* **Boston*
 Consideramos *medv* la variable dependiente. Así, en el siguiente apartado trataremos de analizar que variables explicativas afectan, y como, al valor de la vivienda.
 
 </ul>
+<br>
 
 b) **Make some pairwise scatterplots of the predictors (columns) in
 this data set. Describe your findings.**
@@ -309,8 +462,6 @@ this data set. Describe your findings.**
 <ul>
 
 Como se ha dicho en el apartado anterior, hemos considerado *medv* la variable depenediente. Para tener una idea inicial de que variables pueden afectar al valor de *medv* podemos dibujar varias gráficas dos a dos del valor de la vivienda *vs* las demás variables.
-
-
 
 ```{r, fig.align = "center"}
 par(mfrow=c(2,3))
@@ -345,6 +496,7 @@ plot(Boston[,13],Boston[,14], xlab=predictors[13],ylab = "medv",pch=21,col='blac
 Si analizamos las gráficas obtenidas, hay variables que parecen afectar al valor de la variable *medv*. Por ejemplo, en **(f)** *rm* parece que una función lineal podría ajustar bien la nube de puntos, mientras que en  **(a)** *crim* y **(m)** *Istat* sería mejor usar una función cuadrática. Por otra parte, las gráficas **(e)** *nox*, **(i)** *rad*, **(j)** *tax* y **(k)** *ptratio* indican que no hay relación entre estas variables con *medv*, al menos por separado. Notemos que las gráficas sólo nos dan una idea, que debe ser contrastada.
 
 </ul>
+<br>
 
 c) **Are any of the predictors asociated with per capita crime rate? If so, explain the relationship.**
 
@@ -448,6 +600,7 @@ summary(lm_all)
 Notemos que los p-valores más pequeños corresponden precisamente con las variables *dis* y *medv*, que hemos estudiado anteriormente por separado, y la variable *rad*. También parecen afectar significativamente *zn* y *black*. Así, se observa una relación lineal de *crim* con estas variables.
 
 </ul>
+<br>
 
 d) **Do any of the suburbs of Boston appear to have particularly high crime rates? Tax rates? Pupil-teacher ratios? Comment on the range of each predictor.**
 
@@ -468,7 +621,6 @@ boxplot(Boston[,c("tax")],ylab="tax",col="seagreen3")
 boxplot(Boston[,c("ptratio")],ylab="ptratio",col="lightcoral")
 ```
 
-
 Si nos fijamos en el intervalo de valores que toman cada una de las variables, vemos que la tasa de criminalidad de los barrios varia mucho, de $0$ a $90$ aproximadamente. Los valores de *tax* y *ptratio* también varian aunque tienen un valor mínimo más elevado, 127.0 i 12.60 respectivamente. Esto nos indica que los barrios tienen almenos una tasa de impuesto de 187000$ y 12 alumnos por profesor. 
 
 Por otra parte, no hay ninguna tasa de impuesto o proporción profesor-alumno que supere el valor $Q_3+1.5\cdot IQR$. Esto no ocurre con la tasa de criminalidad, así, seleccionamos los barrios que tienen una tasa mayor que este valor.
@@ -487,6 +639,7 @@ high_crime[idx[1:10],]
 ```
 
 </ul>
+<br>
 
 e) **How many of the suburbs in this data set bound the Charles river?**
 
@@ -501,6 +654,7 @@ sum(Boston$chas)
 Así, hay 35 barrios que lindan con el rio Charles.
 
 </ul>
+<br>
 
 f) **What is the median pupil-teacher ratio among the towns in this data set?**
 
@@ -516,6 +670,7 @@ mean(Boston$ptratio)
 Entonces, la media de alumno por profesor es de 18.45553 alumnos.
 
 </ul>
+<br>
 
 g) **Which suburb of Boston has lowest median value of owneroccupied homes? What are the values of the other predictors for that suburb, and how do those values compare to the overall ranges for those predictors? Comment on your findings.**
 
@@ -547,12 +702,13 @@ par(mfrow=c(1,1))
 boxplot(Boston[,c("medv")],ylab="medv",col="gold")
 ```
 
-
 </ul>
+<br>
 
 h) **In this data set, how many of the suburbs average more than seven rooms per dwelling? More than eight rooms per dwelling? Comment on the suburbs that average more than eight rooms per dwelling.**
 
 <ul>
+
 Veamos cuantas filas, es decir, que barrios, tienen más de 7 habitaciones por vivienda en promedio.
 
 ```{r}
@@ -618,6 +774,7 @@ cor(Boston$rm,Boston$age)
 ```
 
 </ul>
+<br>
 
 ##Exercice 6
 
@@ -638,6 +795,7 @@ head(Pro_Benign)
 ```
 
 </ul>
+<br>
 
 (ii) **Separe la muestra entre datos de entrenamiento y de prueba para predecir el resultado del tratamiento.**
 
@@ -646,22 +804,23 @@ head(Pro_Benign)
 ```{r}
 library(class)
 set.seed(1234)
-ind <- sample(2, nrow(Pro), replace=TRUE, prob=c(0.67, 0.33))
-Pro.training <- Pro[ind==1,3:8]
-Pro.test <- Pro[ind==2,3:8]
+ind = sample(2, nrow(Pro), replace=TRUE, prob=c(0.67, 0.33))
+Pro.training = Pro[ind==1,3:8]
+Pro.test = Pro[ind==2,3:8]
 
-Pro.trainLabels <- Pro[ind==1,2]
-Pro.testLabels <- Pro[ind==2,2]
+Pro.trainLabels = Pro[ind==1,2]
+Pro.testLabels = Pro[ind==2,2]
 
 ```
 
 </ul>
+<br>
 
 (iii) **Ajuste un modelo KNN y evalúe su desempeño.**
 
 <ul>
 ```{r}
-Pro_pred <- knn(train = Pro.training, test = Pro.test, cl = Pro.trainLabels, k=3)
+Pro_pred = knn(train = Pro.training, test = Pro.test, cl = Pro.trainLabels, k=3)
 library('gmodels')
 ct = CrossTable(x = Pro.testLabels, y = Pro_pred, prop.chisq=FALSE)
 
@@ -677,20 +836,20 @@ cat("Error de Prueba: ",n_error/n_total)
 De la tabla podemos obtener que el error es de 2/24 = 0.08333333
 
 </ul>
+<br>
 
 (iv) **Repite el apartado (iii) para descubrir cúal elección de k en el KNN genera el menor error de prueba (con el k 2 [1; 12]).**
 
 <ul>
 
 ```{r}
-cat("-----------------------------\n")
 for(i in 1:12){
-  Pro_pred <- knn(train = Pro.training, test = Pro.test, cl = Pro.trainLabels, k=i)
+  Pro_pred = knn(train = Pro.training, test = Pro.test, cl = Pro.trainLabels, k=i)
   n_total = length(Pro_pred)
   n_error = length(which(c(Pro_pred==Pro.testLabels)==FALSE))
   cat("Prueba K:",i,"\n")
   cat("Error de Prueba: ",n_error/n_total,"\n-----------------------------\n")
-  
 }
 ```
+
 </ul>
