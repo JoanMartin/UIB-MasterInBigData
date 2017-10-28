@@ -66,8 +66,8 @@ editor_options:
 ***       
 
 
-```{r, echo=FALSE,include=FALSE}
-setwd("C:/Users/Marina/Google Drive/master/Aprenentatge")
+```{r, echo=FALSE, include=FALSE}
+setwd("")
 ```
 
 ##Exercice 3
