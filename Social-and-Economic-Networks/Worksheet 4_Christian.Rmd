@@ -1,0 +1,97 @@
+---
+title: "Full4_Handout"
+author: "Christian"
+date: "24 de octubre de 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Handout 4
+
+## 1) The file facebook_sample_anon.txt is a data table containing the list of edges of an anonymized sample of the Facebook friendship network. Download it on your computer, upload it to R as a dataframe, and define an undirected graph with this list of edges.
+
+```{r}
+rm(list = ls())
+library(igraph)
+setwd("C:/Users/Christian/Documents/Master/Redes Sociales y Economicas/Practica 4")
+df = read.csv("facebook_sample_anon.txt", sep=" ")
+
+g = graph_from_data_frame(df, directed = FALSE)
+plot(g, vertex.label=NA, vertex.size=5)
+
+```
+
+### (a) What are its order and size?
+
+```{r}
+gorder(g) # Order
+ecount(g) # Size
+```
+
+### (b) Is it connected?
+
+Descomponer en subgrafos. Es conexo si solo hay 1 subgrafo (el máximo).
+
+```{r}
+length(decompose(g))
+```
+
+### (c) Compute its density. Do you consider it sparse?
+
+```{r}
+edge_density(g, loops = FALSE)
+```
+Es un grafo muy disperso.
+
+### (d) Plot its degrees distribution in linear and in log-log scale. Which is more helpful to understand this distribution? Does this distribution seem to follow a power-law?
+
+```{r}
+dg_dist = degree.distribution(g)
+plot(dg_dist)
+plot(dg_dist, log='xy')
+```
+
+### (e) What are the range, the mode, the mean, the median and the standard deviation of its degree distribution? What do they tell you?
+
+```{r}
+range(dg_dist)
+names(sort(table(degree(g)), decreasing = TRUE))[1]
+mean(dg_dist)
+median(dg_dist)
+sd(dg_dist)
+```
+
+### (f) Compute its diameter, its average distance, and its 90% effective diameter (the smallest distance d such that at least a 90% of the pairs of different nodes are at distance at most d).
+
+```{r}
+diameter(g, directed = FALSE)
+round(mean_distance(g))
+
+l = sort(distances(g),decreasing = FALSE)
+l[round(length(l)*0.9)]
+```
+
+### (g) Plot a histogram of its clustering coefficients.
+
+```{r}
+hist(round(transitivity(g,type="barrat"),3),main="Clustering Coefficients",xlab="Probability",ylab="Nº of Nodes")
+```
+
+### (h) Compute its average clustering coefficient and its transitivity coefficient. What do they tell you about the clustering coefficient of the nodes with large degree? Confirm it by computing the clustering coefficients of the 10 nodes with largest degree.
+
+```{r}
+round(transitivity(g, type="average"),4)
+round(transitivity(g),4)
+
+#round(transitivity(sort(table(degree(g)), decreasing = TRUE)[1:10], type="average"),4)
+#names(sort(table(degree(g)), decreasing = TRUE))[1:10]
+```
+
+### (i) This graph was obtained by gathering all friends of 10 students enrolled in a course and establishing the friendship relations among the union of their friends (in the old times when Facebook APIs allowed it easily). Can you make an educated guess about which are these 10 students?
+
+```{r}
+
+```
