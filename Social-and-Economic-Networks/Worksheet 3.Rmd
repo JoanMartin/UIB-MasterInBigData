@@ -1,0 +1,104 @@
+---
+title: "Handout 3"
+author: "Joan Martin, Christian Strasser."
+date: "31 de octubre de 2017"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##1) For the graph in Fig. 1:
+
+```{r}
+library(igraph)
+g <- graph_from_literal(1---4, 1---5, 1---8, 2---3, 2---4, 2---9, 3---6, 3---4, 4---5, 4---6, 5---8, 5---9, 6---7, 6---8)
+plot(g)
+```
+
+###(1) Its adjacency matrix
+
+```{r}
+get.adjacency(g, sparse = FALSE)
+```
+
+###(2) Its density
+
+```{r}
+edge_density(g, loops = FALSE)
+```
+###(3) The degree of each node
+```{r}
+degree(g)
+```
+###(4) Its average degree and its degrees standard deviation
+```{r}
+round(mean(degree(g)))
+#Degrees standard deviation
+```
+###(5) Its degrees distribution and cumulative distribution, and plot them
+```{r}
+degree.distribution(g)
+degree.distribution(g, cumulative = TRUE)
+
+TrDD=c(1-degree_distribution(g,cumulative=TRUE)[-1],1)
+round(TrDD,4)
+par(mfrow=c(2,1))
+plot(0:max(degree(g)), degree_distribution(g),pch=20,main="Degree density",xlab="Degree",ylab="Probability",type="o")
+plot(0:max(degree(g)), TrDD,pch=20,main="Degree cumulative distribution",xlab="Degree",ylab="Probability",type="o")
+```
+###(6) The distances from 1 to the other nodes
+```{r}
+distances(g)
+```
+###(7) Its diameter, and a pair of nodes at maximum distance
+```{r}
+diameter(g)
+get_diameter(g)
+#distances(g)==diameter(g) # Pair of nodes at maximum distance
+```
+###(8) The clustering coefficient of each node, and a node with maximum clustering coefficient
+```{r}
+round(transitivity(g, type="local"),4)
+#Max clustering
+```
+###(9) Its average clustering coefficient
+```{r}
+round(transitivity(g, type="average"),4)
+```
+###(10) Its transitivity coefficient
+```{r}
+round(transitivity(g),4)
+```
+###(11) Its average distance;
+```{r}
+round(mean_distance(g))
+```
+###(12) Its relative hop plot.
+```{r}
+rel.hop.plot=function(G){
+F=function(x){length(unlist(ego(G,order=x,nodes=V(G))))/length(V(G))^2}
+sapply(1:diameter(G),FUN=F)}
+
+plot(rel.hop.plot(g),pch=20,main="Relative hop plot",xlab="Hops",ylab="Probability",type="o")
+
+```
+##2) Consider a ring G with 100 nodes, labeled consecutively 1, 2, ..., 100.
+###(a) What are its average distance and its diameter?
+```{r}
+g_ring <- make_ring(100)
+plot(g_ring)
+round(mean_distance(g_ring))
+diameter(g_ring)
+```
+###(b) Now, chose equiprobably a new (that is, not existing in G) edge incident to the node 1 and add it to G. What are the expected average distance and the expected diameter of the new graph obtained in this way? You can compute these expected indices analitically (that is, by hand) or estimate them by a Monte Carlo method with 10,000 iterations (that is, generate randomly 10,000 such graphs, compute their indices, and then estimate the expected indices from this sample). Bonus if you do it both ways and the results are consistent.
+```{r}
+
+```
+##3) Find a family of graphs (Hn)n with order(Hn) = n such that C(Hn)????! n!10 and T(Hn)????!n!11.
+```{r}
+
+```
