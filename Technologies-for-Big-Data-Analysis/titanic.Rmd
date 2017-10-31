@@ -81,9 +81,28 @@ titanic_set = read.csv('datasets/train.csv')
 
 ```{r}
 str(titanic_set)
-names(titanic_set)
 summary(titanic_set)
 head(titanic_set, 7)
+```
+
+<br>
+
+Con estas primeras funciones podemos observar que las variables **Pclass**, **Age**, **SibSp**, **Parch** y **Fare** son variables cuantitativas que nos darán una gran información para poder analizar el conjunto de datos e, incluso, realizar predicciones. La variable **SibSp** nos da información sobre el número de hermanos y mujeres/maridos que iban con un pasajero, y la variable **Parch** no da información sobre el número de padres o hijos. Niñeras, prometidos, abuelos o cualquier otro parentesco no está incluído. No obstante, con las variables **Ticket** y **Cabin** quizá se podría obtener qué personas embarcaron o estuvieron durmiendo juntas para poder extraer esa parte de personas relacionadas con un pasajero (aunque esto no se analizará en este trabajo). 
+
+Por lo otro lado, extraemos de la variable **Name** los tratamientos de formalidad (_Mr._, _Mrs._, _Miss._) para poder realizar un análisis más concreto sobre casados o solteros entre mujeres y hombres (aunque extraemos el campo para demostrar hasta qué punto se podría afinar el análisis, no se usará en ningún caso de este trabajo).
+
+```{r}
+titanic_set$Title = gsub("^.*, (.*?)\\..*$", "\\1", titanic_set$Name)
+head(titanic_set[c('PassengerId', 'Name', 'Title', 'Sex')], 10)
+```
+
+<br>
+
+Comprobamos que la variable **Age** tiene bastantes datos con _NA_:
+
+```{r}
+colSums(is.na(titanic_set))
+colSums(titanic_set=='')
 ```
 
 <br>
@@ -440,6 +459,10 @@ ggplot(surv_prob, aes(x=AgeRange,y=Survived,fill=factor(Sex))) +
 
 <br>
 
+Lo que podemos observar con este gráfico muy claramente es que las mujeres, fueran de la edad que fueran, tenían más probabilidad de sobrevivir. Tambień se puede incluir a los menores entre 0 y 15 años entre los que más probabilidades tienen. Esto es debido a la norma de "mujeres y niños primero". Por otra parte, vemos que la probabilidad de sobrevivir en personas de más de 65 años es prácticamente nula.
+
+<br>
+
 ## Ejercicio 9
 
 **Crea un archivo con extensión .json con una lista de todos los pasajeros que contenga: nombre, clase y edad. Valida que está correctamente formado cargándolo en R.**
@@ -466,6 +489,65 @@ head(y)
 
 **¿Qué conclusiones has podido sacar a partir del trabajo con este dataset? Para justificar tu decisión puedes demostrar tus predicciones usando el conjunto de test.**
 
+Hemos podido ver mediante algunas de las gráficas que la edad, el sexo y la clase parecen tener una cierta relación a la hora de poder saber si una persona sobrevivió al naufragio o no. No obstante, realizamos un pequeño análisis para comprobar la correlación de las variables sobre **Survived**.
+
 ```{r}
+titanic_subset = titanic_set[,c('Survived', 'Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare')]
+titanic_subset['Age'] = as.integer(titanic_subset$Age)
+titanic_subset['Sex'] = as.integer(titanic_subset$Sex)
+
+apply(titanic_subset, 2, function(col) cor(col, titanic_subset$Survived))
 ```
 
+<br>
+
+Podemos observar que las variables que más correlación tienen son la clase, el sexo y el precio del ticket. No obstante, vamos a probar de añadir también la edad al modelo ya que, junto con otras variables, podría explicar también la supervivencia.
+
+```{r}
+glm_model <- glm(Survived ~ Pclass + Sex + Age + Fare,  data=titanic_subset, family="binomial")
+summary(glm_model)
+```
+
+<br>
+
+Mediante el _p-valor_ podemos observar que las variables que mejor explican **Survived** son la edad, la clase y el sexo. Es por ello que volvemos a calcular el modelo únicamente con esas 3 variables:
+
+```{r}
+glm_model <- glm(Survived ~ Pclass + Sex + Age,  data=titanic_subset, family="binomial")
+summary(glm_model)
+```
+
+<br>
+
+Ahora que tenemos el modelo generado, importamos el set de prueba y lo analizamos:
+
+```{r}
+titanic_test = read.csv('datasets/test.csv')
+colSums(is.na(titanic_test))
+colSums(titanic_test=='')
+```
+
+<br>
+
+Asignamos a los valores NA de la edad la media de la edad del resto de pasajeros y pasamos las variables de edad y sexo a integer:
+
+```{r}
+age_mean = mean(titanic_test$Age, na.rm=TRUE)
+titanic_test[c('Age')][is.na(titanic_test[c('Age')])] = age_mean
+
+titanic_test['Age'] = as.integer(titanic_test$Age)
+titanic_test['Sex'] = as.integer(titanic_test$Sex)
+```
+
+<br>
+
+Por último, asignamos a cada pasajero del set de prueba la predicción de si sobrevivió o no al naufragio:
+
+```{r}
+titanic_test$Survived = round(predict(glm_model, newdata=titanic_test, type="response"))
+head(titanic_test[c('Pclass', 'Name', 'Sex', 'Age', 'Survived')], 10)
+```
+
+<br>
+
+Ahora deberíamos comparar con el valor real de **Survived** que tuvieron estos pasajeros del test de prueba para comprobar la precisión del modelo, no obstante, no tenemos esa variable.
