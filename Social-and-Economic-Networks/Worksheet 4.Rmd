@@ -208,6 +208,9 @@ mean(media_nodos_mayor)
 
 (i) **This graph was obtained by gathering all friends of 10 students enrolled in a course and establishing the friendship relations among the union of their friends (in the old times when Facebook APIs allowed it easily). Can you make an educated guess about which are these 10 students?**
 
+Serían los 10 nodos que no están conectados directamente entre ellos y donde 2 otros nodos cualquieras tienen un camino entre ellos que pasa por uno de estos 10 nodos iniciales.
+
+Los 10 nodos con grados más grandes que se encuentran en el camino de dos otros nodos cualquieras.
 ```{r}
 
 ```
