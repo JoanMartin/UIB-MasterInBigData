@@ -73,11 +73,51 @@ rm(list = ls())
 
 ## Ejercicio 7
 
-Christian.
+**Cargue los datos del Problema 6 otra vez y obtén el _k_ óptimo mediante una Validación Cruzada 10-Veces: descargue la _package KODAMA_ y utilice la función "_KNN.CV()_", mire las páginas 7-8 de la documentación de la _package KODAMA_.**
+
+Cargar e inicializar datos.
+
+```{r}
+library(KODAMA)
+data_pro = read.csv("datasets/Pro.csv")
+data = data_pro[,3:10]
+labels = data_pro[,2]
+runns = 10 # Número de Cross-Validations
+knn_c = c()
+cv.error10 = c()
+```
+
+Realizar un _KNN() KODAMA_ _k_ veces con una _Validación Cruzada_, en este caso, de 10-veces, y obtener la media del error de predicción de cada  validación.
+
+```{r, results=FALSE}
+for(i in 1:12){
+  # Obtener los 'runns' conjuntos de predicciones
+  knn_t = knn.double.cv(Xdata = data, Ydata = labels, compmax = i, runn = runns) 
+  for(j in 1:runns){ # Obtener los 'runns' errores de predicciones
+    knn_c[j] = (knn_t$results[[j]]$conf[2] + knn_t$results[[j]]$conf[3]) / 
+      (knn_t$results[[j]]$conf[1] + knn_t$results[[j]]$conf[2] + 
+         knn_t$results[[j]]$conf[3] + knn_t$results[[j]]$conf[4])
+  }
+  cv.error10[i] = mean(knn_c) # Obtener la media de los errores de predicción
+}
+```
+
+Visualizar y obtener el _k_ óptimo.
+
+```{r, fig.align="center"}
+plot(1:12, cv.error10, xlab="k Óptimo", ylab="Error de Validación Cruzada 10-Veces", type="b", pch=20, lwd=2)
+min.point = min(cv.error10)
+sd.points = sd(cv.error10)
+abline(h=min.point + 0.05 * sd.points, col="red", lty="dashed")
+abline(h=min.point - 0.05 * sd.points, col="red", lty="dashed")
+legend("topright", "Lineas de 0.2-desviaciones típicas", lty="dashed", col="red")
+```
 
 ## Ejercicio 8
 
 **Cargue las libraries *ISLR* y *boot*. Cargue la base de datos Wage. Es una encuesta sobre sueldos en la región central atlàntica de EE. UU. en 2009. Haz una regresión polinomial para predecir el salario (*wage*) utilizando sólo la variable experiencia (*age*). Utilice la validación cruzada de 5, 10 y $n$ Veces (LOOCV ) para encontrar el orden óptimo para el polinomio (considere $d \in [,; 10]$). Haz un gràfico del error de validación cruzada para cada orden del polinomio, para cada una de las 3 validaciones cruzadas. Proporcione el código y los resultados.**
+
+<br> 
 
 Para realizar el ejercicio necesitamos cargar las librerias *ISLR* y *boot*.
 
@@ -150,6 +190,8 @@ La variable dependiente es *wage* (o *logwage*) y las demás variables son posib
 ```{r}
 head(Wage,20)
 ```
+
+<br> 
 
 De todas las posibles variables explicativas, seleccionamos *age*. Así, vamos a estudiar que relación hay entre la variable dependiente *wage* y la variable independiente *age*. La idea es estimar una función que modele esta relación para poder hacer predicciones del salario de un trabajador, dados sus años de experiencia. Para empezar, visualizamos los datos.
 
@@ -224,6 +266,9 @@ Así, basta ejecutar la siguiente instrucción.
 plot_cv_error(cv_error5,k=5,col="blue", bg="cyan", ylim=c(1585,1677))
 ```
 
+
+<br> 
+
 Fijémonos que el grado que comete menor error $CV_{(5)}$ és 6. Finalmente, conlcuimos que tenemos una relación polinómica de grado $6$ con los siguientes coeficientes.
 
 ```{r}
@@ -238,6 +283,9 @@ plot(wage ~ age, pch=21, cex=0.75,bg="green", col="green4", xlab="Age of worker"
 curve(predict(lm_fit6,data.frame(age=x)),col='blue',lwd=3,add=TRUE)
 legend("topright",legend="Polynomial regression, d=6",col="blue",lty =1,lwd=2,bty ="n")
 ```
+
+
+<br> 
 
 Como se puede observar, según el modelo estimado, el salario aumenta a medida que lo hacen los años de experiencia, hasta cierto valor cercano a 25. A partir de ese momento el salario se mantiene estable hasta los 65 años de experiencia, cuando empieza a decrecer.
 
@@ -263,6 +311,8 @@ En este caso, el menor error se comete con un polinomio de grado 9. Visualicemos
 plot_cv_error(cv_error10,k=10,col="green4", bg="mediumspringgreen",ylim=c(1585,1677))
 ```
 
+<br> 
+
 Así, los coeficientes de la recta estimada para predecir el valor de *Waste*, según *age*, són los calculados a continuación.
 
 ```{r}
@@ -277,6 +327,8 @@ plot(wage ~ age, pch=21, cex=0.75,bg="green", col="green4", xlab="Age of worker"
 curve(predict(lm_fit9,data.frame(age=x)),col='blue',lwd=3,add=TRUE)
 legend("topright",legend="Polynomial regression, d=9",col="blue",lty =1,lwd=2,bty ="n")
 ```
+
+<br> 
 
 Notemos que el comportamiento es similar que para $d=6$, exceptuando las variaciones del salario para valores altos de años de experiencia ($>65$).
 
@@ -303,6 +355,8 @@ plot_cv_error(cv_error3000,k=10,col="darkred", bg="lightcoral",ylim=c(1585,1677)
 
 ```
 
+<br> 
+
 Así, para $k=n$, concluimos que la función de nuestro modelo de predicción es el polinomio de grado 9 obtenido en el apartado anterior, con $k=10$.
 
 </ul>
@@ -314,12 +368,16 @@ matplot(1:10, cbind(cv_error5,cv_error10,cv_error3000), xlab="Degree", ylab="CV 
 legend("topright",legend=c("K=5","K=10","K=3000"),pch=20,col=c("cyan","mediumspringgreen","lightcoral"))
 ```
 
+<br> 
+
 A partir de grado $2$ no se aprecia la diferencia, por tanto, disminuimos el rango de la variable de error $CV_{(K)}$.
 
-```{r}
+```{r, fig.align="center"}
 matplot(1:10, cbind(cv_error5,cv_error10,cv_error3000), xlab="Degree", ylab="CV error", type="b", pch=21, lwd=1, col=c("blue","green4","darkred"), bg=c("cyan","mediumspringgreen","lightcoral"),ylim=c(1590,1601))
 legend("topright",legend=c("K=5","K=10","K=3000"),pch=20,col=c("cyan","mediumspringgreen","lightcoral"))
 ```
+
+<br> 
 
 ```{r}
 detach(Wage)
@@ -390,4 +448,242 @@ plot_cv_error(cv_error_10,k=10,col="green4", bg="mediumspringgreen",  ylim=c(0.9
 ```{r, fig.align="center"}
 plot_cv_error(cv_error_n,k="n",col="darkred", bg="lightcoral", ylim=c(0.95, 1.9))
 ```
+
+
+#Ejercicio 10
+
+**Cargue la package "Lock5Data" y los datos "CommuteAtlanta".**
+
+<ul>
+
+```{r warning=FALSE, message=FALSE}
+library(Lock5Data)
+datos=CommuteAtlanta
+head(datos)
+```
+
+</ul> 
+<br> 
+
+(a) **De una estimación de la media poblacional de "Distance". Llámela de $\tilde{\mu}$.**
+
+<ul>
+Para dar una estimación de la media poblacional de Distance, lo que haremos serà la media de los valores de esta variable:
+
+
+```{r}
+mu_tilde=mean(datos$Distance)
+mu_tilde
+```
+
+</ul> 
+<br> 
+
+(b) **De una estimación del error estándar de $\tilde{\mu}$. Interprete este resultado.**
+
+<ul>
+
+Para dar una estimación del error estándar de $\tilde{\mu}$, lo que haremos será calcular la desviación típica de los valores de esta variable distancia y los dividiremos por la raíz del numero de observaciones, es decir:
+
+$$SE_\tilde{\mu}\ = \frac{s}{\sqrt{n}} $$
+
+
+```{r}
+s=sd(datos$Distance)
+n=dim(datos)[1]
+s/sqrt(n)
+
+```
+
+Podemos observar que el error estándar es relativamente pequeño, en consecuencia los valores de la media muestral no oscilan demasiado alrededor del verdadero valor de la media poblacional.
+
+</ul> 
+<br> 
+
+(c) **Ahora estime el error estándar de  $\tilde{\mu}$ usando el Bootstrap con $B = 100 000$ muestras de boostrap. Compare los resultados con los del apartado (b).**
+
+<ul>
+
+Construimos la función que nos calculará el error estandar de la media para el método Bootstrap:
+
+```{r}
+library(boot)
+
+err.est.media=function(x){
+  sd(x)/sqrt(length(x))
+}
+
+err.est.media.fn=function(data, index){
+  with(data[index,],err.est.media(Distance)) 
+}
+
+boot.out=boot(datos,err.est.media.fn,R=100000)
+boot.out
+
+```
+
+
+ Podemos observar que hemos obtenido la misma estimación del error estándar de $\tilde{\mu}$, como era de esperar (`r boot.out$t0`) . Por otro lado, el bias (`r -boot.out$t0+mean(boot.out$t)`), es decir, la difencia valor entre el estimado y la media de las nuevas muestras, es pequeño y esto es bueno porque cuando más pequeño es,  más pequeño será la desviación estándar. Finalmente, podemos ver que hemos obtenido que una desviación estándar muy pequeña (`r sd(boot.out$t) `), por lo que podemos decir que la estimación del error estándar para la media de la variable Distance es fiable.
+ </ul> 
+
+ 
+<br> 
+
+(d) **A partir de la estimación de Bootstrap del apartado (c), calcule un Intervalo de Confianza del 95% para la media poblacional de "Distance". Utilice el método del percentil. Compare los resultados con el intervalo de confianza obtenido utilizando la distribución Normal.**
+
+<ul>
+Para calcular el intervalo de confianza con el método del percentil cogeremos las 100000 estimaciones que se han considerado en la función boot del apartado anterior, las ordenaremos y nos quedaremos con el 95% central de las estimaciones:
+
+
+
+```{r}
+estimaciones=sort(boot.out$t,decreasing = FALSE)
+lim_inf=round((length(estimaciones)+1)*(5/(2*100)))
+lim_sup=round((length(estimaciones)+1)*(1-5/(2*100)))
+intervalo=range(estimaciones[lim_inf:lim_sup])
+intervalo
+```
+
+En consecuencia el intervalo obtenido es (`r intervalo[1]`,`r intervalo[2]`). Esto implica que en un 95% de los casos el verdadero valor de la media de la población se encontrará en este intervalo.
+
+
+
+
+Por otro lado calculemos intervalo obtenido utilizando la distribución normal. Como estamos cogiendo una muestra de estimaciones muy grande (100000) por el teorema central del límite  $\tilde{\mu}$ se distribuye normalmente, en consecuencia podemos calcular un intervalo de confianza para la media poblacional de la siguiente forma:
+
+$$\left( (T-\tilde{B}^*) - z_{1-\alpha/2}\tilde{SE}^*(T^*), (T-\tilde{B}^*) + z_{1-\alpha/2}\tilde{SE}^*(T^*) \right) $$
+
+Como queremos un intervalo del 95%, entonces $\alpha=0.05$:
+
+
+```{r}
+T=boot.out$t0
+Bias =-boot.out$t0+mean(boot.out$t)
+z=qnorm(1-0.05/2)
+SE=sd(boot.out$t)
+liminf= (T-Bias)-z*SE
+limsup=(T-Bias)+z*SE
+T
+Bias
+z
+SE
+liminf
+limsup
+```
+
+
+
+
+Como podemos observar, el intervalo obtenido utilizando la distribución normal es (`r liminf`,`r limsup`). Esto implica que en un 95% de los casos el verdadero valor de la emdia de la población se encontrará en este intervalo.
+
+
+Finalmente, podemos añadir que los dos invertalos obtenidos para cada métodos son prácticamente el mismo.
+
+
+</ul> 
+<br> 
+
+
+
+
+
+(e) **De una estimación de la varianza poblacional de "Distance". Llámela de $\tilde{\sigma}^2$.**
+
+<ul>
+Para dar una estimación de la varianza poblacional, podemos calcular la varianza de los datos de la muestra:
+
+
+```{r}
+sigma_tilde=sd(datos$Distance)**2
+sigma_tilde
+```
+
+</ul> 
+<br> 
+
+(f) **Estime el error estándar de $\tilde{\sigma}^2$ usando el Bootstrap con $B = 100000$ muestras de boostrap.**
+
+<ul>
+
+Igual que en el apartado anterior, construimos la función que nos calculará el error estandar de la varianza para el método Bootstrap:
+
+
+```{r}
+
+err.est.varianza=function(x){
+  sd(x)**2
+}
+
+err.est.varianza.fn=function(data, index){
+  with(data[index,],err.est.varianza(Distance)) 
+}
+
+boot.out=boot(datos,err.est.varianza.fn,R=100000)
+boot.out
+```
+
+
+Como podemos apreciar, el error estándar es muy grande: `r sd(boot.out$t)`, en consecuencia podemos decir que la estimación `r boot.out$t0` para la varianza de la poblabión del apartado anterior no es muy fiable.
+
+</ul> 
+<br> 
+
+(g) **Estime el percentil 25% poblacional de "Distance". Llámelo de $\tilde{\mu}_{0.25}$ .**
+
+<ul>
+
+Para estimar el 25% poblacional de la variable Distance podemos calcular el primer quartil de nuestra muestra:
+
+```{r}
+quartil1=  as.numeric(quantile(datos$Distance,prob=0.25))
+quartil1
+```
+
+</ul> 
+<br> 
+
+(h) **Estime el error estándar de $\tilde{\mu}_{0.25}$ usando el Bootstrap con $B = 100000$ muestras de boostrap. Interprete los resultados.**
+
+<ul>
+
+Igual que en el apartado anterior, construimos la función que nos calculará el primer quartil para el método Bootstrap:
+
+
+```{r}
+err.est.quantile=function(x){
+ as.numeric(quantile(x,prob=0.25))
+}
+
+err.est.quantile.fn=function(data, index){
+  with(data[index,],err.est.quantile(Distance)) 
+}
+
+boot.out=boot(datos,err.est.quantile.fn,R=100000)
+boot.out
+```
+
+ Podemos observar que hemos obtenido la misma estimación del error estándar de $\tilde{\mu}$, como era de esperar (`r boot.out$t0`) . Por otro lado, el bias (`r -boot.out$t0+mean(boot.out$t)`) es pequeño y esto es bueno porque cuando más pequeño es,  más pequeño será la desviación estándar. Finalmente, podemos ver que hemos obtenido que una desviación estándar muy pequeña (`r sd(boot.out$t) `), por lo que podemos decir que la estimación del primer quartil del apartado anterior en la variable Distance es fiable.
+
+</ul> 
+<br> 
+
+(i) **A partir de la estimación de Bootstrap del apartado (h), calcule un Intervalo de Confianza del 95% para el percentil 25% poblacional de "Distance". Utilice el método del percentil.**
+
+<ul>
+ Al igual que hemos realizado en el apartado d), para calcular el intervalo de confianza con el método del percentil cogeremos las 100000 estimaciones que se han considerado en la función boot del apartado anterior, las ordenaremos y nos quedaremos con el 95% central de las estimaciones:
+
+
+```{r}
+estimaciones=sort(boot.out$t,decreasing = FALSE)
+lim_inf=round((length(estimaciones)+1)*(5/(2*100)))
+lim_sup=round((length(estimaciones)+1)*(1-5/(2*100)))
+intervalo=range(estimaciones[lim_inf:lim_sup])
+intervalo
+```
+
+En consecuencia el intervalo obtenido es (`r intervalo[1]`,`r intervalo[2]`). Esto implica que en un 95% de los casos el verdadero valor del primer quartil de la población se encontrará en este intervalo.
+
+
+</ul> 
+<br> 
 
