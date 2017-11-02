@@ -70,6 +70,48 @@ editor_options:
 #setwd("")
 ```
 
+## Ejercicio 7
+
+**Cargue los datos del Problema 6 otra vez y obtén el _k_ óptimo mediante una Validación Cruzada 10-Veces: descargue la _package KODAMA_ y utilice la función "_KNN.CV()_", mire las páginas 7-8 de la documentación de la _package KODAMA_.**
+
+Cargar e inicializar datos.
+
+```{r}
+library(KODAMA)
+data_pro = read.csv("datasets/Pro.csv")
+data = data_pro[,3:10]
+labels = data_pro[,2]
+runns = 10 # Número de Cross-Validations
+knn_c = c()
+cv.error10 = c()
+```
+
+Realizar un _KNN() KODAMA_ _k_ veces con una _Validación Cruzada_, en este caso, de 10-veces, y obtener la media del error de predicción de cada  validación.
+
+```{r, results=FALSE}
+for(i in 1:12){
+  # Obtener los 'runns' conjuntos de predicciones
+  knn_t = knn.double.cv(Xdata = data, Ydata = labels, compmax = i, runn = runns) 
+  for(j in 1:runns){ # Obtener los 'runns' errores de predicciones
+    knn_c[j] = (knn_t$results[[j]]$conf[2] + knn_t$results[[j]]$conf[3]) / 
+      (knn_t$results[[j]]$conf[1] + knn_t$results[[j]]$conf[2] + 
+         knn_t$results[[j]]$conf[3] + knn_t$results[[j]]$conf[4])
+  }
+  cv.error10[i] = mean(knn_c) # Obtener la media de los errores de predicción
+}
+```
+
+Visualizar y obtener el _k_ óptimo.
+
+```{r, fig.align="center"}
+plot(1:12, cv.error10, xlab="k Óptimo", ylab="Error de Validación Cruzada 10-Veces", type="b", pch=20, lwd=2)
+min.point = min(cv.error10)
+sd.points = sd(cv.error10)
+abline(h=min.point + 0.05 * sd.points, col="red", lty="dashed")
+abline(h=min.point - 0.05 * sd.points, col="red", lty="dashed")
+legend("topright", "Lineas de 0.2-desviaciones típicas", lty="dashed", col="red")
+```
+
 ## Ejercicio 9
 
 **Cargue las libraries _ISLR_ y _boot._ Cargue la base de datos _Boston._ Haz una regresión polinomial para predecir la concentración de óxidos de nitrógeno en partes por 10 millones (_nox_) utilizando sólo la media ponderada de las distancias a cinco centros de empleo de Boston (_dis_). Utilice la validación cruzada de 5, 10 y _n_ Veces (_LOOCV_) para encontrar el orden óptimo para el polinomio (considere $d \in [1; 10]$). Haz el gráfico del error de validación cruzada para cada orden del polinomio, para cada una de las 3 validaciones cruzadas. Proporcione el código y los resultados.**
