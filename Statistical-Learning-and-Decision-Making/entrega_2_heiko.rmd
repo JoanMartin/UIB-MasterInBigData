@@ -1,5 +1,5 @@
 ---
-title: "Hoja de Ejercicios 2 - Parte 2"
+title: "Hoja de Ejercicios 2"
 subtitle: '**Aprendizaje Estadístico y Toma de Decisiones.**'
 author: "Juan José Martín, Marina Moreno, Christian Strasser, Maria del Mar Bibiloni."
 output:
@@ -66,164 +66,19 @@ editor_options:
 ***       
 
 
-```{r, echo=FALSE, include=FALSE}
-#setwd("")
-```
-
-## Ejercicio 7
-
-**Cargue los datos del Problema 6 otra vez y obtén el _k_ óptimo mediante una Validación Cruzada 10-Veces: descargue la _package KODAMA_ y utilice la función "_KNN.CV()_", mire las páginas 7-8 de la documentación de la _package KODAMA_.**
-
-Cargar e inicializar datos.
-
-```{r}
-library(KODAMA)
-data_pro = read.csv("datasets/Pro.csv")
-data = data_pro[,3:10]
-labels = data_pro[,2]
-runns = 10 # Número de Cross-Validations
-knn_c = c()
-cv.error10 = c()
-```
-
-Realizar un _KNN() KODAMA_ _k_ veces con una _Validación Cruzada_, en este caso, de 10-veces, y obtener la media del error de predicción de cada  validación.
-
-```{r, results=FALSE}
-for(i in 1:12){
-  # Obtener los 'runns' conjuntos de predicciones
-  knn_t = knn.double.cv(Xdata = data, Ydata = labels, compmax = i, runn = runns) 
-  for(j in 1:runns){ # Obtener los 'runns' errores de predicciones
-    knn_c[j] = (knn_t$results[[j]]$conf[2] + knn_t$results[[j]]$conf[3]) / 
-      (knn_t$results[[j]]$conf[1] + knn_t$results[[j]]$conf[2] + 
-         knn_t$results[[j]]$conf[3] + knn_t$results[[j]]$conf[4])
-  }
-  cv.error10[i] = mean(knn_c) # Obtener la media de los errores de predicción
-}
-```
-
-Visualizar y obtener el _k_ óptimo.
-
-```{r, fig.align="center"}
-plot(1:12, cv.error10, xlab="k Óptimo", ylab="Error de Validación Cruzada 10-Veces", type="b", pch=20, lwd=2)
-min.point = min(cv.error10)
-sd.points = sd(cv.error10)
-abline(h=min.point + 0.05 * sd.points, col="red", lty="dashed")
-abline(h=min.point - 0.05 * sd.points, col="red", lty="dashed")
-legend("topright", "Lineas de 0.2-desviaciones típicas", lty="dashed", col="red")
-```
-
-## Ejercicio 9
-
-**Cargue las libraries _ISLR_ y _boot._ Cargue la base de datos _Boston._ Haz una regresión polinomial para predecir la concentración de óxidos de nitrógeno en partes por 10 millones (_nox_) utilizando sólo la media ponderada de las distancias a cinco centros de empleo de Boston (_dis_). Utilice la validación cruzada de 5, 10 y _n_ Veces (_LOOCV_) para encontrar el orden óptimo para el polinomio (considere $d \in [1; 10]$). Haz el gráfico del error de validación cruzada para cada orden del polinomio, para cada una de las 3 validaciones cruzadas. Proporcione el código y los resultados.**
-
-```{r}
-library(ISLR)
-library(boot)
-library(MASS)
-attach(Boston)
+```{r, echo=FALSE}
+#setwd("C:/Users/Marina/Google Drive/master/Aprenentatge")
 ```
 
 
-```{r}
-head(Boston)
-```
+<!-- <ul> -->
 
-* crim: per capita crime rate by town.
-* zn: proportion of residential land zoned for lots over 25,000 sq.ft.
-* indus: proportion of non-retail business acres per town.
-* chas: Charles River dummy variable (= 1 if tract bounds river; 0 otherwise).
-* nox: nitrogen oxides concentration (parts per 10 million).
-* rm: average number of rooms per dwelling.
-* age: proportion of owner-occupied units built prior to 1940.
-* dis: weighted mean of distances to five Boston employment centres.
-* rad: index of accessibility to radial highways.
-* tax: full-value property-tax rate per $10,000.
-* ptratio: pupil-teacher ratio by town.
-* black: 1000(Bk−0.63)21000(Bk−0.63)2 where Bk is the proportion of blacks by town.
-* lstat: lower status of the population (percent).
-* medv: median value of owner-occupied homes in $1000s.
+<!-- ```{r } tabulat esquella ``` -->
 
+<!-- </ul> 
+<br> salt de linia -->
 
-```{r}
-boston = Boston[c('dis', 'nox')]
-head(boston)
-dim(boston)
-summary(boston)
-colSums(is.na(boston))
-
-plot(nox~dis, data=boston)
-corr(boston)
-```
-
-
-
-
-```{r}
-cross_val = function(x, y, k=NA, degree=1:5) {
-  
-  loocv = function(fit) {
-    h = lm.influence(fit)$h
-    mean((residuals(fit) / (1-h))^2)
-  }
-  
-  cv_error = NA
-  data = data.frame(x1=x, y1=y)
-  
-  for(d in degree){
-    glm_fit = glm(x1~poly(y1, d), data=data)
-    
-    if (is.na(k)) {
-      cv_error[d] = loocv(glm_fit)
-    } else {
-      cv_error[d] = cv.glm(data, glm_fit, K=k)$delta[1]
-    }
-  }
-  
-  return (cv_error)
-}
-```
-
-
-
-```{r}
-degree=1:10
-
-cv_error_5 = cross_val(x=nox, y=dis, k=5, degree=degree)
-cv_error_10 = cross_val(x=nox, y=dis, k=10, degree=degree)
-cv_error_n = cross_val(x=nox, y=dis, degree=degree)
-```
-
-
-
-```{r}
-plot_cv_error = function(cv_error) {
-  plot(degree, cv_error, xlab="Orden", ylab="Error de Validación Cruzada 5-Veces", type="b", pch=20, lwd=2,  ylim=c(0.0020, 0.02))
-  min.point = min(cv_error)
-  sd.points = sd(cv_error)
-  abline(h=min.point + 0.2 * sd.points, col="red", lty="dashed")
-  abline(h=min.point - 0.2 * sd.points, col="red", lty="dashed")
-  legend("topright", "Lineas de 0.2 desviaciones típicas", lty="dashed", col="red")
-}
-```
-
-
-```{r, fig.align="center"}
-plot_cv_error(cv_error_5)
-```
-
-
-
-```{r, fig.align="center"}
-plot_cv_error(cv_error_10)
-```
-
-
-```{r, fig.align="center"}
-plot_cv_error(cv_error_n)
-```
-
-
-#Ejercicio 10
+#Problema 10
 
 **Cargue la package "Lock5Data" y los datos "CommuteAtlanta".**
 
