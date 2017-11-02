@@ -1,0 +1,182 @@
+---
+title: "Hoja de Ejercicios 2 - Parte 2"
+subtitle: '**Aprendizaje Estadístico y Toma de Decisiones.**'
+author: "Juan José Martín, Marina Moreno, Christian Strasser, Maria del Mar Bibiloni."
+output:
+  html_document:
+    number_sections: false
+    highlight: tango
+    toc: yes
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+---
+
+
+
+<style type="text/css">
+
+  body {
+    background-color: #f6f7fd; 
+  }
+  
+  a:link {
+    color: #0174DF;
+  }
+  
+  code.r {
+    font-size: 14px;
+  } 
+  
+  div pre {
+    background-color:#E0ECF8;
+  }
+  pre {
+    font-size: 14px 
+  }
+ 
+  p {
+    text-align: justify;
+  }
+ 
+    
+  h1, h2, h3, h4, h5, h6 {
+    color: #737aaa;
+  }
+
+  th {  
+    background-color:#737aaa;
+    color: #FAFAFA;
+    padding:5px;
+  }
+  
+  td {
+    font-size: 11.5pt;
+  } 
+  
+  tr:nth-child(even){
+    background: white;
+  }
+  
+  tr:nth-child(odd){ 
+    background-color: #EFF8FB;
+  }
+</style>
+
+***       
+
+
+```{r, echo=FALSE, include=FALSE}
+#setwd("")
+```
+
+## Ejercicio 9
+
+**Cargue las libraries _ISLR_ y _boot._ Cargue la base de datos _Boston._ Haz una regresión polinomial para predecir la concentración de óxidos de nitrógeno en partes por 10 millones (_nox_) utilizando sólo la media ponderada de las distancias a cinco centros de empleo de Boston (_dis_). Utilice la validación cruzada de 5, 10 y _n_ Veces (_LOOCV_) para encontrar el orden óptimo para el polinomio (considere $d \in [1; 10]$). Haz el gráfico del error de validación cruzada para cada orden del polinomio, para cada una de las 3 validaciones cruzadas. Proporcione el código y los resultados.**
+
+```{r}
+library(ISLR)
+library(boot)
+library(MASS)
+attach(Boston)
+```
+
+
+```{r}
+head(Boston)
+```
+
+* crim: per capita crime rate by town.
+* zn: proportion of residential land zoned for lots over 25,000 sq.ft.
+* indus: proportion of non-retail business acres per town.
+* chas: Charles River dummy variable (= 1 if tract bounds river; 0 otherwise).
+* nox: nitrogen oxides concentration (parts per 10 million).
+* rm: average number of rooms per dwelling.
+* age: proportion of owner-occupied units built prior to 1940.
+* dis: weighted mean of distances to five Boston employment centres.
+* rad: index of accessibility to radial highways.
+* tax: full-value property-tax rate per $10,000.
+* ptratio: pupil-teacher ratio by town.
+* black: 1000(Bk−0.63)21000(Bk−0.63)2 where Bk is the proportion of blacks by town.
+* lstat: lower status of the population (percent).
+* medv: median value of owner-occupied homes in $1000s.
+
+
+```{r}
+boston = Boston[c('dis', 'nox')]
+head(boston)
+dim(boston)
+summary(boston)
+colSums(is.na(boston))
+
+plot(nox~dis, data=boston)
+corr(boston)
+```
+
+
+
+
+```{r}
+cross_val = function(x, y, k=NA, degree=1:5) {
+  
+  loocv = function(fit) {
+    h = lm.influence(fit)$h
+    mean((residuals(fit) / (1-h))^2)
+  }
+  
+  cv_error = NA
+  data = data.frame(x1=x, y1=y)
+  
+  for(d in degree){
+    glm_fit = glm(x1~poly(y1, d), data=data)
+    
+    if (is.na(k)) {
+      cv_error[d] = loocv(glm_fit)
+    } else {
+      cv_error[d] = cv.glm(data, glm_fit, K=k)$delta[1]
+    }
+  }
+  
+  return (cv_error)
+}
+```
+
+
+
+```{r}
+degree=1:10
+
+cv_error_5 = cross_val(x=nox, y=dis, k=5, degree=degree)
+cv_error_10 = cross_val(x=nox, y=dis, k=10, degree=degree)
+cv_error_n = cross_val(x=nox, y=dis, degree=degree)
+```
+
+
+
+```{r}
+plot_cv_error = function(cv_error) {
+  plot(degree, cv_error, xlab="Orden", ylab="Error de Validación Cruzada 5-Veces", type="b", pch=20, lwd=2,  ylim=c(0.0020, 0.02))
+  min.point = min(cv_error)
+  sd.points = sd(cv_error)
+  abline(h=min.point + 0.2 * sd.points, col="red", lty="dashed")
+  abline(h=min.point - 0.2 * sd.points, col="red", lty="dashed")
+  legend("topright", "Lineas de 0.2 desviaciones típicas", lty="dashed", col="red")
+}
+```
+
+
+```{r, fig.align="center"}
+plot_cv_error(cv_error_5)
+```
+
+
+
+```{r, fig.align="center"}
+plot_cv_error(cv_error_10)
+```
+
+
+```{r, fig.align="center"}
+plot_cv_error(cv_error_n)
+```
+
