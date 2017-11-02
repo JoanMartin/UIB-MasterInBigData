@@ -67,17 +67,18 @@ editor_options:
 
 
 ```{r, echo=FALSE, include=FALSE}
-#setwd("")
+rm(list = ls())
 ```
 
 ## Ejercicio 7
 
 **Cargue los datos del Problema 6 otra vez y obtén el _k_ óptimo mediante una Validación Cruzada 10-Veces: descargue la _package KODAMA_ y utilice la función "_KNN.CV()_", mire las páginas 7-8 de la documentación de la _package KODAMA_.**
 
-Cargar e inicializar datos.
+Cargamos e inicializamos las variables.
 
 ```{r}
 library(KODAMA)
+
 data_pro = read.csv("datasets/Pro.csv")
 data = data_pro[,3:10]
 labels = data_pro[,2]
@@ -86,6 +87,7 @@ knn_c = c()
 cv.error10 = c()
 ```
 
+<br>
 A continuación realizamos _k_ veces (12 veces en nuesttro caso) la función _KNN()_ de _KODAMA_ y usamos los datos obtenidos de esta función para realizar una _Validación Cruzada_, en este caso, de 10-veces, para así obtener cada vez una media del error de predicción en cada validación.
 
 ```{r, results = FALSE}
@@ -101,6 +103,7 @@ for(i in 1:12){
 }
 ```
 
+<br>
 Finalmente, visualizamos nuestro conjunto de errores de predicción _cv.error10_ y obtenemos el _k_ óptimo. En este caso, el _k_ óptimo es el valor entre 1 y 12 en el que obtenemos el menor error de predicción. Además, el valor óptimo _k_ y el menor error de predicción depende en parte de la aleatoriedad en la que el método _KNN()_ de _KODAMA_ escoge las variables de nuestros conjunto de datos.
 
 ```{r, fig.align="center"}
@@ -109,57 +112,112 @@ min.point = min(cv.error10)
 sd.points = sd(cv.error10)
 abline(h=min.point + 0.05 * sd.points, col="red", lty="dashed")
 abline(h=min.point - 0.05 * sd.points, col="red", lty="dashed")
-legend("topright", "Lineas de 0.2-desviaciones típicas", lty="dashed", col="red")
+legend("topright", "Lineas de 0.05-desviaciones típicas", lty="dashed", col="red")
 ```
 
-## Ejercicio 9
+<br>
 
-**Cargue las libraries _ISLR_ y _boot._ Cargue la base de datos _Boston._ Haz una regresión polinomial para predecir la concentración de óxidos de nitrógeno en partes por 10 millones (_nox_) utilizando sólo la media ponderada de las distancias a cinco centros de empleo de Boston (_dis_). Utilice la validación cruzada de 5, 10 y _n_ Veces (_LOOCV_) para encontrar el orden óptimo para el polinomio (considere $d \in [1; 10]$). Haz el gráfico del error de validación cruzada para cada orden del polinomio, para cada una de las 3 validaciones cruzadas. Proporcione el código y los resultados.**
+## Ejercicio 8
 
-```{r}
+**Cargue las libraries *ISLR* y *boot*. Cargue la base de datos Wage. Es una encuesta sobre sueldos en la región central atlàntica de EE. UU. en 2009. Haz una regresión polinomial para predecir el salario (*wage*) utilizando sólo la variable experiencia (*age*). Utilice la validación cruzada de 5, 10 y $n$ Veces (LOOCV ) para encontrar el orden óptimo para el polinomio (considere $d \in [,; 10]$). Haz un gràfico del error de validación cruzada para cada orden del polinomio, para cada una de las 3 validaciones cruzadas. Proporcione el código y los resultados.**
+
+<br> 
+
+Para realizar el ejercicio necesitamos cargar las librerias *ISLR* y *boot*.
+
+```{r, warning=FALSE}
 library(ISLR)
 library(boot)
-library(MASS)
-attach(Boston)
 ```
 
 
+El conjunto de datos **Wage** contiene información de 3000 hombres trabajadores de la región Mid-Atlantic de Estados Unidos. Calculemos las dimensiones del data frame.
+
 ```{r}
-head(Boston)
+Wage=na.omit(Wage)
+dim(Wage)
 ```
 
-* crim: per capita crime rate by town.
-* zn: proportion of residential land zoned for lots over 25,000 sq.ft.
-* indus: proportion of non-retail business acres per town.
-* chas: Charles River dummy variable (= 1 if tract bounds river; 0 otherwise).
-* nox: nitrogen oxides concentration (parts per 10 million).
-* rm: average number of rooms per dwelling.
-* age: proportion of owner-occupied units built prior to 1940.
-* dis: weighted mean of distances to five Boston employment centres.
-* rad: index of accessibility to radial highways.
-* tax: full-value property-tax rate per $10,000.
-* ptratio: pupil-teacher ratio by town.
-* black: 1000(Bk−0.63)21000(Bk−0.63)2 where Bk is the proportion of blacks by town.
-* lstat: lower status of the population (percent).
-* medv: median value of owner-occupied homes in $1000s.
-
+Ahora, veamos que idica cada una de las columnas.
 
 ```{r}
-boston = Boston[c('dis', 'nox')]
-head(boston)
-dim(boston)
-summary(boston)
-colSums(is.na(boston))
+names(Wage)
+```
 
-plot(nox~dis, data=boston)
-corr(boston)
+Según la documentación de R, cada una de estas variables contiene la siguiente información.
+
+* *year*: Año en que se recogió la información salarial.
+* *age*: Años de experiencia.
+* *maritl:* Factor que indica el estado civil.
+<ul>
+  1. Nunca casado.
+  2. Casado.
+  3. Viudo.
+  4. Divorciado.
+</ul>
+* *race:* Factor que indica la raza.
+<ul>
+  1. Blanco.
+  2. Negro.
+  3. Asiático.
+  4. Otros.
+</ul>
+* *education:* Factor que indica el nivel de educación.
+<ul>
+  1. Inferior que eduación secundaria.
+  2. Educación secundaria.
+  3. Educación superior.
+  4. Graduado en la Universidad.
+  5. Estudios de post-grado.
+</ul>
+* *region:* Región del País (de Mid-Atlantic).
+* *jobclass:* Factor que indica el tipo de trabajo.
+<ul>  
+  1. Industrial.
+  2. Información.
+</ul>
+* *health:* Factor que indica el nivel de salud.
+<ul>
+  1. Bien o peor que bien.
+  2. Muy bien o más.
+</ul>
+* *health_ins:* Factor que indica si el trabajador tiene seguro de salud.
+<ul>  
+  1. Sí.
+  2. No.
+</ul>
+* *logwage:* Logaritmo del salario.
+* *wage:* Salario bruto.
+
+La variable dependiente es *wage* (o *logwage*) y las demás variables son posibles variables explicativas del salario de los trabajadores. Antes de empezar el análisis, visualizemos algunas de las filas del data frame.
+
+```{r}
+head(Wage,20)
+```
+
+<br> 
+
+De todas las posibles variables explicativas, seleccionamos *age*. Así, vamos a estudiar que relación hay entre la variable dependiente *wage* y la variable independiente *age*. La idea es estimar una función que modele esta relación para poder hacer predicciones del salario de un trabajador, dados sus años de experiencia. Para empezar, visualizamos los datos.
+
+```{r, fig.align="center"}
+attach(Wage)
+plot(wage ~ age, pch=21, cex=0.75, bg="green", col="green4", xlab="Age of worker", ylab="Wage")
 ```
 
 
+Si observamos la gráfica anterior, parece que hay una relación lineal entre las variables, o cuadràtica de coeficiente principal muy cercano a cero. A continuación, utilizaremos el mètodo de validación cruzada para diferentes valores de $K$ para encontrar el modelo que mejor se ajusta a la nube de puntos.
 
+* $K=5$.
+
+<ul>
+Para realizar la validación cruzada con k=5 hay que seleccionar aleatóriamente 5 subconjuntos de trabajadores. Luego, se realizan 5 iteraciones. En cada iteración se toma uno de los $k$ subconjuntos como el conjunto de validación y los otros como conjunto de entrenamiento. Así, se obtienen 5 errores de prueba estimados en cada una de las iteraciones, con cada uno de los 5 conjuntos de validación. Finalmente, se calcula la media del error quadràtico cometido en el conjunto de validación, llamémoslo $CV_{(5)}$.
+
+La función *cv.glm()* de `R` realiza el método de validación cruzada con el valor de $K$ que se indique y devuelve el error $CV_{(k)}$. Por tanto, sólo falta escoger que polinomios son candidatos para estimar la función de predicción. Tal como indica el enunciado, tomaremos polinomios de grado 1 hasta 10. 
+
+Para calcular el error de validación $CV_{(k)}$ , implementmos la siguiente función
 
 ```{r}
-cross_val = function(x, y, k=NA, degree=1:5) {
+cross_val = function(x, y, k=NA, degree=1:10) {
   
   loocv = function(fit) {
     h = lm.influence(fit)$h
@@ -170,7 +228,7 @@ cross_val = function(x, y, k=NA, degree=1:5) {
   data = data.frame(x1=x, y1=y)
   
   for(d in degree){
-    glm_fit = glm(x1~poly(y1, d), data=data)
+    glm_fit = glm(y1~poly(x1, d), data=data)
     
     if (is.na(k)) {
       cv_error[d] = loocv(glm_fit)
@@ -183,45 +241,344 @@ cross_val = function(x, y, k=NA, degree=1:5) {
 }
 ```
 
-
+Veamos que polinomio tiene associado un valor menor del error $CV_{(5)}$.
 
 ```{r}
-degree=1:10
-
-cv_error_5 = cross_val(x=nox, y=dis, k=5, degree=degree)
-cv_error_10 = cross_val(x=nox, y=dis, k=10, degree=degree)
-cv_error_n = cross_val(x=nox, y=dis, degree=degree)
+set.seed(357)
+cv_error5=cross_val(x=age, y=wage, k=5)
+cv_error5
+cv_min=min(cv_error5)
+which(cv_error5==cv_min)
 ```
 
-
+Por tanto, el polinomio que mejor predice el salario en función de los años de experciencia, según nuestros datos, es de grado seis. Ahora, para ver la gràfica de los errores CV implementamos la siguiente función.
 
 ```{r}
-plot_cv_error = function(cv_error) {
-  plot(degree, cv_error, xlab="Orden", ylab="Error de Validación Cruzada 5-Veces", type="b", pch=20, lwd=2,  ylim=c(0.0020, 0.02))
+plot_cv_error = function(cv_error,k,col,bg,ylim, degree=1:10){ 
+  plot(degree, cv_error, xlab="Orden", ylab=paste("Error de Validación Cruzada",k,"-Veces"), type="b", pch=21, lwd=1, col=col, bg=bg, ylim=ylim)
   min.point = min(cv_error)
-  sd.points = sd(cv_error)
+  sd.points = sd(cv_error) 
   abline(h=min.point + 0.2 * sd.points, col="red", lty="dashed")
   abline(h=min.point - 0.2 * sd.points, col="red", lty="dashed")
   legend("topright", "Lineas de 0.2 desviaciones típicas", lty="dashed", col="red")
 }
 ```
 
+Así, basta ejecutar la siguiente instrucción.
 
-```{r, fig.align="center"}
-plot_cv_error(cv_error_5)
+```{r}
+plot_cv_error(cv_error5,k=5,col="blue", bg="cyan", ylim=c(1585,1677))
 ```
 
 
+<br> 
 
-```{r, fig.align="center"}
-plot_cv_error(cv_error_10)
+Fijémonos que el grado que comete menor error $CV_{(5)}$ es 6. Finalmente, conlcuimos que tenemos una relación polinómica de grado $6$ con los siguientes coeficientes.
+
+```{r}
+lm_fit6=lm(wage~poly(age, 6), data = Wage)
+lm_fit6$coefficients
+```
+
+Veamos como el polinomio estimado se ajusta a la nube de puntos.
+
+```{r,fig.align="center"}
+plot(wage ~ age, pch=21, cex=0.75,bg="green", col="green4", xlab="Age of worker", ylab="Wage")
+curve(predict(lm_fit6,data.frame(age=x)),col='blue',lwd=3,add=TRUE)
+legend("topright",legend="Polynomial regression, d=6",col="blue",lty =1,lwd=2,bty ="n")
 ```
 
 
-```{r, fig.align="center"}
-plot_cv_error(cv_error_n)
+<br> 
+
+Como se puede observar, según el modelo estimado, el salario aumenta a medida que lo hacen los años de experiencia, hasta cierto valor cercano a 25. A partir de ese momento el salario se mantiene estable hasta los 65 años de experiencia, cuando empieza a decrecer.
+
+</ul>
+
+* $K=10$.
+
+
+<ul>
+En este apartado repetiremos el proceso de validación cruzada con $K=10$. Así, veremos que grado del polinomio es mejor según el nuevo $K$.
+
+```{r}
+set.seed(78)
+cv_error10=cross_val(x=age, y=wage, k=10)
+cv_error10
+cv_min=min(cv_error10)
+which(cv_error10==cv_min)
 ```
 
+En este caso, el menor error se comete con un polinomio de grado 9. Visualicemos los errores para cada grado.
+
+```{r,fig.align="center"}
+plot_cv_error(cv_error10,k=10,col="green4", bg="mediumspringgreen",ylim=c(1585,1677))
+```
+
+<br> 
+
+Así, los coeficientes de la recta estimada para predecir el valor de *Waste*, según *age*, son los calculados a continuación.
+
+```{r}
+lm_fit9=lm(wage~poly(age, 9), data = Wage)
+lm_fit9$coefficients
+```
+
+Ahora, viasualicemos el nuevo polinomio estimado.
+
+```{r,fig.align="center"}
+plot(wage ~ age, pch=21, cex=0.75,bg="green", col="green4", xlab="Age of worker", ylab="Wage")
+curve(predict(lm_fit9,data.frame(age=x)),col='blue',lwd=3,add=TRUE)
+legend("topright",legend="Polynomial regression, d=9",col="blue",lty =1,lwd=2,bty ="n")
+```
+
+<br> 
+
+Notemos que el comportamiento es similar que para $d=6$, exceptuando las variaciones del salario para valores altos de años de experiencia ($>65$).
+
+</ul>
+
+* LOOCV. $K=n$, donde $n$ es el número de observaciones (trabajadores).
+
+<ul>
+
+De nuevo, vamos a utilizar el mètodo de validación cruzada para estimar un modelo que nos permita hacer predicciones del salario de los trabajadores en función de los años de experiencia. En este caso, tomamos $K=n=3000$.
+
+```{r}
+set.seed(11235)
+cv_error3000=cross_val(x=age, y=wage)
+cv_error3000
+cv_min=min(cv_error3000)
+which(cv_error3000==cv_min)
+```
+
+Como podemos observar, el resultado es el mismo que en el caso anterior: el mejor polinomio es de grado 9. Dibujemos la gràfica de los errores.
+
+```{r,fig.align="center"}
+plot_cv_error(cv_error3000,k=10,col="darkred", bg="lightcoral",ylim=c(1585,1677))
+
+```
+
+<br> 
+
+Así, para $k=n$, concluimos que la función de nuestro modelo de predicción es el polinomio de grado 9 obtenido en el apartado anterior, con $k=10$.
+
+</ul>
+
+Para poder comparar el resultado del método de validación cruzada para $K=5,10$ y $n$, vamos a dibujar los errores $CV_{(K)}$ en un mismo gràfico.
+
+```{r, fig.align="center"}
+matplot(1:10, cbind(cv_error5,cv_error10,cv_error3000), xlab="Degree", ylab="CV error", type="b", pch=21, lwd=1, col=c("blue","green4","darkred"), bg=c("cyan","mediumspringgreen","lightcoral"))
+legend("topright",legend=c("K=5","K=10","K=3000"),pch=20,col=c("cyan","mediumspringgreen","lightcoral"))
+```
+
+<br> 
+
+A partir de grado $2$ no se aprecia la diferencia, por tanto, disminuimos el rango de la variable de error $CV_{(K)}$.
+
+```{r, fig.align="center"}
+matplot(1:10, cbind(cv_error5,cv_error10,cv_error3000), xlab="Degree", ylab="CV error", type="b", pch=21, lwd=1, col=c("blue","green4","darkred"), bg=c("cyan","mediumspringgreen","lightcoral"),ylim=c(1590,1601))
+legend("topright",legend=c("K=5","K=10","K=3000"),pch=20,col=c("cyan","mediumspringgreen","lightcoral"))
+```
+
+<br> 
+
+```{r}
+detach(Wage)
+```
+
+
+## Ejercicio 9
+
+**Cargue las libraries _ISLR_ y _boot._ Cargue la base de datos _Boston._ Haz una regresión polinomial para predecir la concentración de óxidos de nitrógeno en partes por 10 millones (_nox_) utilizando sólo la media ponderada de las distancias a cinco centros de empleo de Boston (_dis_). Utilice la validación cruzada de 5, 10 y _n_ Veces (_LOOCV_) para encontrar el orden óptimo para el polinomio (considere $d \in [1; 10]$). Haz el gráfico del error de validación cruzada para cada orden del polinomio, para cada una de las 3 validaciones cruzadas. Proporcione el código y los resultados.**
+
+```{r}
+library(ISLR)
+library(boot)
+library(MASS)
+```
+
+<br>
+
+Realizamos un pequeño exploratorio de los datos antes de empezar con el análisis.
+
+```{r}
+head(Boston)
+```
+
+Según la documentación de R, cada una de estas variables contiene la siguiente información.
+
+* crim: tasa de criminalidad per cápita por ciudad.
+* zn: proporción de terrenos residenciales divididos en zonas para lotes de más de 25,000 pies cuadrados.
+* indus: proporción de acres de negocios no minoristas por pueblo.
+* chas: variable ficticia de Charles River (= 1 si el tramo limita con el río, 0 en caso contrario).
+* nox: concentración de óxidos de nitrógeno (partes por 10 millones).
+* rm: número promedio de habitaciones por vivienda.
+* age: proporción de unidades ocupadas por sus propietarios construidas antes de 1940.
+* dis: media ponderada de las distancias a cinco centros de empleo de Boston.
+* rad: índice de accesibilidad a las autopistas radiales.
+* tax: tasa de impuesto a la propiedad de valor completo por $ 10,000.
+* ptratio: relación alumnos por profesor por ciudad.
+* black: $1000(Bk−0.63)^2$ donde Bk es la proporción de negros por ciudad.
+* lstat: estado inferior de la población (porcentaje).
+* medv: valor mediano de las viviendas ocupadas por sus propietarios en miles de dólares.
+
+La variable dependiente para este análisis será _nox_ y la variable explicativa será _dis_.
+
+```{r}
+boston = Boston[c('dis', 'nox')]
+head(boston)
+dim(boston)
+summary(boston)
+colSums(is.na(boston))
+
+attach(Boston)
+```
+
+<br>
+
+```{r}
+plot(nox~dis, pch=21, cex=0.75, bg="green", col="green4", xlab="Distancias a cinco centros de empleo de Boston", ylab="Concentración de óxidos de nitrógeno")
+```
+
+<br>
+
+Observando la gráfica anterior, parece que hay una correlación negativa entre ambas variables. El valor de esta correlación:
+
+```{r}
+corr(boston)
+```
+
+<br>
+
+* $K=5$.
+
+Para calcular el error de validación para $k=5$, usamos la función *cross_val* que hemos implementado anteriormente.
+
+```{r}
+set.seed(357)
+cv_error_5 = cross_val(x=dis, y=nox, k=5)
+cv_error_5
+
+cv_min = min(cv_error_5)
+which(cv_error_5==cv_min)
+```
+
+<br>
+
+El polinómio que mejor predice la concentración de óxidos de nitrógeno en función a las medias ponderadas de las distancias a cinco centros de empleos en Bostos, según estos datos, es cuatro.
+
+Generamos la gráfica de los error de CV mediante la función *plot_cv_error*, implementada también anteriormente.
+
+```{r}
+plot_cv_error(cv_error_5, k=5, col="blue", bg="cyan", ylim=c(0, 0.02))
+```
+
+<br>
+
+```{r}
+lm_fit_4 = lm(nox~poly(dis, 4))
+lm_fit_4$coefficients
+```
+
+<br>
+
+Veamos como el polinomio estimado se ajusta a la nube de puntos.
+
+```{r}
+plot(nox~dis, pch=21, cex=0.75, bg="green", col="green4", xlab="Distancias a cinco centros de empleo de Boston", ylab="Concentración de óxidos de nitrógeno")
+curve(predict(lm_fit_4, data.frame(dis=x)), col='blue', lwd=3, add=TRUE)
+legend("topright", legend="Polynomial regression, d=4", col="blue", lty =1, lwd=2, bty ="n")
+```
+
+<br>
+
+Como podemos observar, la concentración de óxidos de nitrógeno disminuye a medida que nos alejamos de los centros de empleo de Boston.
+
+
+* $K=10$.
+
+Repetimos el mismo proceso para $k=10$.
+
+```{r}
+set.seed(11235)
+cv_error_10 = cross_val(x=dis, y=nox, k=10)
+cv_error_10
+
+cv_min = min(cv_error_10)
+which(cv_error_10==cv_min)
+```
+
+<br>
+
+En este caso, el menor error se comete con un polinomio de grado 3. Visualicemos los errores para cada grado.
+
+```{r, fig.align="center"}
+plot_cv_error(cv_error_10, k=10, col="green4", bg="mediumspringgreen", ylim=c(-0.001, 0.035))
+```
+
+<br>
+
+```{r}
+lm_fit_3 = lm(nox~poly(dis, 3))
+lm_fit_3$coefficients
+```
+
+<br>
+
+Veamos como el polinomio estimado se ajusta a la nube de puntos.
+
+```{r}
+plot(nox~dis, pch=21, cex=0.75, bg="green", col="green4", xlab="Distancias a cinco centros de empleo de Boston", ylab="Concentración de óxidos de nitrógeno")
+curve(predict(lm_fit_3, data.frame(dis=x)), col='blue', lwd=3, add=TRUE)
+legend("topright", legend="Polynomial regression, d=3", col="blue", lty =1, lwd=2, bty ="n")
+```
+
+<br>
+
+* LOOCV. $K=n$, donde $n$ es el número de observaciones (trabajadores).
+
+Repetimos el proceso por última vez para $k=n$.
+
+```{r}
+set.seed(78)
+cv_error_n = cross_val(x=dis, y=nox)
+cv_error_n
+
+cv_min = min(cv_error_n)
+which(cv_error_n==cv_min)
+```
+
+<br>
+
+En este caso, el menor error se vuelve a cometer con un polinomio de grado 3. Visualicemos los errores para cada grado.
+
+```{r, fig.align="center"}
+plot_cv_error(cv_error_n, k="n", col="darkred", bg="lightcoral", ylim=c(0, 0.023))
+```
+
+<br>
+
+El gráfico con la nube de puntos y la línea del polinomio será el mismo que para $k=10$.
+
+Para poder comparar el resultado del método de validación cruzada para $k=5$, $k=10$ y $k=n$, dibujamos los errores $CV_{(K)}$ en un mismo gràfico.
+
+```{r}
+matplot(1:10, cbind(cv_error_5, cv_error_10, cv_error_n), xlab="Degree", ylab="CV error", type="b", pch=21, lwd=1, col=c("blue","green4","darkred"), bg=c("cyan","mediumspringgreen","lightcoral"), ylim=c(0, 0.028))
+legend("topleft",legend=c("K=5","K=10","K=n"), pch=20, col=c("cyan","mediumspringgreen","lightcoral"))
+```
+
+<br>
+
+Para los grados del 0 al 6, no se aprecian cambios a esta escala, por lo tanto la modificamos.
+
+```{r}
+matplot(1:10, cbind(cv_error_5, cv_error_10, cv_error_n), xlab="Degree", ylab="CV error", type="b", pch=21, lwd=1, col=c("blue","green4","darkred"), bg=c("cyan","mediumspringgreen","lightcoral"), ylim=c(0.0035, 0.007), xlim=c(0.5, 6.5))
+legend("topleft",legend=c("K=5","K=10","K=n"), pch=20, col=c("cyan","mediumspringgreen","lightcoral"))
+```
+
+
+<br>
 
 #Ejercicio 10
 
