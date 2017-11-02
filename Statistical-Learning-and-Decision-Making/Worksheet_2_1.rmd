@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Hoja de Ejercicios 2"
 subtitle: '**Aprendizaje Estadístico y Toma de Decisiones.**'
 author: "Juan José Martín, Marina Moreno, Christian Strasser, Maria del Mar Bibiloni."
@@ -64,7 +64,6 @@ editor_options:
 </style>
 
 ***       
-
 
 
 ```{r, echo=FALSE, include=FALSE}
@@ -931,3 +930,5 @@ for(i in 1:12){
 ```
 
 </ul>
+
+
