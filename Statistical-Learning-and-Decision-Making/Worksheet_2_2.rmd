@@ -86,9 +86,9 @@ knn_c = c()
 cv.error10 = c()
 ```
 
-Realizar un _KNN() KODAMA_ _k_ veces con una _Validación Cruzada_, en este caso, de 10-veces, y obtener la media del error de predicción de cada  validación.
+A continuación realizamos _k_ veces (12 veces en nuesttro caso) la función _KNN()_ de _KODAMA_ y usamos los datos obtenidos de esta función para realizar una _Validación Cruzada_, en este caso, de 10-veces, para así obtener cada vez una media del error de predicción en cada validación.
 
-```{r, results=FALSE}
+```{r, results = FALSE}
 for(i in 1:12){
   # Obtener los 'runns' conjuntos de predicciones
   knn_t = knn.double.cv(Xdata = data, Ydata = labels, compmax = i, runn = runns) 
@@ -101,7 +101,7 @@ for(i in 1:12){
 }
 ```
 
-Visualizar y obtener el _k_ óptimo.
+Finalmente, visualizamos nuestro conjunto de errores de predicción _cv.error10_ y obtenemos el _k_ óptimo. En este caso, el _k_ óptimo es el valor entre 1 y 12 en el que obtenemos el menor error de predicción. Además, el valor óptimo _k_ y el menor error de predicción depende en parte de la aleatoriedad en la que el método _KNN()_ de _KODAMA_ escoge las variables de nuestros conjunto de datos.
 
 ```{r, fig.align="center"}
 plot(1:12, cv.error10, xlab="k Óptimo", ylab="Error de Validación Cruzada 10-Veces", type="b", pch=20, lwd=2)
