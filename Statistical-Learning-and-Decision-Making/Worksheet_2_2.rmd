@@ -432,12 +432,12 @@ dim(boston)
 summary(boston)
 colSums(is.na(boston))
 
-attach(Boston)
+attach(boston)
 ```
 
 <br>
 
-```{r}
+```{r, fig.align="center"}
 plot(nox~dis, pch=21, cex=0.75, bg="green", col="green4", xlab="Distancias a cinco centros de empleo de Boston", ylab="Concentración de óxidos de nitrógeno")
 ```
 
@@ -452,6 +452,8 @@ corr(boston)
 <br>
 
 * $K=5$.
+
+<ul>
 
 Para calcular el error de validación para $k=5$, usamos la función *cross_val* que hemos implementado anteriormente.
 
@@ -470,7 +472,7 @@ El polinómio que mejor predice la concentración de óxidos de nitrógeno en fu
 
 Generamos la gráfica de los error de CV mediante la función *plot_cv_error*, implementada también anteriormente.
 
-```{r}
+```{r, fig.align="center"}
 plot_cv_error(cv_error_5, k=5, col="blue", bg="cyan", ylim=c(0, 0.02))
 ```
 
@@ -485,7 +487,7 @@ lm_fit_4$coefficients
 
 Veamos como el polinomio estimado se ajusta a la nube de puntos.
 
-```{r}
+```{r, fig.align="center"}
 plot(nox~dis, pch=21, cex=0.75, bg="green", col="green4", xlab="Distancias a cinco centros de empleo de Boston", ylab="Concentración de óxidos de nitrógeno")
 curve(predict(lm_fit_4, data.frame(dis=x)), col='blue', lwd=3, add=TRUE)
 legend("topright", legend="Polynomial regression, d=4", col="blue", lty =1, lwd=2, bty ="n")
@@ -495,8 +497,12 @@ legend("topright", legend="Polynomial regression, d=4", col="blue", lty =1, lwd=
 
 Como podemos observar, la concentración de óxidos de nitrógeno disminuye a medida que nos alejamos de los centros de empleo de Boston.
 
+</ul>
+<br>
 
 * $K=10$.
+
+<ul>
 
 Repetimos el mismo proceso para $k=10$.
 
@@ -528,15 +534,18 @@ lm_fit_3$coefficients
 
 Veamos como el polinomio estimado se ajusta a la nube de puntos.
 
-```{r}
+```{r, fig.align="center"}
 plot(nox~dis, pch=21, cex=0.75, bg="green", col="green4", xlab="Distancias a cinco centros de empleo de Boston", ylab="Concentración de óxidos de nitrógeno")
 curve(predict(lm_fit_3, data.frame(dis=x)), col='blue', lwd=3, add=TRUE)
 legend("topright", legend="Polynomial regression, d=3", col="blue", lty =1, lwd=2, bty ="n")
 ```
 
+</ul>
 <br>
 
 * LOOCV. $K=n$, donde $n$ es el número de observaciones (trabajadores).
+
+<ul>
 
 Repetimos el proceso por última vez para $k=n$.
 
@@ -561,22 +570,29 @@ plot_cv_error(cv_error_n, k="n", col="darkred", bg="lightcoral", ylim=c(0, 0.023
 
 El gráfico con la nube de puntos y la línea del polinomio será el mismo que para $k=10$.
 
+</ul>
+
 Para poder comparar el resultado del método de validación cruzada para $k=5$, $k=10$ y $k=n$, dibujamos los errores $CV_{(K)}$ en un mismo gràfico.
 
-```{r}
+```{r, fig.align="center"}
 matplot(1:10, cbind(cv_error_5, cv_error_10, cv_error_n), xlab="Degree", ylab="CV error", type="b", pch=21, lwd=1, col=c("blue","green4","darkred"), bg=c("cyan","mediumspringgreen","lightcoral"), ylim=c(0, 0.028))
 legend("topleft",legend=c("K=5","K=10","K=n"), pch=20, col=c("cyan","mediumspringgreen","lightcoral"))
 ```
 
 <br>
 
-Para los grados del 0 al 6, no se aprecian cambios a esta escala, por lo tanto la modificamos.
+Para los grados del 1 al 6, no se aprecian cambios a esta escala, por lo tanto la modificamos.
 
-```{r}
+```{r, fig.align="center"}
 matplot(1:10, cbind(cv_error_5, cv_error_10, cv_error_n), xlab="Degree", ylab="CV error", type="b", pch=21, lwd=1, col=c("blue","green4","darkred"), bg=c("cyan","mediumspringgreen","lightcoral"), ylim=c(0.0035, 0.007), xlim=c(0.5, 6.5))
 legend("topleft",legend=c("K=5","K=10","K=n"), pch=20, col=c("cyan","mediumspringgreen","lightcoral"))
 ```
 
+<br> 
+
+```{r}
+detach(boston)
+```
 
 <br>
 
