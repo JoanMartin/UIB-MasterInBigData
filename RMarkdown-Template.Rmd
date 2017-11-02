@@ -1,51 +1,69 @@
 ---
+title: "RMarkdown Template"
+subtitle: "Subtitle"
+author: "Author name"
 output:
-  html_document: default
-  pdf_document: default
-  word_document: default
+  html_document:
+    number_sections: false
+    highlight: tango
+    toc: yes
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
 ---
+
+
 
 <style type="text/css">
-    body {
-        background-color: #f6f7fd;
-    }
+
+  body {
+    background-color: #f6f7fd; 
+  }
+  
+  a:link {
+    color: #0174DF;
+  }
+  
+  code.r {
+    font-size: 14px;
+  } 
+  
+  div pre {
+    background-color:#E0ECF8;
+  }
+  pre {
+    font-size: 14px 
+  }
+ 
+  p {
+    text-align: justify;
+  }
+ 
     
-    p {
-        text-align: justify;
-        text-indent: 1cm;
-    }
-    
-    li p {
-        text-indent: 0cm;
-    }
-    
-    h1, h2, h3, h4, h5, h6 {
-        color: #737aaa;
-        text-decoration: underline;
-    }
-    
-    th {  
-        background-color:#737aaa;
-        color: white;
-        padding:5px;
-    }
-    
-    tr:nth-child(even){
-		    background: #dae5f4;
-	  }
-	  
-	  tr:nth-child(odd){ 
-		    background: #b8d1f3;
-	  }
+  h1, h2, h3, h4, h5, h6 {
+    color: #737aaa;
+  }
+
+  th {  
+    background-color:#737aaa;
+    color: #FAFAFA;
+    padding:5px;
+  }
+  
+  td {
+    font-size: 11.5pt;
+  } 
+  
+  tr:nth-child(even){
+    background: white;
+  }
+  
+  tr:nth-child(odd){ 
+    background-color: #EFF8FB;
+  }
 </style>
 
----
-title: "RMarkdown Template"
-author: "Author name"
-output: html_document
----
-    
-***       
+***     
 
 <br/>    
 
