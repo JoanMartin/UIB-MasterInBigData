@@ -253,7 +253,7 @@ which(cv_error5==cv_min)
 
 Por tanto, el polinomio que mejor predice el salario en función de los años de experciencia, según nuestros datos, es de grado seis. Ahora, para ver la gràfica de los errores CV implementamos la siguiente función.
 
-```{r}
+```{r, fig.align='center'}
 plot_cv_error = function(cv_error,k,col,bg,ylim, degree=1:10){ 
   plot(degree, cv_error, xlab="Orden", ylab=paste("Error de Validación Cruzada",k,"-Veces"), type="b", pch=21, lwd=1, col=col, bg=bg, ylim=ylim)
   min.point = min(cv_error)
@@ -266,7 +266,7 @@ plot_cv_error = function(cv_error,k,col,bg,ylim, degree=1:10){
 
 Así, basta ejecutar la siguiente instrucción.
 
-```{r}
+```{r, fig.align='center'}
 plot_cv_error(cv_error5,k=5,col="blue", bg="cyan", ylim=c(1585,1677))
 ```
 
