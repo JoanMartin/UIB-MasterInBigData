@@ -270,5 +270,39 @@ round(mean(Diam))
 
 **Find a family of graphs $(H_n)_n$ with order$(H_n) = n$ such that $C(H_n){\longrightarrow}0$ and $T(H_n){\longrightarrow}1$.**
 ```{r}
-
+h = make_full_graph(5)
+plot(h)
 ```
+
+```{r}
+
+# LINK --> http://pages.stat.wisc.edu/~karlrohe/netsci/MeasuringTrianglesInGraphs.pdf
+# link 2 --> http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.70.9248&rep=rep1&type=pdf
+
+clus = c()
+trans = c()
+
+for (i in 5:2000) {
+  #c = floor(i^(2/3))
+  c = ceiling(i^(2/3))
+  #c = floor(i/3)
+  l = i - c
+  
+  full_g = make_full_graph(c)
+  line_g = graph(sort(cbind(seq(c, c+l-1), seq(c+1, c+l))), directed = FALSE)
+  join_g = graph.union(full_g, line_g)
+  
+  trans[i] = transitivity(join_g)
+  clus[i] = transitivity(join_g, type="average")
+}
+
+plot(trans)
+plot(clus)
+```
+```{r}
+g <- graph_from_literal(1---2, 2---3, 3---4, 4---5, 5---2, 2---4)
+plot(g)
+transitivity(g)
+transitivity(g, type="local")
+```
+
