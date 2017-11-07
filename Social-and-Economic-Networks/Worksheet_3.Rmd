@@ -65,15 +65,13 @@ editor_options:
 
 ***    
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
 ## Ejercicio 1
 
 **For the graph in Fig. 1:**
 ```{r, results='hide', message=FALSE, warning=FALSE}
 library(igraph)
+library(ggplot2)
+library(reshape2)
 library(knitr)
 ```
 
@@ -269,6 +267,7 @@ diameter(g_ring)
 Para añadir una arista desde el nodo 1 a cualquier otro nodo de forma equiprobable, sobre el grafo inicial $G$ añadimos una nueva arista y calculamos su distancia media. Esta acción la realimos 97 veces más (una por cada nodo diferente de 2 y 100, ya que estos son nodos vecinos de 1). Finalmente, calculamos la media de las distancias medias, y la media de su diámetro, de haber añadido 98 veces una nueva arista desde el nodo a cualquiera de los demás nodos.
 
 Es importante tener claro que en cada iteración se genera un nueva grafo (a partir del grafo original) con una nueva arista desde el nodo 1 a cualquier otro nodo. Es decir, en ningún caso se genera un único grafo con 97 aristas nuevas.
+
 ```{r}
 g_ring_original = make_ring(100, directed = FALSE)
 Avg_D = c()
@@ -296,6 +295,7 @@ Podemos observar que la distancia media con respecto al grafo original $G$ se ha
 Mediante el método Monte Carlo, lo que se hace es generar 10000 valores entre 3 y 99 (nodos diferentes de 2 y 100, ya que estos son nodos vecinos de 1) de forma aleatoria para, finalmente, sacar la media de las distancias medias y la media de su diámetro.
 
 Hay que tener en cuenta que se cogen los nodos de forma aleatoria y no de forma secuencial como se ha hecho en el anterior ejemplo. Esto causará que haya nodos que se repitan en diferentes iteraciones.
+
 ```{r}
 Avg_D = c()
 Diam = c()
@@ -324,24 +324,89 @@ Vemos que la media de las distancias y la media de los diámetros da lo mismo qu
 
 **Find a family of graphs $(H_n)_n$ with order $(H_n) = n$ such that $C(H_n){\longrightarrow}0$ and $T(H_n){\longrightarrow}1$.**
 
-El grafo $(H_n)_n$ con orden $(H_n) = n$ sería un grafo completo tal que:
-```{r}
-g = graph_from_literal(1---2, 1---3, 1---4, 1---5, 2---3, 2---4, 2---5, 3---1, 3---2, 3---4, 3---5, 4---1, 4---2, 4---3, 4---5, 5---1)
-plot(g)
+El grafo $(H_n)_n$ con orden $(H_n) = n$ sería un grafo completo como, por ejemplo:
+```{r, fig.align='center'}
+full_g = graph_from_literal(1---2, 1---3, 1---4, 1---5, 2---3, 2---4, 2---5, 3---1, 3---2, 3---4, 3---5, 4---1, 4---2, 4---3, 4---5, 5---1)
+plot(full_g)
 ```
 
+<br>
+
+Este grafo completo tendrá el coeficiente de clustering y de transitividad igual a 1.
 
 ```{r}
-
-
-g = make_full_graph(5, directed = FALSE)
-plot(g)
+transitivity(full_g) # Transitivity coefficient
+transitivity(full_g, type="average") # Clustering coefficient
 ```
 
+<br>
 
+Por lo tanto, para que este grafo cumpliera la condición $\lim_{n \to \infty} C(H_n) = 0$, habría que añadir al grafo completo un grafo tal que su número de triángulos fuera igual a 0. Por ejemplo, una cadena:
 
+```{r, fig.align='center'}
+chain_g = graph_from_literal(1---2, 2---3, 3---4, 4---5)
+plot(chain_g)
+```
 
+<br>
 
+cuyo coeficiente de clustering y de transitividad es igual a 0.
 
+```{r}
+transitivity(chain_g) # Transitivity coefficient
+transitivity(chain_g, type="average") # Clustering coefficient
+```
 
+<br>
+
+Además, para que realmente se cumpla $\lim_{n \to \infty} C(H_n) = 0$, la cadena deberá tener más nodos que el grafo completo para que el número de tripletas sea mayor que el número de triángulos. Esto se debe por la fórmula del coeficiente de clustering:
+
+$$ C(H) = \frac{\lambda(v)}{\tau(v)} $$
+donde $\lambda(v)$ es el número de triángulos y $\tau(v)$ es el número de tripletas.
+
+Para saber cuántos nodos más ha de tener la cadena con respecto al grafo completo, se ha utilizado el artículo [The difference between the transitivity ratio and the clustering coefficient](http://pages.stat.wisc.edu/~karlrohe/netsci/MeasuringTrianglesInGraphs.pdf) de _Karl Rohe_, donde se demuestra que para un grafo con $n$ nodos, el grafo completo ha de tener $n^{2/3}$ nodos, y la cadena el resto de nodos.
+
+Por lo tanto, el siguiente algoritmo realiza 999 iteraciones donde, por cada iteración $i$, se generará un nuevo grafo $H$ de $n = i$ nodos formado por un grafo completo de $x = n^{2/3}$ nodos y una cadena de $y = n - x$ nodos. Para cada grafo generado, se calcula sus coeficientes de clustering y de transitividad.
+
+```{r}
+clus = c()
+trans = c()
+
+for (i in 2:1000) {
+  x = ceiling(i^(2/3))
+  y = i - x
+  
+  full_g = make_full_graph(x)
+  chain_g = graph(sort(cbind(seq(x, x+y-1), seq(x+1, x+y))), directed = FALSE)
+  H_g = graph.union(full_g, chain_g)
+  
+  trans[i] = transitivity(H_g) # Transitivity coefficient
+  clus[i] = transitivity(H_g, type="average") # Clustering coefficient
+}
+```
+
+<br>
+
+Finalmente, generamos una gráfica con los coeficientes de clustering y de transitividad para cada grafo generado.
+
+```{r, fig.align='center', fig.width=10}
+df = na.omit(data.frame(x=clus, y=trans))
+colnames(df) = c('clus', 'trans')
+df['seq'] = seq(1, length(df$clus))
+df = melt(df, id.vars='seq')
+
+ggplot(df) + 
+  geom_point(aes(x=seq, y=value, color=variable)) + 
+  scale_color_discrete(name="Coefficients",
+                      breaks=c("clus", "trans"),
+                      labels=c("Clustering", "Transitivity")) +
+  xlab("n nodes of graph H") +
+  ylab("Coefficients of clustering and transitivity")
+```
+
+<br>
+
+Se puede observar como se cumple $\lim_{n \to \infty} C(H_n) = 0$ y $\lim_{n \to \infty} T(H_n) = 1$ para un grafo $H$ de $n$ nodos formado por un grafo completo de $n^{2/3}$ nodos y una cadena de $n - n^{2/3}$ nodos.
+
+<br>
 

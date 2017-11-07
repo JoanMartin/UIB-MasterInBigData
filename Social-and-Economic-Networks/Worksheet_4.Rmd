@@ -1,0 +1,255 @@
+---
+title: "Social and economic networks"
+subtitle: "Handout 4.A"
+author: "Juan José Martín y Christian Strasser"
+output:
+  html_document:
+    number_sections: false
+    highlight: tango
+    toc: yes
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+---
+
+
+
+<style type="text/css">
+
+  body {
+    background-color: #f6f7fd; 
+  }
+  
+  a:link {
+    color: #0174DF;
+  }
+  
+  code.r {
+    font-size: 14px;
+  } 
+  
+  div pre {
+    background-color:#E0ECF8;
+  }
+  pre {
+    font-size: 14px 
+  }
+ 
+  p {
+    text-align: justify;
+  }
+ 
+    
+  h1, h2, h3, h4, h5, h6 {
+    color: #737aaa;
+  }
+
+  th {  
+    background-color:#737aaa;
+    color: #FAFAFA;
+    padding:5px;
+  }
+  
+  td {
+    font-size: 11.5pt;
+  } 
+  
+  tr:nth-child(even){
+    background: white;
+  }
+  
+  tr:nth-child(odd){ 
+    background-color: #EFF8FB;
+  }
+</style>
+
+***  
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(igraph)
+```
+
+
+## Ejercicio 1
+
+**The file facebook_sample_anon.txt is a data table containing the list of edges of an anonymized sample of the Facebook friendship network. Download it on your computer, upload it to R as a dataframe, and define an undirected graph with this list of edges.**
+
+```{r, results='hide'}
+df = read.csv("datasets/facebook_sample_anon.txt", sep=" ")
+
+g = graph_from_data_frame(df, directed = FALSE)
+```
+
+<br>
+
+**(a) What are its order and size?**
+
+Orden:
+```{r}
+gorder(g)
+```
+
+<br>
+
+Tamaño:
+```{r}
+ecount(g) 
+```
+
+<br>
+
+**(b) Is it connected?**
+
+Descomponer en subgrafos. Es conexo si solo hay 1 subgrafo (el máximo).
+
+```{r}
+length(decompose(g))
+```
+
+<br>
+
+**(c) Compute its density. Do you consider it sparse?**
+
+```{r}
+edge_density(g, loops = FALSE)
+```
+
+<br>
+
+Es un grafo disperso porque la densidad del grafo es de un 1%.
+
+<br>
+
+**(d) Plot its degrees distribution in linear and in log-log scale. Which is more helpful to understand this distribution? Does this distribution seem to follow a power-law?**
+
+```{r, fig.align='center'}
+dg_dist = degree.distribution(g)
+dg_dist = dg_dist[dg_dist != 0]
+
+plot(dg_dist)
+plot(dg_dist, log='xy')
+```
+
+<br>
+
+La función logarítmica es la que más ayuda en la interpretación de los datos debido a que la distribución de los datos se amplía en los lugares que estaban más juntos en la función original.
+
+<br>
+
+**(e) What are the range, the mode, the mean, the median and the standard deviation of its degree distribution? What do they tell you?**
+
+Rango:
+```{r}
+range(dg_dist)
+```
+
+<br>
+
+Moda:
+```{r}
+names(sort(table(degree(g)), decreasing = TRUE))[1]
+```
+
+<br>
+
+Media:
+```{r}
+mean(dg_dist)
+```
+
+<br>
+
+Mediana:
+```{r}
+median(dg_dist)
+```
+
+<br>
+
+Desviación estándar:
+```{r}
+sd(dg_dist)
+```
+
+<br>
+
+**(f) Compute its diameter, its average distance, and its 90% effective diameter (the smallest distance d such that at least a 90% of the pairs of different nodes are at distance at most d).**
+
+Diámetro:
+```{r}
+diameter(g, directed = FALSE)
+```
+
+<br>
+
+Distancia media:
+```{r}
+round(mean_distance(g))
+```
+
+<br>
+
+Distancia a la que están el 90% de los nodos: 
+```{r}
+l = sort(distances(g),decreasing = FALSE)
+l[round(length(l) * 0.9)]
+```
+
+<br>
+
+**(g) Plot a histogram of its clustering coefficients.**
+
+```{r, fig.align='center'}
+hist(round(transitivity(g, type="barrat"), 3), main="Clustering Coefficients", xlab="Probability", ylab="Num. of Nodes")
+```
+
+<br>
+
+**(h) Compute its average clustering coefficient and its transitivity coefficient. What do they tell you about the clustering coefficient of the nodes with large degree?**
+
+Coeficiente de clustering:
+```{r}
+round(transitivity(g, type="average"),4)
+```
+
+<br>
+
+Coeficiente de transitividad:
+```{r}
+round(transitivity(g),4)
+```
+
+<br>
+
+El coeficiente de transitividad es menor que el coeficiente de clustering, lo que significa que la probabilidad es muy baja de que dos nodos están conectados entre si, cuando están conectados a un nodo con grado alto.
+
+Se puede demostrar cogiendo solo el conjunto de los 10 nodos con mayor grado y obtener la media de su coeficiente de clustering y obtener un valor relativamente bajo.
+
+<br>
+
+**Confirm it by computing the clustering coefficients of the 10 nodes with largest degree.**
+```{r}
+coef_clus=0
+media_nodos_mayor = c()
+conjunto_nodos_mayor = names(sort(degree(g), decreasing = TRUE))[1:10]
+for(i in 1:10){
+  media_nodos_mayor = c(media_nodos_mayor, transitivity(g, type="local", vids = conjunto_nodos_mayor[i]))
+}
+mean(media_nodos_mayor)
+```
+
+<br>
+
+**(i) This graph was obtained by gathering all friends of 10 students enrolled in a course and establishing the friendship relations among the union of their friends (in the old times when Facebook APIs allowed it easily). Can you make an educated guess about which are these 10 students?**
+
+
+Hay varias acciones que se podrían tomar, pero ninguna asegura al 100% de encontrar estos primeros 10 nodos iniciales:
+
+* Se podría intuir que los 10 nodos de más grado son los 10 nodos iniciales, ya que todos los demás nodos provienen de estos iniciales, pero con la posibilidad de tener uniones entre los demás nodos también, no se puede asegurar que los 10 nodos de más grado son los nodos iniciales.
+
+* Se podrían analizar todos los recorridos en el grafo (de todos los nodos a todos los nodos), y se podría afirmar que los 10 nodos iniciales están en al menos uno de los recorridos entre dos nodos cualquieras. Pero, igual que antes, con la posibilidad de que los demás nodos pueden tener uniones entre si también, esta afirmación también se podría cumplir con otro nodo que no es de los 10 iniciales.
+
+Solo, con la ayuda de estudios como _Friendship Paradox_, se pueden tomar decisiones para obtener la mayor probabilidad de encontrar estos nodos inciales. Por ejemplo, el estudio dice que es probable que la gente tenga menos amigos que el promedio del número de amigos de sus amigos, es decir, que el grado de los nodos conectados a los nodos iniciales tienen mayor probabilidad de tener un grado superior que estos 10 nodos iniciales. Además, el estudio dice que es probable que los amigos de individuos seleccionados al azar tienen una centralidad superior a la media, es decir, que los nodos conectados a los nodos iniciales tienen mayor probabilidad de tener una mayor centralidad que los 10 nodos iniciales.
+
+Así pues, solamente podemos decir que habría maneras de analizar los nodos del grafo para encontrar aquellos que cumplen mejor los casos descritos anteriormente, pero que ninguno de estos análisis nos darían con el resultado exacto.
