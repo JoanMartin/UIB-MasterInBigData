@@ -225,6 +225,12 @@ diameter(g_ring)
 
 (b) **Now, chose equiprobably a new (that is, not existing in G) edge incident to the node 1 and add it to G. What are the expected average distance and the expected diameter of the new graph obtained in this way? You can compute these expected indices analitically (that is, by hand) or estimate them by a Monte Carlo method with 10,000 iterations (that is, generate randomly 10,000 such graphs, compute their indices, and then estimate the expected indices from this sample). Bonus if you do it both ways and the results are consistent.**
 
+Para añadir una arista al nodo '1' en el grafo $G$ de forma equiprobable, recorremos los nodos '3' hasta '99' (los nodos '2' y '100' ya son vecinos de '1') y creamos la arista para unir estos nodos sobre el grafo original $G$. A continuación, obtenemos la distancia media nueva y el diametro nuevo y guardamos estos valores, para cada iteración, en un conjunto ($Avg_D$ guarda las distancias media y $Diam$ guarda los diametros).
+
+Importante ver que generamos 97 nuevos grafos aro con una arista extra añadida entre dos nodos, no generamos 1 grafo aro con 97 aristas más.
+
+Finalmente, realizamos la media de los dos conjuntos para obtener la distancia media y el diametro.
+
 ```{r}
 g_ring_original = make_ring(100, directed = FALSE)
 Avg_D = c()
@@ -238,8 +244,13 @@ round(mean(Avg_D))
 round(mean(Diam))
 ```
 
-
 Método Monte Carlo:
+
+La diferencia con el método anterior es que con Monte Carlo nuestros dos conjuntos tendrán 10.000 valores (y no 97 como antes). Además, no se realiza un recorrido de todos los nodos, sino que, de forma aleatoria, elegimos uno de los 97 nodos para crear una arista entre este nodo y el nodo '1'.
+
+Importante ver que, mediante la simple aleatoriedad, podemos obtener valores repetidos porque podemos generamos el mismo grafo varias veces, mientras que en el caso anterior nunca generamos dos veces el mismo grafo.
+
+En promedio, el resultado de utilizar el primer método o utilizar el método de Monte Carlo es el mismo.
 ```{r}
 Avg_D = c()
 Diam = c()
