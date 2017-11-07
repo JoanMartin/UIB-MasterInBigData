@@ -1,0 +1,553 @@
+---
+title: "Titanic"
+subtitle: "Machine Learning from Disaster"
+author: "Juan José Martín y Christian Strasser"
+output:
+  html_document:
+    number_sections: false
+    highlight: tango
+    toc: yes
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+---
+
+
+
+<style type="text/css">
+
+  body {
+    background-color: #f6f7fd; 
+  }
+  
+  a:link {
+    color: #0174DF;
+  }
+  
+  code.r {
+    font-size: 14px;
+  } 
+  
+  div pre {
+    background-color:#E0ECF8;
+  }
+  pre {
+    font-size: 14px 
+  }
+ 
+  p {
+    text-align: justify;
+  }
+ 
+    
+  h1, h2, h3, h4, h5, h6 {
+    color: #737aaa;
+  }
+
+  th {  
+    background-color:#737aaa;
+    color: #FAFAFA;
+    padding:5px;
+  }
+  
+  td {
+    font-size: 11.5pt;
+  } 
+  
+  tr:nth-child(even){
+    background: white;
+  }
+  
+  tr:nth-child(odd){ 
+    background-color: #EFF8FB;
+  }
+</style>
+
+***       
+
+<br/> 
+
+```{r}
+library(ggplot2)
+library(jsonlite)
+
+titanic_set = read.csv('datasets/train.csv')
+```
+
+
+## Ejercicio 1
+
+**Realizar un análisis descriptivo del dataset: campos, tipos de datos, dimensiones del dataset, etc. y mostrad las 7 primeras filas.**
+
+```{r}
+str(titanic_set)
+summary(titanic_set)
+head(titanic_set, 7)
+```
+
+<br>
+
+Con estas primeras funciones podemos observar que las variables **Pclass**, **Age**, **SibSp**, **Parch** y **Fare** son variables cuantitativas que nos darán una gran información para poder analizar el conjunto de datos e, incluso, realizar predicciones. La variable **SibSp** nos da información sobre el número de hermanos y mujeres/maridos que iban con un pasajero, y la variable **Parch** no da información sobre el número de padres o hijos. Niñeras, prometidos, abuelos o cualquier otro parentesco no está incluído. No obstante, con las variables **Ticket** y **Cabin** quizá se podría obtener qué personas embarcaron o estuvieron durmiendo juntas para poder extraer esa parte de personas relacionadas con un pasajero (aunque esto no se analizará en este trabajo). 
+
+Por lo otro lado, extraemos de la variable **Name** los tratamientos de formalidad (_Mr._, _Mrs._, _Miss._) para poder realizar un análisis más concreto sobre casados o solteros entre mujeres y hombres (aunque extraemos el campo para demostrar hasta qué punto se podría afinar el análisis, no se usará en ningún caso de este trabajo).
+
+```{r}
+titanic_set$Title = gsub("^.*, (.*?)\\..*$", "\\1", titanic_set$Name)
+head(titanic_set[c('PassengerId', 'Name', 'Title', 'Sex')], 10)
+```
+
+<br>
+
+Comprobamos que la variable **Age** tiene bastantes datos con _NA_:
+
+```{r}
+colSums(is.na(titanic_set))
+colSums(titanic_set=='')
+```
+
+<br>
+
+## Ejercicio 2
+
+**Responde a estas breves preguntas:**
+
+* **¿Cuántos hombres había? ¿Cuántas mujeres? Queremos saber la respuesta en valores absolutos y porcentajes.**
+
+El número de hombres y mujeres fue:
+
+```{r}
+t = table(titanic_set$Sex)
+t
+```
+
+<br>
+
+Y en porcentaje:
+
+```{r}
+prop.table(t)
+```
+
+
+<br>
+
+* **¿Cuántos menores de edad viajaban en el Titanic?**
+
+El número de menos de edad fue:
+
+```{r}
+sum(titanic_set$Age < 18, na.rm=T)
+```
+
+<br>
+
+de los cuales sobrevivieron:
+
+```{r}
+sum(titanic_set$Age < 18 & titanic_set$Survived == 1, na.rm=T)
+```
+
+
+<br>
+
+* **¿Cuántas personas había entre 20 y 40 años?**
+
+El número de personas entre 20 y 40 años fue:
+
+```{r}
+sum(titanic_set$Age >= 20 & titanic_set$Age <= 40, na.rm=T)
+```
+
+<br>
+
+* **¿Cuántas personas embarcaron en cada puerto?**
+
+Las personas que embarcaron en cada puerto fue:
+
+```{r}
+table(titanic_set$Embarked)
+```
+
+<br>
+
+siendo _C = Cherbourg_, _Q = Queenstown_ y _S = Southampton_.
+
+<br>
+
+## Ejercicio 3
+
+**Realizar las siguientes funciones:**
+
+* **Crea una función que reciba como parámetro un vector y calcule su media (No se puede usar la funcion mean).**
+
+```{r}
+my_mean = function(v) {
+  if (typeof(v) == 'character') {
+    warning("Vector must be numeric")
+    return (NA)
+  }
+  return (sum(v) / length(v))
+}
+```
+
+<br>
+
+Probamos que la función dé un resultado correcto comparándola con la función _mean_ de R:
+
+```{r}
+v = c(1, 3, 6, 3, 8, 5, 4, 4)
+mean(v)
+my_mean(v)
+```
+
+<br>
+
+* **Crea una función que reciba como parámetro dos vectores y nos diga si tienen todos los elementos iguales.**
+
+```{r}
+my_identical = function(v1, v2) {
+  if (length(v1) != length(v2)) {
+    return (FALSE)
+  }
+  
+  for (i in 1:length(v1)) {
+    if (v1[i] != v2[i] | typeof(v1[i]) != typeof(v2[i])) {
+      return (FALSE)
+    }
+  }
+  
+  return (TRUE)
+}
+```
+
+<br>
+
+Probamos que la función dé un resultado correcto comparándola con la función _identical_ de R mediante diferentes ejemplos:
+
+```{r}
+v1 = c(1, 3, 6, 3, 8, 5, 4, 4)
+v2 = c(1, 3, 6, 3, 8, 5, 4, 4)
+identical(v1, v2)
+my_identical(v1, v2)
+```
+
+<br>
+
+Vectores diferentes:
+
+```{r}
+v3 = c(1, 3, 6, 3, 8, 5, 4, 4)
+v4 = c(1, '3', 6, 3, 8, 5, 4, 4)
+identical(v3, v4)
+my_identical(v3, v4)
+```
+
+<br>
+
+Vectores de diferente tamaño:
+
+```{r}
+v5 = c(1, 3, 6, 3, 8, 5, 4, 4)
+v6 = c(1, 3, 6, 3, 8, 5, 4)
+identical(v5, v6)
+my_identical(v5, v6)
+```
+
+<br>
+
+* **Crea una función que reciba como parámetro un vector y nos devuelva uno nuevo sin elementos duplicados. P.ej si nos llega el vector _c(2, 1, 3, 4, 5, 5, 4, 1)_ la función nos devolverá el vector _c(2, 1, 3, 4, 5)_.**
+
+```{r}
+my_unique = function(v) {
+  new_v = c()
+  
+  for (i in v) {
+    if (!is.element(i, new_v)) {
+      new_v = c(new_v, i)
+    }
+  }
+  
+  return (new_v)
+}
+```
+
+<br>
+
+Probamos que la función dé un resultado correcto comparándola con la función _unique_ de R:
+
+```{r}
+v = c(1, 3, 6, 3, 8, 4, 4, 64)
+unique(v)
+my_unique(v)
+```
+
+<br>
+
+## Ejercicio 4
+
+**¿Cuál es el numero medio de parientes de cada pasajero? ¿Qué pasajero tiene mas parientes? ¿Cuántos pasajeros viajaban sin ningún pariente?**
+
+El número medio de parientes era de:
+
+```{r}
+titanic_set$FamRel = rowSums(titanic_set[c('Parch', 'SibSp')], na.rm=TRUE)
+mean(titanic_set$FamRel)
+```
+
+<br>
+
+Los pasajeros con más parientes son:
+
+```{r}
+titanic_set[titanic_set$FamRel == max(titanic_set$FamRel), c('Name', 'Parch', 'SibSp', 'FamRel')]
+```
+
+<br>
+
+Estos son 7 de los 9 hermanos (los dos que faltan están en el fichero de test) de la familia Sage, que vinieron con sus padres John George Sage y Annie Elizabeth Cazaly. Para más información sobre esta familia, visita [este link](https://www.encyclopedia-titanica.org/titanic-victim/john-george-sage.html).
+
+<br>
+
+El número de pasajeros que viajaban sin parientes fue:
+
+```{r}
+sum(titanic_set$FamRel == 0)
+```
+
+<br>
+
+## Ejercicio 5
+
+**Sustituye las edades que faltan con la media de las edades que ya tenemos.**
+
+```{r}
+mean(titanic_set$Age, na.rm=TRUE)
+age_mean = mean(titanic_set$Age, na.rm=TRUE)
+titanic_set[c('Age')][is.na(titanic_set[c('Age')])] = age_mean
+```
+
+<br>
+
+## Ejercicio 6
+
+**Hablemos del precio de los tickets:**
+
+* **¿Cuál es la mediana del precio de los tickets por clase?**
+
+La mediana del precio de los tickets por clase es:
+
+```{r}
+aggregate(titanic_set$Fare~Pclass, data=titanic_set, FUN=median)
+```
+
+<br>
+
+* **¿Cuál el el precio de los tickets que más veces se repite?**
+
+Para sacar el precio de los tickets que más veces se repite podemos usar varias formas a partir de la función _table_. 
+
+```{r}
+tt = table(titanic_set$Fare)
+```
+
+<br>
+
+Por ejemplo, se puede ordenar descendientemente el resultado de la función _table_ y comprobar los 10 precios de tickets que más se repite:
+
+```{r}
+tt_sort = sort(tt, decreasing = TRUE)[1:10]
+tt_sort
+```
+
+<br>
+
+Por lo tanto, basta coger el primer elemento para obtener el que más se repite:
+
+```{r}
+names(tt_sort[1])
+```
+
+<br>
+
+Otra forma podría ser esta:
+
+```{r}
+names(tt[tt == max(tt)])
+```
+
+<br>
+
+Y por último:
+
+```{r}
+names(which(tt == max(tt)))
+```
+
+<br>
+
+## Ejercicio 7
+
+**Realiza una (o varias) gráficas en las que se muestre un histograma de la edad de los pasajeros por cada una de las clases. También seria interesante ver una gráfica del número de hombres y mujeres por cada una de las clases.**
+
+El histograma de la edad de los pasajeros por cada una de las clases es el siguiente:
+
+```{r, fig.align='center'}
+agg = aggregate(Age~Pclass+Sex, data=titanic_set, FUN=mean, na.rm=TRUE)
+
+ggplot(agg, aes(x=Pclass, y=Age, fill=factor(Sex))) +
+  geom_bar(stat="identity", position="dodge") +
+  scale_fill_discrete(name="Sex",
+                      breaks=c("male", "female"),
+                      labels=c("Male", "Female")) +
+  xlab("Class")+ylab("Age")
+```
+
+<br>
+
+Los pasajeros más jóvenes pertenecían a la tercera clase y los más mayores a la primera clase, lo cual podría explicarse por ser las personas de mayor edad las que ya habían ganado un status económico-social más alto que los jóvenes.
+
+<br>
+
+El histograma del número de hombres y mujeres por cada una de las clases es:
+
+```{r, fig.align='center'}
+t = table(titanic_set$Pclass, titanic_set$Sex)
+t = as.data.frame(t)
+colnames(t)=c('Pclass', 'Sex', 'Freq')
+
+ggplot(t, aes(x=Pclass, y=Freq, fill=factor(Sex))) +
+  geom_bar(stat="identity", position="dodge") +
+  scale_fill_discrete(name="Sex",
+                      breaks=c("male", "female"),
+                      labels=c("Male", "Female")) +
+  xlab("Class")+ylab("Number of passengers")
+```
+
+<br>
+
+Se puede observar un aumento de más de un 100% en el número de hombres en tercera clase respecto a los que hubo en primera y segunda clase.
+
+<br>
+
+## Ejercicio 8
+
+**Realiza la(s) gráfica(s) que puedan mostrar la relación entre la edad de los pasajeros y su probabilidad de supervivencia.**
+
+Para facilitar la interpretación de la gráfica, se ha puesto la edad de cada pasajero en rangos de 5 años.
+
+```{r}
+seq = seq(0, max(titanic_set$Age) + 10, 5)
+titanic_set$AgeRange = cut(titanic_set$Age, seq)
+titanic_set[1:10, c('Name', 'Sex', 'Age', 'AgeRange')]
+```
+
+<br>
+
+La siguiente gráfica se ha hecho de tal forma que se puede apreciar fácilmente la relación entre el sexo del pasajero, su edad y la probabilidad de supervivencia.
+
+```{r, fig.align='center', fig.width=10}
+surv_prob = aggregate(Survived~AgeRange+Sex, data=titanic_set, FUN=mean, na.rm=TRUE)
+surv_prob$Survived = surv_prob$Survived * 100
+
+ggplot(surv_prob, aes(x=AgeRange,y=Survived,fill=factor(Sex))) +
+    geom_bar(stat="identity", position="dodge") +
+    scale_fill_discrete(name="Sex",
+                        breaks=c("male", "female"),
+                        labels=c("Male", "Female")) +
+    xlab("Age")+ylab("Survival Percentage")
+```
+
+<br>
+
+Lo que podemos observar con este gráfico muy claramente es que las mujeres, fueran de la edad que fueran, tenían más probabilidad de sobrevivir. Tambień se puede incluir a los menores entre 0 y 15 años entre los que más probabilidades tienen. Esto es debido a la norma de "mujeres y niños primero". Por otra parte, vemos que la probabilidad de sobrevivir en personas de más de 65 años es prácticamente nula.
+
+<br>
+
+## Ejercicio 9
+
+**Crea un archivo con extensión .json con una lista de todos los pasajeros que contenga: nombre, clase y edad. Valida que está correctamente formado cargándolo en R.**
+
+Escribimos el JSON:
+
+```{r}
+x = toJSON(titanic_set[,c('Name', 'Pclass', 'Age')])
+write(x, file="json_test.json")
+```
+
+<br>
+
+Y lo leemos:
+
+```{r}
+y = fromJSON("json_test.json")
+head(y)
+```
+
+<br>
+
+## Ejercicio 10
+
+**¿Qué conclusiones has podido sacar a partir del trabajo con este dataset? Para justificar tu decisión puedes demostrar tus predicciones usando el conjunto de test.**
+
+Hemos podido ver mediante algunas de las gráficas que la edad, el sexo y la clase parecen tener una cierta relación a la hora de poder saber si una persona sobrevivió al naufragio o no. No obstante, realizamos un pequeño análisis para comprobar la correlación de las variables sobre **Survived**.
+
+```{r}
+titanic_subset = titanic_set[,c('Survived', 'Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare')]
+titanic_subset['Age'] = as.integer(titanic_subset$Age)
+titanic_subset['Sex'] = as.integer(titanic_subset$Sex)
+
+apply(titanic_subset, 2, function(col) cor(col, titanic_subset$Survived))
+```
+
+<br>
+
+Podemos observar que las variables que más correlación tienen son la clase, el sexo y el precio del ticket. No obstante, vamos a probar de añadir también la edad al modelo ya que, junto con otras variables, podría explicar también la supervivencia.
+
+```{r}
+glm_model <- glm(Survived ~ Pclass + Sex + Age + Fare,  data=titanic_subset, family="binomial")
+summary(glm_model)
+```
+
+<br>
+
+Mediante el _p-valor_ podemos observar que las variables que mejor explican **Survived** son la edad, la clase y el sexo. Es por ello que volvemos a calcular el modelo únicamente con esas 3 variables:
+
+```{r}
+glm_model <- glm(Survived ~ Pclass + Sex + Age,  data=titanic_subset, family="binomial")
+summary(glm_model)
+```
+
+<br>
+
+Ahora que tenemos el modelo generado, importamos el set de prueba y lo analizamos:
+
+```{r}
+titanic_test = read.csv('datasets/test.csv')
+colSums(is.na(titanic_test))
+colSums(titanic_test=='')
+```
+
+<br>
+
+Asignamos a los valores NA de la edad la media de la edad del resto de pasajeros y pasamos las variables de edad y sexo a integer:
+
+```{r}
+age_mean = mean(titanic_test$Age, na.rm=TRUE)
+titanic_test[c('Age')][is.na(titanic_test[c('Age')])] = age_mean
+
+titanic_test['Age'] = as.integer(titanic_test$Age)
+titanic_test['Sex'] = as.integer(titanic_test$Sex)
+```
+
+<br>
+
+Por último, asignamos a cada pasajero del set de prueba la predicción de si sobrevivió o no al naufragio:
+
+```{r}
+titanic_test$Survived = round(predict(glm_model, newdata=titanic_test, type="response"))
+head(titanic_test[c('Pclass', 'Name', 'Sex', 'Age', 'Survived')], 10)
+```
+
+<br>
+
+Ahora deberíamos comparar con el valor real de **Survived** que tuvieron estos pasajeros del test de prueba para comprobar la precisión del modelo, no obstante, no tenemos esa variable.

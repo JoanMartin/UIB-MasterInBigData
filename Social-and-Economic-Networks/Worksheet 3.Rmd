@@ -1,0 +1,274 @@
+---
+title: "Social and economic networks"
+subtitle: "Handout 3"
+author: "Juan José Martín y Christian Strasser"
+output:
+  html_document:
+    number_sections: false
+    highlight: tango
+    toc: yes
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+---
+
+
+
+<style type="text/css">
+
+  body {
+    background-color: #f6f7fd; 
+  }
+  
+  a:link {
+    color: #0174DF;
+  }
+  
+  code.r {
+    font-size: 14px;
+  } 
+  
+  div pre {
+    background-color:#E0ECF8;
+  }
+  pre {
+    font-size: 14px 
+  }
+ 
+  p {
+    text-align: justify;
+  }
+ 
+    
+  h1, h2, h3, h4, h5, h6 {
+    color: #737aaa;
+  }
+
+  th {  
+    background-color:#737aaa;
+    color: #FAFAFA;
+    padding:5px;
+  }
+  
+  td {
+    font-size: 11.5pt;
+  } 
+  
+  tr:nth-child(even){
+    background: white;
+  }
+  
+  tr:nth-child(odd){ 
+    background-color: #EFF8FB;
+  }
+</style>
+
+***    
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Ejercicio 1
+
+**For the graph in Fig. 1:**
+```{r, results='hide', message=FALSE, warning=FALSE}
+library(igraph)
+library(knitr)
+```
+
+```{r, fig.align='center'}
+g <- graph_from_literal(1---4, 1---5, 1---8, 2---3, 2---4, 2---9, 3---6, 3---4, 4---5,  4---6, 5---8, 5---9, 6---7, 6---8)
+plot(g)
+```
+
+<br>
+
+(1) **Its adjacency matrix**
+
+```{r}
+get.adjacency(g, sparse = FALSE)
+```
+
+<br>
+
+(2) **Its density**
+
+```{r}
+edge_density(g, loops = FALSE)
+```
+
+<br>
+
+(3) **The degree of each node**
+```{r}
+degree(g)
+```
+
+<br>
+
+(4) **Its average degree and its degrees standard deviation**
+```{r}
+round(mean(degree(g)))
+sd(degree(g))
+```
+
+<br>
+
+(5) **Its degrees distribution and cumulative distribution, and plot them**
+```{r, fig.align='center'}
+degree.distribution(g)
+degree.distribution(g, cumulative = TRUE)
+
+TrDD = c(1-degree_distribution(g,cumulative=TRUE)[-1],1)
+round(TrDD, 4)
+par(mfrow=c(2,1))
+plot(0:max(degree(g)), degree_distribution(g),pch=20,main="Degree density",xlab="Degree",
+     ylab="Probability",type="o")
+plot(0:max(degree(g)), TrDD,pch=20,main="Degree cumulative distribution",xlab="Degree",
+     ylab="Probability",type="o")
+```
+
+<br>
+
+(6) **The distances from 1 to the other nodes**
+```{r}
+kable(distances(g, 1))
+```
+
+<br>
+
+(7) **Its diameter, and a pair of nodes at maximum distance**
+```{r}
+diameter(g)
+farthest_vertices(g)$vertices
+```
+
+<br>
+
+(8) **The clustering coefficient of each node, and a node with maximum clustering coefficient**
+
+Coeficiente de clustering de cada node ('1' - '9'):
+
+```{r}
+coef_clus = c()
+for(i in 1:gorder(g)){
+  coef_clus = c(coef_clus, transitivity(g, type="local", vids = i))
+  if(coef_clus[i]=="NaN"){
+    coef_clus[i] = 0
+  }
+}
+coef_clus
+```
+
+```{r}
+which(coef_clus == max(coef_clus))
+```
+
+<br>
+
+(9) **Its average clustering coefficient**
+```{r}
+round(transitivity(g, type="average"), 4)
+```
+
+<br>
+
+(10) **Its transitivity coefficient**
+```{r}
+round(transitivity(g), 4)
+```
+
+<br>
+
+(11) **Its average distance**
+```{r}
+round(mean_distance(g))
+```
+
+<br>
+
+(12) **Its relative hop plot**
+```{r, fig.align='center'}
+rel_hop_plot = function(G) {
+  
+  F = function(x){
+    length(unlist(ego(G, order=x, nodes=V(G)))) / length(V(G)) ^ 2
+  }
+
+  sapply(1:diameter(G), FUN=F)
+}
+
+plot(rel_hop_plot(g), pch=20, main="Relative hop plot", xlab="Hops", ylab="Probability", type="o")
+```
+
+<br>
+
+## Ejercicio 2
+
+**Consider a ring G with 100 nodes, labeled consecutively 1, 2, ..., 100.**
+
+```{r, fig.align='center', fig.width=10}
+g_ring = make_ring(100, directed = FALSE)
+plot(g_ring, layout = layout.circle)
+```
+
+
+(a) **What are its average distance and its diameter?**
+
+```{r}
+round(mean_distance(g_ring))
+diameter(g_ring)
+```
+
+<br>
+
+(b) **Now, chose equiprobably a new (that is, not existing in G) edge incident to the node 1 and add it to G. What are the expected average distance and the expected diameter of the new graph obtained in this way? You can compute these expected indices analitically (that is, by hand) or estimate them by a Monte Carlo method with 10,000 iterations (that is, generate randomly 10,000 such graphs, compute their indices, and then estimate the expected indices from this sample). Bonus if you do it both ways and the results are consistent.**
+
+Para añadir una arista al nodo '1' en el grafo $G$ de forma equiprobable, recorremos los nodos '3' hasta '99' (los nodos '2' y '100' ya son vecinos de '1') y creamos la arista para unir estos nodos sobre el grafo original $G$. A continuación, obtenemos la distancia media nueva y el diametro nuevo y guardamos estos valores, para cada iteración, en un conjunto ($Avg_D$ guarda las distancias media y $Diam$ guarda los diametros).
+
+Importante ver que generamos 97 nuevos grafos aro con una arista extra añadida entre dos nodos, no generamos 1 grafo aro con 97 aristas más.
+
+Finalmente, realizamos la media de los dos conjuntos para obtener la distancia media y el diametro.
+
+```{r}
+g_ring_original = make_ring(100, directed = FALSE)
+Avg_D = c()
+Diam = c()
+for(i in 3:99){
+  g_ring = add_edges(g_ring_original, c(1, i))
+  Avg_D = c(Avg_D, mean(distances(g_ring)))
+  Diam = c(Diam, diameter(g_ring))
+}
+round(mean(Avg_D))
+round(mean(Diam))
+```
+
+Método Monte Carlo:
+
+La diferencia con el método anterior es que con Monte Carlo nuestros dos conjuntos tendrán 10.000 valores (y no 97 como antes). Además, no se realiza un recorrido de todos los nodos, sino que, de forma aleatoria, elegimos uno de los 97 nodos para crear una arista entre este nodo y el nodo '1'.
+
+Importante ver que, mediante la simple aleatoriedad, podemos obtener valores repetidos porque podemos generamos el mismo grafo varias veces, mientras que en el caso anterior nunca generamos dos veces el mismo grafo.
+
+En promedio, el resultado de utilizar el primer método o utilizar el método de Monte Carlo es el mismo.
+```{r}
+Avg_D = c()
+Diam = c()
+for(i in 1:10000){
+  v_random = sample(3:99, 1)
+  g_ring = add_edges(g_ring_original, c(1, v_random))
+  Avg_D[i] = mean_distance(g_ring)
+  Diam[i] = diameter(g_ring)
+}
+round(mean(Avg_D))
+round(mean(Diam))
+```
+
+<br>
+
+## Ejercicio 3
+
+**Find a family of graphs $(H_n)_n$ with order$(H_n) = n$ such that $C(H_n){\longrightarrow}0$ and $T(H_n){\longrightarrow}1$.**
+```{r}
+
+```
