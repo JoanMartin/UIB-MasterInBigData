@@ -78,11 +78,10 @@ library(knitr)
 ```
 
 ```{r, fig.align='center'}
-g <- graph_from_literal(1---4, 1---5, 1---8, 2---3, 2---4, 2---9, 3---6, 3---4, 4---5,  4---6, 5---8, 5---9, 6---7, 6---8)
+g = graph_from_literal(1---4, 1---5, 1---8, 2---3, 2---4, 2---9, 3---6, 3---4, 4---5,  4---6, 5---8, 5---9, 6---7, 6---8)
 plot(g)
 ```
 
-<br>
 
 (1) **Its adjacency matrix**
 
@@ -108,26 +107,59 @@ degree(g)
 <br>
 
 (4) **Its average degree and its degrees standard deviation**
+
+El grado medio es:
 ```{r}
-round(mean(degree(g)))
+mean(degree(g))
+```
+
+<br>
+
+Y la desviación estándar de los grados es:
+```{r}
 sd(degree(g))
 ```
 
 <br>
 
 (5) **Its degrees distribution and cumulative distribution, and plot them**
+
+La distribución de los grados es:
 ```{r, fig.align='center'}
 degree.distribution(g)
-degree.distribution(g, cumulative = TRUE)
+```
 
-TrDD = c(1-degree_distribution(g,cumulative=TRUE)[-1],1)
-round(TrDD, 4)
-par(mfrow=c(2,1))
+<br>
+
+y generamos su gráfica:
+```{r, fig.align="center"}
 plot(0:max(degree(g)), degree_distribution(g),pch=20,main="Degree density",xlab="Degree",
      ylab="Probability",type="o")
+```
+
+<br>
+
+La distribución acumulada de los grados es:
+```{r}
+degree.distribution(g, cumulative = TRUE)
+```
+
+<br>
+
+Giramos la distribución acumulada de los grados:
+```{r}
+TrDD = c(1-degree_distribution(g,cumulative=TRUE)[-1], 1)
+round(TrDD, 4)
+```
+
+<br>
+
+y generamos su gráfica:
+```{r, fig.align="center"}
 plot(0:max(degree(g)), TrDD,pch=20,main="Degree cumulative distribution",xlab="Degree",
      ylab="Probability",type="o")
 ```
+
 
 <br>
 
@@ -146,9 +178,13 @@ farthest_vertices(g)$vertices
 
 <br>
 
+El par de nodos que está a máxima distancia es 7 - 9.
+
+<br>
+
 (8) **The clustering coefficient of each node, and a node with maximum clustering coefficient**
 
-Coeficiente de clustering de cada node ('1' - '9'):
+El coeficiente de clustering de cada nodo es:
 
 ```{r}
 coef_clus = c()
@@ -161,9 +197,14 @@ for(i in 1:gorder(g)){
 coef_clus
 ```
 
+<br>
+
+Vemos que hay dos nodos que tienen el máximo coeficiente de clustering 0.6666667 que son:
 ```{r}
 which(coef_clus == max(coef_clus))
 ```
+
+el nodo 1 y 6.
 
 <br>
 
@@ -225,6 +266,9 @@ diameter(g_ring)
 
 (b) **Now, chose equiprobably a new (that is, not existing in G) edge incident to the node 1 and add it to G. What are the expected average distance and the expected diameter of the new graph obtained in this way? You can compute these expected indices analitically (that is, by hand) or estimate them by a Monte Carlo method with 10,000 iterations (that is, generate randomly 10,000 such graphs, compute their indices, and then estimate the expected indices from this sample). Bonus if you do it both ways and the results are consistent.**
 
+Para añadir una arista desde el nodo 1 a cualquier otro nodo de forma equiprobable, sobre el grafo inicial $G$ añadimos una nueva arista y calculamos su distancia media. Esta acción la realimos 97 veces más (una por cada nodo diferente de 2 y 100, ya que estos son nodos vecinos de 1). Finalmente, calculamos la media de las distancias medias, y la media de su diámetro, de haber añadido 98 veces una nueva arista desde el nodo a cualquiera de los demás nodos.
+
+Es importante tener claro que en cada iteración se genera un nueva grafo (a partir del grafo original) con una nueva arista desde el nodo 1 a cualquier otro nodo. Es decir, en ningún caso se genera un único grafo con 97 aristas nuevas.
 ```{r}
 g_ring_original = make_ring(100, directed = FALSE)
 Avg_D = c()
@@ -234,12 +278,24 @@ for(i in 3:99){
   Avg_D = c(Avg_D, mean(distances(g_ring)))
   Diam = c(Diam, diameter(g_ring))
 }
+```
+
+<br>
+
+```{r}
 round(mean(Avg_D))
 round(mean(Diam))
 ```
 
+<br>
 
-Método Monte Carlo:
+Podemos observar que la distancia media con respecto al grafo original $G$ se ha reducido al añadir esa nueva arista.
+
+<br>
+
+Mediante el método Monte Carlo, lo que se hace es generar 10000 valores entre 3 y 99 (nodos diferentes de 2 y 100, ya que estos son nodos vecinos de 1) de forma aleatoria para, finalmente, sacar la media de las distancias medias y la media de su diámetro.
+
+Hay que tener en cuenta que se cogen los nodos de forma aleatoria y no de forma secuencial como se ha hecho en el anterior ejemplo. Esto causará que haya nodos que se repitan en diferentes iteraciones.
 ```{r}
 Avg_D = c()
 Diam = c()
@@ -249,15 +305,43 @@ for(i in 1:10000){
   Avg_D[i] = mean_distance(g_ring)
   Diam[i] = diameter(g_ring)
 }
+```
+
+<br>
+
+```{r}
 round(mean(Avg_D))
 round(mean(Diam))
 ```
 
 <br>
 
+Vemos que la media de las distancias y la media de los diámetros da lo mismo que el método realizado anteriormente.
+
+<br>
+
 ## Ejercicio 3
 
-**Find a family of graphs $(H_n)_n$ with order$(H_n) = n$ such that $C(H_n){\longrightarrow}0$ and $T(H_n){\longrightarrow}1$.**
+**Find a family of graphs $(H_n)_n$ with order $(H_n) = n$ such that $C(H_n){\longrightarrow}0$ and $T(H_n){\longrightarrow}1$.**
+
+El grafo $(H_n)_n$ con orden $(H_n) = n$ sería un grafo completo tal que:
+```{r}
+g = graph_from_literal(1---2, 1---3, 1---4, 1---5, 2---3, 2---4, 2---5, 3---1, 3---2, 3---4, 3---5, 4---1, 4---2, 4---3, 4---5, 5---1)
+plot(g)
+```
+
+
 ```{r}
 
+
+g = make_full_graph(5, directed = FALSE)
+plot(g)
 ```
+
+
+
+
+
+
+
+
