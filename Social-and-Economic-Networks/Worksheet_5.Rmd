@@ -10,15 +10,15 @@ output: html_document
 
 ```{r global_options, include=FALSE}
 knitr::opts_chunk$set(fig.width=8, fig.height=8, fig.align="center", echo=TRUE, warning=FALSE, message=FALSE)
-library(knitr)
-library(printr)
+library(centiserve)
 library(igraph)
+rm(list=ls())
 ```
 
 **1)** It has been observed in many networks an association between "centrality" and "lethality," defined as the fatal disconnection of the network when nodes are removed. Let's study this association on  an undirected network describing  an old map of the Internet at the autonomous system  level. The links in this network are contained in the file **AS-19971108.dat**. Download it on your computer and upload it to R as a dataframe. Define an undirected graph with this list of edges.
 
 ```{r}
-df = read.csv("AS-19971108.dat")
+df = read.csv("datasets/AS-19971108.dat", sep=" ")
 g = graph_from_data_frame(df, directed = FALSE)
 ```
 *a)* Compute its basic indices: order, size, density, number of connected components, diameter, transitivity.
@@ -44,7 +44,7 @@ edge_density(g, loops = FALSE)
 Componentes conectadas:
 
 ```{r}
-length(induced_subgraph(g, v=groups(components(g))[[1]]))
+length(decompose(g))
 ```
 
 Diametro:
@@ -62,44 +62,124 @@ round(transitivity(g),4)
 *b)* Repeat 1000 times the procedure of removing a random 0.1% of its set of nodes, and compute the average number of connected components of the resulting networks and the average fraction of the network represented by the largest component. (The function **replicate** is useful to avoid for-loops in, well, replications.)
 
 ```{r}
-g_new = g
-r = round(gorder(g_new) * 0.001)
-n_random = sample(1:gorder(g_new), r, replace = TRUE)
-gorder(g_new)
-g_new = delete.vertices(g_new, n_random)
-gorder(g_new)
-```
-
-```{r}
 Avg_CC = c()
 Avg_LC = c()
-g_new = g
-n_randoms = c()
+r = round(gorder(g) * 0.001)
 for(i in 1:1000){
-  r = round(gorder(g_new) * 0.001)
-  n_random = sample(1:gorder(g_new), r, replace = TRUE)
-  g_new = delete.vertices(g_new, n_random)
-  Avg_CC = c(Avg_CC, length(induced_subgraph(g_new, v=groups(components(g_new))[[1]])))
-  
+  n_random = sample(1:gorder(g), r, replace = FALSE)
+  g_new = delete.vertices(g, n_random)
+  comp = components(g_new)
+  Avg_CC = c(Avg_CC, comp$no)
+  AVG_LC = c(Avg_LC, max(comp$csize) / gorder(g_new))
 }
-round(mean(Avg_CC))
+mean(Avg_CC)
+mean(Avg_LC)
 ```
+
 
 *c)* Now, compute the number of connected components and the fraction represented by the largest component of the networks obtained after removing the most central 0.1% of nodes, for the following centrality indices (of course, if the most central 0.1% of nodes for two indices are the same set of nodes, you need not waste your time considering twice the same network): 
 
 * degree
 
+```{r}
+r = round(gorder(g) * 0.001)
+g_new = delete.vertices(g, names(round(igraph::degree(g,normalized=TRUE),4)[1:r]))
+comp = components(g_new)
+comp$no
+max(comp$csize) / gorder(g_new)
+```
 * connectedness
+
+```{r}
+r = round(gorder(g) * 0.001)
+g_new = delete.vertices(g, names(round(sort(1/eccentricity(g),decreasing =TRUE),4)[1:r]))
+comp = components(g_new)
+comp$no
+max(comp$csize) / gorder(g_new)
+```
 
 * decay with $\delta=0.5$
 
+```{r}
+r = round(gorder(g) * 0.001)
+g_new = delete.vertices(g, names(round(sort(decay(g, decay=0.5),decreasing=TRUE),4)[1:r]))
+comp = components(g_new)
+comp$no
+max(comp$csize) / gorder(g_new)
+```
+
 * betweenness
+```{r}
+r = round(gorder(g) * 0.001)
+g_new = delete.vertices(g, names(round(igraph::betweenness(g),4)[1:r]))
+comp = components(g_new)
+comp$no
+max(comp$csize) / gorder(g_new)
+```
 
 * eigenvector
 
+```{r}
+r = round(gorder(g) * 0.001)
+g_new = delete.vertices(g, names(round(eigen_centrality(g,scale=FALSE)$vector,4)[1:r]))
+comp = components(g_new)
+comp$no
+max(comp$csize) / gorder(g_new)
+```
+
 * $\alpha$-centrality with $\alpha$ around half its maximum sensible value (use the functions of the package **rARPACK** to compute fast the first eigenvalue). 
 
+
 *d)* Repeat the last two points replacing 0.1% by 1%.
+* degree
+
+```{r}
+r = round(gorder(g) * 0.01)
+g_new = delete.vertices(g, names(round(igraph::degree(g,normalized=TRUE),4)[1:r]))
+comp = components(g_new)
+comp$no
+max(comp$csize) / gorder(g_new)
+```
+* connectedness
+
+```{r}
+r = round(gorder(g) * 0.01)
+g_new = delete.vertices(g, names(round(sort(1/eccentricity(g),decreasing =TRUE),4)[1:r]))
+comp = components(g_new)
+comp$no
+max(comp$csize) / gorder(g_new)
+```
+
+* decay with $\delta=0.5$
+
+```{r}
+r = round(gorder(g) * 0.01)
+g_new = delete.vertices(g, names(round(sort(decay(g, decay=0.5),decreasing=TRUE),4)[1:r]))
+comp = components(g_new)
+comp$no
+max(comp$csize) / gorder(g_new)
+```
+
+* betweenness
+```{r}
+r = round(gorder(g) * 0.01)
+g_new = delete.vertices(g, names(round(igraph::betweenness(g),4)[1:r]))
+comp = components(g_new)
+comp$no
+max(comp$csize) / gorder(g_new)
+```
+
+* eigenvector
+
+```{r}
+r = round(gorder(g) * 0.01)
+g_new = delete.vertices(g, names(round(eigen_centrality(g,scale=FALSE)$vector,4)[1:r]))
+comp = components(g_new)
+comp$no
+max(comp$csize) / gorder(g_new)
+```
+
+* $\alpha$-centrality with $\alpha$ around half its maximum sensible value (use the functions of the package **rARPACK** to compute fast the first eigenvalue).
 
 *e)* Comment the results obtained.
 
