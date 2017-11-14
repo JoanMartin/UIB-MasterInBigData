@@ -1,26 +1,87 @@
 ---
-title: "Handout 5"
-output: html_document
+title: "Social and economic networks"
+subtitle: "Handout 5"
+author: "Juan José Martín y Christian Strasser"
+output:
+  html_document:
+    number_sections: false
+    highlight: tango
+    toc: yes
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
 ---
 
-* Name 1: Juan José Martín
-* Name 2: Christian Strasser
 
+
+<style type="text/css">
+
+  body {
+    background-color: #f6f7fd; 
+  }
+  
+  a:link {
+    color: #0174DF;
+  }
+  
+  code.r {
+    font-size: 14px;
+  } 
+  
+  div pre {
+    background-color:#E0ECF8;
+  }
+  pre {
+    font-size: 14px 
+  }
+ 
+  p {
+    text-align: justify;
+  }
+ 
+    
+  h1, h2, h3, h4, h5, h6 {
+    color: #737aaa;
+  }
+
+  th {  
+    background-color:#737aaa;
+    color: #FAFAFA;
+    padding:5px;
+  }
+  
+  td {
+    font-size: 11.5pt;
+  } 
+  
+  tr:nth-child(even){
+    background: white;
+  }
+  
+  tr:nth-child(odd){ 
+    background-color: #EFF8FB;
+  }
+</style>
+
+***  
 
 
 ```{r global_options, include=FALSE}
-knitr::opts_chunk$set(fig.width=8, fig.height=8, fig.align="center", echo=TRUE, warning=FALSE, message=FALSE)
+knitr::opts_chunk$set(fig.width=7, fig.height=8, fig.align="center", echo=TRUE, warning=FALSE, message=FALSE)
 library(knitr)
-library(printr)
 library(igraph)
 ```
 
-**1)** It has been observed in many networks an association between "centrality" and "lethality," defined as the fatal disconnection of the network when nodes are removed. Let's study this association on  an undirected network describing  an old map of the Internet at the autonomous system  level. The links in this network are contained in the file **AS-19971108.dat**. Download it on your computer and upload it to R as a dataframe. Define an undirected graph with this list of edges.
+
+**1)** It has been observed in many networks an association between "centrality" and "lethality," defined as the fatal disconnection of the network when nodes are removed. Let's study this association on an undirected network describing an old map of the Internet at the autonomous system level. The links in this network are contained in the file **AS-19971108.dat**. Download it on your computer and upload it to R as a dataframe. Define an undirected graph with this list of edges.
 
 ```{r}
-df = read.csv("AS-19971108.dat")
+df = read.csv("datasets/AS-19971108.dat", sep = " ")
 g = graph_from_data_frame(df, directed = FALSE)
 ```
+
+<br>
+
 *a)* Compute its basic indices: order, size, density, number of connected components, diameter, transitivity.
 
 Orden:
@@ -29,11 +90,15 @@ Orden:
 gorder(g)
 ```
 
+<br>
+
 Tamaño:
 
 ```{r}
-ecount(g)
+gsize(g)
 ```
+
+<br>
 
 Densidad:
 
@@ -41,17 +106,23 @@ Densidad:
 edge_density(g, loops = FALSE)
 ```
 
+<br>
+
 Componentes conectadas:
 
 ```{r}
-length(induced_subgraph(g, v=groups(components(g))[[1]]))
+length(decompose(g))
 ```
 
-Diametro:
+<br>
+
+Diámetro:
 
 ```{r}
 diameter(g, directed = FALSE)
 ```
+
+<br>
 
 Transitividad:
 
@@ -59,31 +130,45 @@ Transitividad:
 round(transitivity(g),4)
 ```
 
-*b)* Repeat 1000 times the procedure of removing a random 0.1% of its set of nodes, and compute the average number of connected components of the resulting networks and the average fraction of the network represented by the largest component. (The function **replicate** is useful to avoid for-loops in, well, replications.)
+<br>
 
-```{r}
-g_new = g
-r = round(gorder(g_new) * 0.001)
-n_random = sample(1:gorder(g_new), r, replace = TRUE)
-gorder(g_new)
-g_new = delete.vertices(g_new, n_random)
-gorder(g_new)
-```
+*b)* Repeat 1000 times the procedure of removing a random 0.1% of its set of nodes, and compute the average number of connected components of the resulting networks and the average fraction of the network represented by the largest component. (The function **replicate** is useful to avoid for-loops in, well, replications.)
 
 ```{r}
 Avg_CC = c()
 Avg_LC = c()
-g_new = g
-n_randoms = c()
-for(i in 1:1000){
-  r = round(gorder(g_new) * 0.001)
-  n_random = sample(1:gorder(g_new), r, replace = TRUE)
-  g_new = delete.vertices(g_new, n_random)
-  Avg_CC = c(Avg_CC, length(induced_subgraph(g_new, v=groups(components(g_new))[[1]])))
-  
+r = round(gorder(g) * 0.001)
+set.seed(100)
+
+for(i in 1:1000) {
+  n_random = sample(1:gorder(g), r, replace = FALSE)
+  g_new = delete.vertices(g, n_random)
+  comp = components(g_new)
+  Avg_CC = c(Avg_CC, comp$no)
+  Avg_LC = c(Avg_LC, max(comp$csize) / gorder(g_new))
 }
-round(mean(Avg_CC))
+
+mean(Avg_CC)
+mean(Avg_LC)
 ```
+```{r}
+set.seed(100)
+
+foo = function() {
+  n_random = sample(1:gorder(g), r, replace = FALSE)
+  g_new = delete.vertices(g, n_random)
+  comp = components(g_new)
+  n_comp = comp$no
+  avg_f = max(comp$csize) / gorder(g_new)
+  return (c(n_comp, avg_f))
+}
+
+Avg = replicate(n = 1000, foo())
+mean(Avg[1,])
+mean(Avg[2,])
+```
+
+<br>
 
 *c)* Now, compute the number of connected components and the fraction represented by the largest component of the networks obtained after removing the most central 0.1% of nodes, for the following centrality indices (of course, if the most central 0.1% of nodes for two indices are the same set of nodes, you need not waste your time considering twice the same network): 
 
