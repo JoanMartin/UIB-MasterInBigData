@@ -67,8 +67,8 @@ editor_options:
 
 
 ```{r global_options, include=FALSE}
-knitr::opts_chunk$set(fig.width=7, fig.height=8, fig.align="center", echo=TRUE, warning=FALSE, message=FALSE)
-library(knitr)
+knitr::opts_chunk$set(fig.width=8, fig.height=8, fig.align="center", echo=TRUE, warning=FALSE, message=FALSE)
+library(centiserve)
 library(igraph)
 ```
 
@@ -151,6 +151,7 @@ for(i in 1:1000) {
 mean(Avg_CC)
 mean(Avg_LC)
 ```
+
 ```{r}
 set.seed(100)
 
@@ -174,17 +175,131 @@ mean(Avg[2,])
 
 * degree
 
+```{r}
+r = round(gorder(g) * 0.001)
+g_new = delete.vertices(g, names(round(igraph::degree(g,normalized=TRUE),4)[1:r]))
+comp = components(g_new)
+comp$no
+max(comp$csize) / gorder(g_new)
+```
+
+<br>
+
 * connectedness
+
+```{r}
+r = round(gorder(g) * 0.001)
+g_new = delete.vertices(g, names(round(sort(1/eccentricity(g),decreasing =TRUE),4)[1:r]))
+comp = components(g_new)
+comp$no
+max(comp$csize) / gorder(g_new)
+```
+
+<br>
 
 * decay with $\delta=0.5$
 
+```{r}
+r = round(gorder(g) * 0.001)
+g_new = delete.vertices(g, names(round(sort(decay(g, decay=0.5),decreasing=TRUE),4)[1:r]))
+comp = components(g_new)
+comp$no
+max(comp$csize) / gorder(g_new)
+```
+
+<br>
+
 * betweenness
+
+```{r}
+r = round(gorder(g) * 0.001)
+g_new = delete.vertices(g, names(round(igraph::betweenness(g),4)[1:r]))
+comp = components(g_new)
+comp$no
+max(comp$csize) / gorder(g_new)
+```
+
+<br>
 
 * eigenvector
 
+```{r}
+r = round(gorder(g) * 0.001)
+g_new = delete.vertices(g, names(round(eigen_centrality(g,scale=FALSE)$vector,4)[1:r]))
+comp = components(g_new)
+comp$no
+max(comp$csize) / gorder(g_new)
+```
+
+<br>
+
 * $\alpha$-centrality with $\alpha$ around half its maximum sensible value (use the functions of the package **rARPACK** to compute fast the first eigenvalue). 
 
+<br>
+
 *d)* Repeat the last two points replacing 0.1% by 1%.
+
+* degree
+
+```{r}
+r = round(gorder(g) * 0.01)
+g_new = delete.vertices(g, names(round(igraph::degree(g,normalized=TRUE),4)[1:r]))
+comp = components(g_new)
+comp$no
+max(comp$csize) / gorder(g_new)
+```
+
+<br>
+
+* connectedness
+
+```{r}
+r = round(gorder(g) * 0.01)
+g_new = delete.vertices(g, names(round(sort(1/eccentricity(g),decreasing =TRUE),4)[1:r]))
+comp = components(g_new)
+comp$no
+max(comp$csize) / gorder(g_new)
+```
+
+<br>
+
+* decay with $\delta=0.5$
+
+```{r}
+r = round(gorder(g) * 0.01)
+g_new = delete.vertices(g, names(round(sort(decay(g, decay=0.5),decreasing=TRUE),4)[1:r]))
+comp = components(g_new)
+comp$no
+max(comp$csize) / gorder(g_new)
+```
+
+<br>
+
+* betweenness
+
+```{r}
+r = round(gorder(g) * 0.01)
+g_new = delete.vertices(g, names(round(igraph::betweenness(g),4)[1:r]))
+comp = components(g_new)
+comp$no
+max(comp$csize) / gorder(g_new)
+```
+
+<br>
+
+* eigenvector
+
+```{r}
+r = round(gorder(g) * 0.01)
+g_new = delete.vertices(g, names(round(eigen_centrality(g,scale=FALSE)$vector,4)[1:r]))
+comp = components(g_new)
+comp$no
+max(comp$csize) / gorder(g_new)
+```
+
+<br>
+
+* $\alpha$-centrality with $\alpha$ around half its maximum sensible value (use the functions of the package **rARPACK** to compute fast the first eigenvalue).
 
 *e)* Comment the results obtained.
 
