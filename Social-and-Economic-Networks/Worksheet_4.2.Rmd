@@ -1,0 +1,235 @@
+---
+title: "Social and economic networks"
+subtitle: "Handout 4.2"
+author: "Juan José Martín y Christian Strasser"
+output:
+  html_document:
+    number_sections: false
+    highlight: tango
+    toc: yes
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+---
+
+
+
+<style type="text/css">
+
+  body {
+    background-color: #f6f7fd; 
+  }
+  
+  a:link {
+    color: #0174DF;
+  }
+  
+  code.r {
+    font-size: 14px;
+  } 
+  
+  div pre {
+    background-color:#E0ECF8;
+  }
+  pre {
+    font-size: 14px 
+  }
+ 
+  p {
+    text-align: justify;
+  }
+ 
+    
+  h1, h2, h3, h4, h5, h6 {
+    color: #737aaa;
+  }
+
+  th {  
+    background-color:#737aaa;
+    color: #FAFAFA;
+    padding:5px;
+  }
+  
+  td {
+    font-size: 11.5pt;
+  } 
+  
+  tr:nth-child(even){
+    background: white;
+  }
+  
+  tr:nth-child(odd){ 
+    background-color: #EFF8FB;
+  }
+</style>
+
+***  
+
+```{r setup, include=FALSE}
+library(igraph)
+```
+
+
+## Ejercicio 2
+
+**The file WikiVote.txt is a data table containing the votations on promotion to administratorship of Wikipedia (till January 2008). Each arc $(x, y)$ in it means that user $x$ voted on $y$ becoming Wikipedia administrator. More details at** http://snap.stanford.edu/data/wiki-Vote.html
+
+**Download it on your computer and upload it to R as a dataframe. Define a directed graph $DW$ with this list of arcs, and the underlying unweighted undirected graph $UW$.**
+
+```{r, results='hide'}
+df = read.csv("datasets/WikiVote.txt", sep="\t")
+dw = graph_from_data_frame(df, directed = TRUE)
+uw = graph_from_data_frame(df, directed = FALSE)
+```
+
+<br>
+
+**(a) Does $DW$ contain self-loops? How many? What do self-loops mean, in the context of this graph? If any, remove them (as well as from $UW$).**
+
+```{r}
+table(which_loop(dw))
+
+table(which_multiple(uw))
+is_simple(uw)
+```
+
+<br>
+
+```{r}
+uw = simplify(uw, remove.multiple = TRUE, remove.loops = TRUE, edge.attr.comb = igraph_opt("edge.attr.comb"))
+is_simple(uw)
+```
+
+
+<br>
+
+**(b) What are the order and size of $DW$? What is the size of $UW$? What does the difference in sizes correspond to?**
+
+```{r}
+gorder(dw)
+gsize(dw)
+```
+
+<br>
+
+```{r}
+gsize(uw)
+```
+
+<br>
+
+**(c) Does $DW$ have a giant weakly connected component? And a giant strongly connected component?**
+
+```{r}
+induced_subgraph(dw, v=groups(components(dw))[[1]])
+
+induced_subgraph(dw, v=groups(components(dw, mode = "strong"))[[1]])
+induced_subgraph(dw, v=groups(components(dw, mode = "weak"))[[1]])
+```
+
+<br>
+
+**(d) Plot its out-degree distribution on a log-log scale (omitting the nodes with out-degree 0).**
+
+```{r, fig.align='center'}
+dg_dist_out = degree.distribution(dw, mode="out")
+dg_dist_out = dg_dist_out[dg_dist_out != 0]
+
+plot(dg_dist_out, log='xy')
+```
+
+<br>
+
+**(e) Do the same with its in-degree distribution.**
+
+```{r, fig.align='center'}
+dg_dist_in = degree.distribution(dw, mode="in")
+dg_dist_in = dg_dist_in[dg_dist_in != 0]
+
+plot(dg_dist_in, log='xy')
+```
+
+<br>
+
+**(f) For both the in-degrees and the out-degrees, compute their range, mode, mean, median, and standard deviation. What do they tell you?**
+
+
+Rango:
+```{r}
+range(dg_dist_out)
+```
+
+<br>
+
+Moda:
+```{r}
+names(sort(table(degree(dw, mode = "out")), decreasing = TRUE))[1]
+```
+
+<br>
+
+Media:
+```{r}
+mean(dg_dist_out)
+```
+
+<br>
+
+Mediana:
+```{r}
+median(dg_dist_out)
+```
+
+<br>
+
+Desviación estándar:
+```{r}
+sd(dg_dist_out)
+```
+
+<br>
+<br>
+
+
+Rango:
+```{r}
+range(dg_dist_in)
+```
+
+<br>
+
+Moda:
+```{r}
+names(sort(table(degree(dw, mode = "in")), decreasing = TRUE))[1]
+```
+
+<br>
+
+Media:
+```{r}
+mean(dg_dist_in)
+```
+
+<br>
+
+Mediana:
+```{r}
+median(dg_dist_in)
+```
+
+<br>
+
+Desviación estándar:
+```{r}
+sd(dg_dist_in)
+```
+
+<br>
+
+**(g) What kind (or kinds) of transitivity do you consider worth studying in this network? Choose at least one, compute it, and comment the results.**
+
+```{r}
+
+```
+
+<br>

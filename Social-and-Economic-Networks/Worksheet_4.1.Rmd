@@ -1,6 +1,6 @@
 ---
 title: "Social and economic networks"
-subtitle: "Handout 4.A"
+subtitle: "Handout 4.1"
 author: "Juan José Martín y Christian Strasser"
 output:
   html_document:
