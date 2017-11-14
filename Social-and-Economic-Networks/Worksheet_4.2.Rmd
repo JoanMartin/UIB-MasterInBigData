@@ -87,24 +87,35 @@ uw = graph_from_data_frame(df, directed = FALSE)
 **(a) Does $DW$ contain self-loops? How many? What do self-loops mean, in the context of this graph? If any, remove them (as well as from $UW$).**
 
 ```{r}
-table(which_loop(dw))
+sum(which_loop(dw))
+```
 
-table(which_multiple(uw))
+<br>
+
+$DW$ no contiene ningún self-loop. No obstante, en el contesto de este grafo, un self-loop sería una arista que tiene como nodo de salia y como nodo de entrada al mismo.
+
+```{r}
 is_simple(uw)
 ```
 
 <br>
+
+Vemos que $uw$ no es simple, por lo que contiene aristas múltiple o aristas loop, que eliminamos a continuación:
 
 ```{r}
 uw = simplify(uw, remove.multiple = TRUE, remove.loops = TRUE, edge.attr.comb = igraph_opt("edge.attr.comb"))
 is_simple(uw)
 ```
 
+<br>
+
+Y ya podemos observar como es simple.
 
 <br>
 
 **(b) What are the order and size of $DW$? What is the size of $UW$? What does the difference in sizes correspond to?**
 
+Order y tamaño de $dw$:
 ```{r}
 gorder(dw)
 gsize(dw)
@@ -112,20 +123,34 @@ gsize(dw)
 
 <br>
 
+Tamaño de $uw$:
 ```{r}
 gsize(uw)
 ```
 
 <br>
 
+Esta diferencia se corresponde a la cantidad de aristas eliminadas de $uw$ que eran multiple o loop.
+
+<br>
+
 **(c) Does $DW$ have a giant weakly connected component? And a giant strongly connected component?**
 
 ```{r}
-induced_subgraph(dw, v=groups(components(dw))[[1]])
-
-induced_subgraph(dw, v=groups(components(dw, mode = "strong"))[[1]])
-induced_subgraph(dw, v=groups(components(dw, mode = "weak"))[[1]])
+gorder(induced_subgraph(dw, v=groups(components(dw, mode = "weak"))[[1]]))
 ```
+
+<br>
+
+Sí tiene un component conexo gigante débilmente conectado de 7066 nodos.
+
+```{r}
+gorder(induced_subgraph(dw, v=groups(components(dw, mode = "strong"))[[1]]))
+```
+
+<br>
+
+No tiene un component conexo gigante fuertemente conectado ya que el orden es 1.
 
 <br>
 
@@ -154,35 +179,35 @@ plot(dg_dist_in, log='xy')
 **(f) For both the in-degrees and the out-degrees, compute their range, mode, mean, median, and standard deviation. What do they tell you?**
 
 
-Rango:
+Rango OUT:
 ```{r}
 range(dg_dist_out)
 ```
 
 <br>
 
-Moda:
+Moda OUT:
 ```{r}
 names(sort(table(degree(dw, mode = "out")), decreasing = TRUE))[1]
 ```
 
 <br>
 
-Media:
+Media OUT:
 ```{r}
 mean(dg_dist_out)
 ```
 
 <br>
 
-Mediana:
+Mediana OUT:
 ```{r}
 median(dg_dist_out)
 ```
 
 <br>
 
-Desviación estándar:
+Desviación estándar OUT:
 ```{r}
 sd(dg_dist_out)
 ```
@@ -191,35 +216,35 @@ sd(dg_dist_out)
 <br>
 
 
-Rango:
+Rango IN:
 ```{r}
 range(dg_dist_in)
 ```
 
 <br>
 
-Moda:
+Moda IN:
 ```{r}
 names(sort(table(degree(dw, mode = "in")), decreasing = TRUE))[1]
 ```
 
 <br>
 
-Media:
+Media IN:
 ```{r}
 mean(dg_dist_in)
 ```
 
 <br>
 
-Mediana:
+Mediana IN:
 ```{r}
 median(dg_dist_in)
 ```
 
 <br>
 
-Desviación estándar:
+Desviación estándar IN:
 ```{r}
 sd(dg_dist_in)
 ```
@@ -228,8 +253,29 @@ sd(dg_dist_in)
 
 **(g) What kind (or kinds) of transitivity do you consider worth studying in this network? Choose at least one, compute it, and comment the results.**
 
-```{r}
+Consideramos oportuno estudiar la transitividad de doble-entrada para medir cuántas veces, por ejemplo, si $X$ e $Y$ muestran estar conectados a $Z$, implica que también deben estar conectados entre sí.
 
+Tipo de tripleta '15': A->B<->C, A<->C: 2 1
+
+Función para transitividad de doble-entrada:
+
+```{r}
+Local_Double_In_Trans = function(G, x){
+  NN = induced_subgraph(G, v = as.vector(neighbors(G, v = x, mode = "in")))
+  (sum(which_mutual(NN)) / 2) / choose(gorder(NN), 2)
+}
 ```
 
 <br>
+
+Transitividad de doble-entrada del grafo dirigido _DW_:
+
+```{r}
+Local_Double_In_Trans(dw, 15)
+```
+
+<br>
+
+Como podemos ver, se trata de un valor muy bajo, por lo que podemos considerar que tendremos más nodos con grado de entrada muy grandes y cuyos nodos que entran en ellos no estarán conectados entre sí. 
+
+<br> 
