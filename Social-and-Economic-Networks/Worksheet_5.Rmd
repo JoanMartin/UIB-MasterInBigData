@@ -1,0 +1,110 @@
+---
+title: "Handout 5"
+output: html_document
+---
+
+* Name 1: Juan José Martín
+* Name 2: Christian Strasser
+
+
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=8, fig.height=8, fig.align="center", echo=TRUE, warning=FALSE, message=FALSE)
+library(knitr)
+library(printr)
+library(igraph)
+```
+
+**1)** It has been observed in many networks an association between "centrality" and "lethality," defined as the fatal disconnection of the network when nodes are removed. Let's study this association on  an undirected network describing  an old map of the Internet at the autonomous system  level. The links in this network are contained in the file **AS-19971108.dat**. Download it on your computer and upload it to R as a dataframe. Define an undirected graph with this list of edges.
+
+```{r}
+df = read.csv("AS-19971108.dat")
+g = graph_from_data_frame(df, directed = FALSE)
+```
+*a)* Compute its basic indices: order, size, density, number of connected components, diameter, transitivity.
+
+Orden:
+
+```{r}
+gorder(g)
+```
+
+Tamaño:
+
+```{r}
+ecount(g)
+```
+
+Densidad:
+
+```{r}
+edge_density(g, loops = FALSE)
+```
+
+Componentes conectadas:
+
+```{r}
+length(induced_subgraph(g, v=groups(components(g))[[1]]))
+```
+
+Diametro:
+
+```{r}
+diameter(g, directed = FALSE)
+```
+
+Transitividad:
+
+```{r}
+round(transitivity(g),4)
+```
+
+*b)* Repeat 1000 times the procedure of removing a random 0.1% of its set of nodes, and compute the average number of connected components of the resulting networks and the average fraction of the network represented by the largest component. (The function **replicate** is useful to avoid for-loops in, well, replications.)
+
+```{r}
+g_new = g
+r = round(gorder(g_new) * 0.001)
+n_random = sample(1:gorder(g_new), r, replace = TRUE)
+gorder(g_new)
+g_new = delete.vertices(g_new, n_random)
+gorder(g_new)
+```
+
+```{r}
+Avg_CC = c()
+Avg_LC = c()
+g_new = g
+n_randoms = c()
+for(i in 1:1000){
+  r = round(gorder(g_new) * 0.001)
+  n_random = sample(1:gorder(g_new), r, replace = TRUE)
+  g_new = delete.vertices(g_new, n_random)
+  Avg_CC = c(Avg_CC, length(induced_subgraph(g_new, v=groups(components(g_new))[[1]])))
+  
+}
+round(mean(Avg_CC))
+```
+
+*c)* Now, compute the number of connected components and the fraction represented by the largest component of the networks obtained after removing the most central 0.1% of nodes, for the following centrality indices (of course, if the most central 0.1% of nodes for two indices are the same set of nodes, you need not waste your time considering twice the same network): 
+
+* degree
+
+* connectedness
+
+* decay with $\delta=0.5$
+
+* betweenness
+
+* eigenvector
+
+* $\alpha$-centrality with $\alpha$ around half its maximum sensible value (use the functions of the package **rARPACK** to compute fast the first eigenvalue). 
+
+*d)* Repeat the last two points replacing 0.1% by 1%.
+
+*e)* Comment the results obtained.
+
+**2)** What 0.5% of the nodes do you consider more "central" in the Facebook network studied in Handout 4? What kind of centrality (or centralities) do you use and why? Do, for your centrality index or indices, the corresponding 0.5% most central nodes contain good candidates to be the users around which the network was built? What candidates?
+
+**3)** What fraction of individuals in the Facebook network studied in Handout 4 have a number of friends smaller than the mean number of friends of their friends? And what fraction of individuals in that network have less friends than every friend of theirs?
+
+
