@@ -1,0 +1,82 @@
+---
+title: "Untitled"
+author: " "
+date: "9 de noviembre de 2017"
+output: html_document
+---
+
+#Ejercicio 9
+
+**Nos interesa estimar una regresión logística en la que queremos explicar una variable binomial (0,1) con una variable $X$. Por el problema de endogenidad, lo estimamos en 2 etapas. En la primera etapa en vez de regresar $Y$ sobre $X$, primero se hace una regresión de $X$ sobre cualquier combinación de instrumentos posibles $\{Z_1,Z_2,Z_3\}$ y se guarda el valor ajustado $\tilde{X}$, después se hace una regresión de la variable continua $Y$ sobre  $\tilde{X}$. **
+
+El método de las variables instrumentales se utiliza cuando puede existir correlación entre la variable independiente y el término de error. Para evitar que esto suceda,  se busca una/s variable/s instrumental/es $Z$ de manera que $Corr(Y,Z)=0$ pero que $Corr(X,Z)\neq 0$. 
+
+El método se basa en buscar cuál es la mejor regresión ($\tilde{X}$) de la variable independiente $X$ con las variables instrumentales $Z_i$ de manera que el error en la regresión $Y$ sobre $\tilde{X}$ sea mínimo. Para saber con qué variables instrumentales es mejor realizar la regresión sobre $X$ utilizaremos el método de validación cruzada con dos etapas.
+
+
+(a) **Explica cómo se utilizaría la validación cruzada para evaluar que combinación de instrumentos da los mejores resultados. **
+
+El problema a resolver es el siguiente: 
+
+$$\tilde{X} = \alpha Z_1 +\beta Z_2 +\gamma Z_3 $$
+
+Vamos a seleccionar con validación cruzada cuál es la mejor combinación de variables instrumentales para predecir $Y$ sobre $\tilde{X}$, es decir, qué coeficientes $\alpha, \beta, \gamma$ igualamos a 1 o anulamos para obtener una predicción final mejor. Notemos que tenemos $2^3=8$ combinaciones para anular o mantener los coeficentes anteriores y en consecuencia tenemos 8 modelos posibles.
+
+Se realizaran 5 (o 10) particiones de los datos, y en cada modelo se realiazará la regresión $Y$ sobre $\tilde{X}$ (que estemos considerando) con 4 de los 5 trozos de los datos y con el quinto trozo se calculará el error de predicción. Manteniendo la misma partición, se volverá a calcular la regresión $Y$ sobre $\tilde{X}$, pero esta vez cambiando el trozo de validación. En consecuencia tendremos 5 errores de predicción para cada modelo de $\tilde{X}$, uno para cada trozo de la partición que hemos dejado para calcular el error de predicción. Se suman estos 5 errores y así obtenemos el error de predicción del modelo con el que estabamos trabajando.
+
+Este mismo proceso se realiza con los otros siete modelos posibles restantes y nos quedamos con el que obtengamos un error de predicción mínimo.
+
+(b) **Explica cómo se utilizaría el bootstrap para calcular la desviación estándar del coeficiente de regresión de $Y$ sobre $X$.**
+
+<!-- Una vez hemos seleccionado el mejor modelo para el apartado anterior, querremos saber como de fiables son los coeficentes $\alpha,\  \beta$ y $\gamma$ que hemos calculado (si no los hemos anulado). Para ello podemos anular el método de bootstrap.  -->
+
+Una vez tenemos el modelo de regresión $Y = \alpha X$ , queremos saber cómo es de fiable el parámetro $\alpha$ que hemos estimado. Para ello cogeremos 1000 muestras aleatorias simples de los datos de los que disponemos con reemplazo y calculamos para cada m.a.s. el coeficiente de la regresión. Una vez tengamos estimados el coeficiente $\alpha$ para cada regresión calculamos su desviación típica del vector de coeficientes. De este modo obtendremos la desviación estándar del coeficiente de regresión de $Y$ sobre $X$.
+
+#Ejercicio 13
+
+**Te gustaría invertir dinero en acciones. Algún amigo comenta que acciones de tecnologia han crecido los últimos años más rápidamente. Sin embargo quieres basar tu decisión en datos y comparas los rendimientos de acciones de tecnología con los demás. Encuentras que la diferencia es positiva y altamente signicativa. Por eso inviertes. Te parece bien el análisis?**
+
+
+ En primer lugar, debemos comentar que el estudio que quiere realizar la persona que quiere invertir es insuficiente y elemental. Nosotros propondríamos un estudio basado en buscar correlaciones positivas y negativas en diferentes sectores y que estos sectores fueran más específicos (y no: o tecnnolgia o no tecnologia). Además en el supuesto del eunciado no se contempla el hecho de que se pueda producir un suceso externo que provoque la caída del precio de las acciones.
+ 
+ En segundo lugar, el sujeto del enunciado que quiere invertir peca en una de las pautas básicas para la creación de cualquier modelo. Se supone que el individuo realiza un modelo con datos históricos pero en ningún momento se verifica o contrasta con datos nuevos para obtenerun error de predicción y saber cómo de bueno es el modelo.
+ 
+ En conclusión, el análisis que se realiza no nos parece bien, ya que es necesario la obtención de nuevos datos para poder dar el modelo como válido.
+ 
+ 
+<!-- Aún así, dados los pocos datos de los que disponemos, expondremos un ejemplo en el cual no deberíamos invertir cumpliéndose las hipótesis del enunciado. supongamos que hemos recogido rendimientos de distintas accciones tecnológicas (y por ejemplo, obtenemos el siguiente vector de rendimientos $T=$(1%, 2.3%, -0.5%, ...)) y también hemos recogido rendimientos de distintas accciones no tecnológicas (y por ejemplo, obtenemos el siguiente vector de rendimientos $NT=$(-1%, 2.5%, -3.5%, ...)).  -->
+
+<!-- Aunque en el enunciado no se especifica cómo se realiza la diferencia de ambos rendimientos, supondremos que la diferencia está basada en la media de los dos vectores $T$ y $NT$. Supongamos que nos encontramos en una situación que el mercado cae y hemos obtenido que la media de $NT$ es $\overline{NT}=-5%$ y la media de $T$ es $\overline{T}=-1%$. -->
+
+<!-- La difencia de la media de rendimientos es positiva:  $\overline{T} -\overline{NT}=-1%-(-5%)=4%$ y además es significativa, ya que una diferencia de 4% es grande para ser rendimientos de acciones. Sin embargo el sentido común nos dice que no deberíamos invertir, ya que se espera una rentabilidad negativa del -1% y perderíamos dinero. -->
+
+
+
+#Ejercicio 14
+
+**Algunos de los resultados de un análisis de componentes principales se muestran en las siguientes tablas. Valore e interprete los resultados obtenidos.**
+
+En primer lugar, observemos que todas las variables estan medidas sobre una misma unidad de medida, en consecuencia no seria necesario escalar los datos con desviación estandar a 1, aunque se puede realizar.
+
+ <!-- en la tabla de los estadísticos principales de las variables. Podenos notar    que obtenemos valores muy grandes de las desviaciones típicas de las variables -->
+
+En segundo lugar, en la tabla de los 4 estadísticos principales podemos observar que la mayoria de variables presentan una desviación típica grande, en consequencia podemos tener problemas a la hora de encontrar una reducción de la dimensionalidad porque tenemos un conjunto de datos bastante disperso.
+
+En tercer lugar, en la matriz de correlaciones se puede observar que no existe una gran correlación entre las variables. El mayor valor se presenta entre la variable *PMIN* y *SMEAN* y es de 0.832. El siguiente valor más grande es de 0.6951 entre la variable *PMEAN* y *PMIN*. Este hecho también nos indica que vamos a tener dificultades para encontrar pocas componentes principales que expliquen la mayoria de datos, ya que cuanta más correlación hay entre las variables, más se explica una en función de la otra y esto permite reducir la dimensión del problema con una componente principal combinación lineal de ambas.
+
+En cuarto lugar podemos observar, que el problema se ha intentado resolver con dos componentes principales, de las cuales la primera explica un 0.5352 de la variabilidad de los datos y la segunda un 0.1993 de los datos, en consecuencia, entre las dos explican un total del 0.7344 de la variabilidad. 
+
+Finalmente, podemos observar las cargas de las dos componentes en la tabla *Eigenvectors (CORR)*. Si nos fijamos en dicha tabla, obtenemos que la primera componente pincipal da una información bastante homogénia sobre todas las variables, por tanto podemos afirmar que la primera componente principal nos da información sobre la contaminación en general. Por otro lado, en la segunda componente principal, podemos diferenciar que hay una correlación positiva entre las variables que dan información sobre sulfatos y una correlación negativa sobre las variables que dan información sobre partículas, en consecuencia con esta componente principal obtenemos información sobre el tipo de contaminación.
+
+
+
+
+
+todas la variables salvo *SMIN* tienen un mayor coeficiente en la primera componente principal. Esto nos indica que la primera componente principal es la que explica la mayor variabilidad para estas variables. En cambio la variable *SMIN* tiene una mayor coeficiente para la segunda componente principal, en consecuencia esta componente explica mayoritariamente la variabilidad en *SMIN*
+
+
+
+
+
+
+
