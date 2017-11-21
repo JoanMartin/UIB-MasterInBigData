@@ -1,0 +1,58 @@
+---
+title: "Handout 6"
+output: html_document
+---
+
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=8, fig.height=8, fig.align="center", echo=TRUE, warning=FALSE, message=FALSE)
+library(knitr)
+library(printr)
+```
+
+
+**1)** What 0.5% of the nodes do you consider more ``prestigious'' in the WikiVote network studied in Handout 4? What kind of centrality (or centralities) do you use to measure this prestige and why? 
+```{r}
+df_wv = read.csv("datasets/WikiVote.txt", sep = "\t")
+g_wv = graph_from_data_frame(df_wv, directed = FALSE)
+```
+
+```{r}
+r = round(gorder(g_wv) * 0.005)
+names(round(igraph::betweenness(g_wv),4)[1:r])
+```
+
+```{r}
+r = round(gorder(g_wv) * 0.005)
+g_new = delete.vertices(g_wv, names(round(igraph::betweenness(g_wv),4)[1:r]))
+comp = components(g_new)
+comp$no
+max(comp$csize) / gorder(g_new)
+```
+
+**2)** What fraction of individuals in this network received less votes than the mean number of votes received by the people they voted? 
+
+**3)** Consider the weighted directed network describing the main crude petrol trade among countries in 2003, downloaded from UN COMTRADE (https://comtrade.un.org/data/). The links in this network are contained in the file **WT_petrol.txt**: a link $x\to y$ with weight $w$ means that $x$ exported to $y$ for an amount of $w$ kg. The names of the countries and their ISO3 are contained in the file **Countries.txt**.
+
+Download it on your computer and upload it to R as a dataframe. Define a directed graph with this list of arcs. Check that it is a weighted simple network. 
+
+*a)* It is reasonable to use the weights as distances? Why? If your answer is negative, take it into account when computing centralities.
+
+*b)* Remove the isolated nodes from the network. 
+
+*c)*  Compute the basic indices of the resulting network's topology: order, size, density, number of weak and strong connected components, directed and undirected diameter, undirected transitivity.
+
+*d)* What fraction of adjacent pairs are mutual (of the form $x\leftrightarrow y$)? What do mutual pairs of nodes mean, in the context of this network, and how do you consider they could affect the notion of centrality in this network?
+
+*e)* There is on "important" type of centrality that is not relevant in this network. Which one and why?
+
+*f)* What are the 5% most central nodes in this network according to the different sensible and relevant centrality indices discussed in the course? (Remember to distinguish between incoming arcs and outcoming arcs, and recall that the network is weighted.) Comment the results, including the meaning of the centralities used in the context of this network ans why you use them.
+
+*g)* What are the Spearman correlations between the centralities computed in the previous point? Do these centralities sort the countries in a similar way? 
+
+*h)* What would you consider the 5% most important nodes in this network? Explain your decision.
+
+*i)* Plot the induced subgraph supported on the set of cuntries consisting of the union of the 5% most central nodes w.r.t. in-strength and the 5% most central nodes w.r.t. out-strength. The size of the nodes must represent some sensible centrality (choose which one and justify your choice) and the width of the arrows their weight.
+
+*j)* Is this network robust against the removal of a few central nodes?
+

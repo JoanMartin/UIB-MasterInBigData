@@ -235,6 +235,14 @@ max(comp$csize) / gorder(g_new)
 
 * $\alpha$-centrality with $\alpha$ around half its maximum sensible value (use the functions of the package **rARPACK** to compute fast the first eigenvalue). 
 
+```{r}
+r = round(gorder(g) * 0.001)
+g_new = delete.vertices(g, names(sort(alpha_centrality(g,alpha=0.5), decreasing=TRUE))[1:r])
+comp = components(g_new)
+comp$no
+max(comp$csize) / gorder(g_new)
+```
+
 <br>
 
 *d)* Repeat the last two points replacing 0.1% by 1%.
@@ -301,9 +309,31 @@ max(comp$csize) / gorder(g_new)
 
 * $\alpha$-centrality with $\alpha$ around half its maximum sensible value (use the functions of the package **rARPACK** to compute fast the first eigenvalue).
 
+```{r}
+r = round(gorder(g) * 0.01)
+g_new = delete.vertices(g, names(sort(alpha_centrality(g,alpha=0.5), decreasing=TRUE))[1:r])
+comp = components(g_new)
+comp$no
+max(comp$csize) / gorder(g_new)
+```
+
 *e)* Comment the results obtained.
 
+Todos los valores obtenidos son el resultado de eliminar una cantidad de nodos "centrales" según un tipo de centralidad u otra. Después de la eliminación, analizamos el número de componendes desconectadas que obtenemos y cuanto mayor es este valor, mayor es la importancia de estos nodos eliminados. Su "centralidad" es elevada.
+
 **2)** What 0.5% of the nodes do you consider more "central" in the Facebook network studied in Handout 4? What kind of centrality (or centralities) do you use and why? Do, for your centrality index or indices, the corresponding 0.5% most central nodes contain good candidates to be the users around which the network was built? What candidates?
+
+```{r}
+dff = read.csv("datasets/facebook_sample_anon.txt", sep = " ")
+gf = graph_from_data_frame(dff, directed = FALSE)
+```
+
+Connectedness
+```{r}
+r = round(gorder(gf) * 0.005)
+names(round(sort(1/eccentricity(gf),decreasing =TRUE),4)[1:r])
+```
+Son los nodos más "centrales" considerando su nivel de _connectedness_, ya que una vez eliminados estos nodos, obtenemos el mayor número de componentes desconectadas de la red de Facebook.
 
 **3)** What fraction of individuals in the Facebook network studied in Handout 4 have a number of friends smaller than the mean number of friends of their friends? And what fraction of individuals in that network have less friends than every friend of theirs?
 
