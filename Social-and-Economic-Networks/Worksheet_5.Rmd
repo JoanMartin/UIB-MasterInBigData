@@ -134,6 +134,7 @@ round(transitivity(g),4)
 
 *b)* Repeat 1000 times the procedure of removing a random 0.1% of its set of nodes, and compute the average number of connected components of the resulting networks and the average fraction of the network represented by the largest component. (The function **replicate** is useful to avoid for-loops in, well, replications.)
 
+Lo hacemos primero con un **for**.
 ```{r}
 Avg_CC = c()
 Avg_LC = c()
@@ -152,6 +153,9 @@ mean(Avg_CC)
 mean(Avg_LC)
 ```
 
+<br>
+
+Hacemos lo mismo, pero usando la función **replicate**.
 ```{r}
 set.seed(100)
 
@@ -317,9 +321,13 @@ comp$no
 max(comp$csize) / gorder(g_new)
 ```
 
+<br>
+
 *e)* Comment the results obtained.
 
 Todos los valores obtenidos son el resultado de eliminar una cantidad de nodos "centrales" según un tipo de centralidad u otra. Después de la eliminación, analizamos el número de componendes desconectadas que obtenemos y cuanto mayor es este valor, mayor es la importancia de estos nodos eliminados. Su "centralidad" es elevada.
+
+<br>
 
 **2)** What 0.5% of the nodes do you consider more "central" in the Facebook network studied in Handout 4? What kind of centrality (or centralities) do you use and why? Do, for your centrality index or indices, the corresponding 0.5% most central nodes contain good candidates to be the users around which the network was built? What candidates?
 
@@ -328,13 +336,67 @@ dff = read.csv("datasets/facebook_sample_anon.txt", sep = " ")
 gf = graph_from_data_frame(dff, directed = FALSE)
 ```
 
+<br>
+
 Connectedness
 ```{r}
 r = round(gorder(gf) * 0.005)
-names(round(sort(1/eccentricity(gf),decreasing =TRUE),4)[1:r])
+names(round(sort(1/eccentricity(gf), decreasing = TRUE), 4)[1:r])
 ```
+
+<br>
+
 Son los nodos más "centrales" considerando su nivel de _connectedness_, ya que una vez eliminados estos nodos, obtenemos el mayor número de componentes desconectadas de la red de Facebook.
 
+<br>
+
 **3)** What fraction of individuals in the Facebook network studied in Handout 4 have a number of friends smaller than the mean number of friends of their friends? And what fraction of individuals in that network have less friends than every friend of theirs?
+
+```{r}
+mean_neigh_friends = c()
+min_neigh_friends = c()
+dg = degree(gf)
+
+for (i in 1:gorder(gf)) {
+  neigh = neighbors(gf, i)
+  mean_neigh_friends = c(mean_neigh_friends, mean(degree(gf, neigh) - 1))
+  min_neigh_friends = c(min_neigh_friends, min(degree(gf, neigh) - 1))
+}
+```
+
+<br>
+
+El número y la fracción de individuos que tienen un número de amigos más pequeño que el número medio de amigos de sus amigos es el siguiente:
+```{r}
+v_mean = sum(dg < mean_neigh_friends)
+v_mean
+v_mean / gorder(gf)
+```
+
+<br>
+
+El número y la fracción de individuos que tienen un número de amigos menor que cada uno de sus amigos es el siguiente:
+```{r}
+v_min = sum(dg < min_neigh_friends)
+v_min
+v_min / gorder(gf)
+```
+
+<br>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

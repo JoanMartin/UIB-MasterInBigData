@@ -232,42 +232,217 @@ g =<span class="st"> </span><span class="kw">graph_from_data_frame</span>(df, <s
 <pre><code>## [1] 0.0148</code></pre>
 <p><br></p>
 <p><em>b)</em> Repeat 1000 times the procedure of removing a random 0.1% of its set of nodes, and compute the average number of connected components of the resulting networks and the average fraction of the network represented by the largest component. (The function <strong>replicate</strong> is useful to avoid for-loops in, well, replications.)</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">g_new =<span class="st"> </span>g
-r =<span class="st"> </span><span class="kw">round</span>(<span class="kw">gorder</span>(g_new) <span class="op">*</span><span class="st"> </span><span class="fl">0.001</span>)
-n_random =<span class="st"> </span><span class="kw">sample</span>(<span class="dv">1</span><span class="op">:</span><span class="kw">gorder</span>(g_new), r, <span class="dt">replace =</span> <span class="ot">TRUE</span>)
-<span class="kw">gorder</span>(g_new)</code></pre></div>
-<pre><code>## [1] 3015</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">g_new =<span class="st"> </span><span class="kw">delete.vertices</span>(g_new, n_random)
-<span class="kw">gorder</span>(g_new)</code></pre></div>
-<pre><code>## [1] 3012</code></pre>
-<p><br></p>
+<p>Lo hacemos primero con un <strong>for</strong>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Avg_CC =<span class="st"> </span><span class="kw">c</span>()
 Avg_LC =<span class="st"> </span><span class="kw">c</span>()
-g_new =<span class="st"> </span>g
-n_randoms =<span class="st"> </span><span class="kw">c</span>()
-<span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="dv">1000</span>){
-  r =<span class="st"> </span><span class="kw">round</span>(<span class="kw">gorder</span>(g_new) <span class="op">*</span><span class="st"> </span><span class="fl">0.001</span>)
-  n_random =<span class="st"> </span><span class="kw">sample</span>(<span class="dv">1</span><span class="op">:</span><span class="kw">gorder</span>(g_new), r, <span class="dt">replace =</span> <span class="ot">TRUE</span>)
-  g_new =<span class="st"> </span><span class="kw">delete.vertices</span>(g_new, n_random)
-  Avg_CC =<span class="st"> </span><span class="kw">c</span>(Avg_CC, <span class="kw">length</span>(<span class="kw">induced_subgraph</span>(g_new, <span class="dt">v=</span><span class="kw">groups</span>(<span class="kw">components</span>(g_new))[[<span class="dv">1</span>]])))
-  
+r =<span class="st"> </span><span class="kw">round</span>(<span class="kw">gorder</span>(g) <span class="op">*</span><span class="st"> </span><span class="fl">0.001</span>)
+<span class="kw">set.seed</span>(<span class="dv">100</span>)
+
+<span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="dv">1000</span>) {
+  n_random =<span class="st"> </span><span class="kw">sample</span>(<span class="dv">1</span><span class="op">:</span><span class="kw">gorder</span>(g), r, <span class="dt">replace =</span> <span class="ot">FALSE</span>)
+  g_new =<span class="st"> </span><span class="kw">delete.vertices</span>(g, n_random)
+  comp =<span class="st"> </span><span class="kw">components</span>(g_new)
+  Avg_CC =<span class="st"> </span><span class="kw">c</span>(Avg_CC, comp<span class="op">$</span>no)
+  Avg_LC =<span class="st"> </span><span class="kw">c</span>(Avg_LC, <span class="kw">max</span>(comp<span class="op">$</span>csize) <span class="op">/</span><span class="st"> </span><span class="kw">gorder</span>(g_new))
 }
-<span class="kw">round</span>(<span class="kw">mean</span>(Avg_CC))</code></pre></div>
-<pre><code>## [1] 10</code></pre>
+
+<span class="kw">mean</span>(Avg_CC)</code></pre></div>
+<pre><code>## [1] 2.301</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">mean</span>(Avg_LC)</code></pre></div>
+<pre><code>## [1] 0.9995405</code></pre>
+<p><br></p>
+<p>Hacemos lo mismo, pero usando la función <strong>replicate</strong>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">100</span>)
+
+foo =<span class="st"> </span><span class="cf">function</span>() {
+  n_random =<span class="st"> </span><span class="kw">sample</span>(<span class="dv">1</span><span class="op">:</span><span class="kw">gorder</span>(g), r, <span class="dt">replace =</span> <span class="ot">FALSE</span>)
+  g_new =<span class="st"> </span><span class="kw">delete.vertices</span>(g, n_random)
+  comp =<span class="st"> </span><span class="kw">components</span>(g_new)
+  n_comp =<span class="st"> </span>comp<span class="op">$</span>no
+  avg_f =<span class="st"> </span><span class="kw">max</span>(comp<span class="op">$</span>csize) <span class="op">/</span><span class="st"> </span><span class="kw">gorder</span>(g_new)
+  <span class="kw">return</span> (<span class="kw">c</span>(n_comp, avg_f))
+}
+
+Avg =<span class="st"> </span><span class="kw">replicate</span>(<span class="dt">n =</span> <span class="dv">1000</span>, <span class="kw">foo</span>())
+<span class="kw">mean</span>(Avg[<span class="dv">1</span>,])</code></pre></div>
+<pre><code>## [1] 2.301</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">mean</span>(Avg[<span class="dv">2</span>,])</code></pre></div>
+<pre><code>## [1] 0.9995405</code></pre>
 <p><br></p>
 <p><em>c)</em> Now, compute the number of connected components and the fraction represented by the largest component of the networks obtained after removing the most central 0.1% of nodes, for the following centrality indices (of course, if the most central 0.1% of nodes for two indices are the same set of nodes, you need not waste your time considering twice the same network):</p>
 <ul>
-<li><p>degree</p></li>
-<li><p>connectedness</p></li>
-<li><p>decay with <span class="math inline">\(\delta=0.5\)</span></p></li>
-<li><p>betweenness</p></li>
-<li><p>eigenvector</p></li>
-<li><p><span class="math inline">\(\alpha\)</span>-centrality with <span class="math inline">\(\alpha\)</span> around half its maximum sensible value (use the functions of the package <strong>rARPACK</strong> to compute fast the first eigenvalue).</p></li>
+<li>degree</li>
 </ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">r =<span class="st"> </span><span class="kw">round</span>(<span class="kw">gorder</span>(g) <span class="op">*</span><span class="st"> </span><span class="fl">0.001</span>)
+g_new =<span class="st"> </span><span class="kw">delete.vertices</span>(g, <span class="kw">names</span>(<span class="kw">round</span>(igraph<span class="op">::</span><span class="kw">degree</span>(g,<span class="dt">normalized=</span><span class="ot">TRUE</span>),<span class="dv">4</span>)[<span class="dv">1</span><span class="op">:</span>r]))
+comp =<span class="st"> </span><span class="kw">components</span>(g_new)
+comp<span class="op">$</span>no</code></pre></div>
+<pre><code>## [1] 52</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">max</span>(comp<span class="op">$</span>csize) <span class="op">/</span><span class="st"> </span><span class="kw">gorder</span>(g_new)</code></pre></div>
+<pre><code>## [1] 0.9824037</code></pre>
+<p><br></p>
+<ul>
+<li>connectedness</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">r =<span class="st"> </span><span class="kw">round</span>(<span class="kw">gorder</span>(g) <span class="op">*</span><span class="st"> </span><span class="fl">0.001</span>)
+g_new =<span class="st"> </span><span class="kw">delete.vertices</span>(g, <span class="kw">names</span>(<span class="kw">round</span>(<span class="kw">sort</span>(<span class="dv">1</span><span class="op">/</span><span class="kw">eccentricity</span>(g),<span class="dt">decreasing =</span><span class="ot">TRUE</span>),<span class="dv">4</span>)[<span class="dv">1</span><span class="op">:</span>r]))
+comp =<span class="st"> </span><span class="kw">components</span>(g_new)
+comp<span class="op">$</span>no</code></pre></div>
+<pre><code>## [1] 257</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">max</span>(comp<span class="op">$</span>csize) <span class="op">/</span><span class="st"> </span><span class="kw">gorder</span>(g_new)</code></pre></div>
+<pre><code>## [1] 0.9123506</code></pre>
+<p><br></p>
+<ul>
+<li>decay with <span class="math inline">\(\delta=0.5\)</span></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">r =<span class="st"> </span><span class="kw">round</span>(<span class="kw">gorder</span>(g) <span class="op">*</span><span class="st"> </span><span class="fl">0.001</span>)
+g_new =<span class="st"> </span><span class="kw">delete.vertices</span>(g, <span class="kw">names</span>(<span class="kw">round</span>(<span class="kw">sort</span>(<span class="kw">decay</span>(g, <span class="dt">decay=</span><span class="fl">0.5</span>),<span class="dt">decreasing=</span><span class="ot">TRUE</span>),<span class="dv">4</span>)[<span class="dv">1</span><span class="op">:</span>r]))
+comp =<span class="st"> </span><span class="kw">components</span>(g_new)
+comp<span class="op">$</span>no</code></pre></div>
+<pre><code>## [1] 523</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">max</span>(comp<span class="op">$</span>csize) <span class="op">/</span><span class="st"> </span><span class="kw">gorder</span>(g_new)</code></pre></div>
+<pre><code>## [1] 0.813081</code></pre>
+<p><br></p>
+<ul>
+<li>betweenness</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">r =<span class="st"> </span><span class="kw">round</span>(<span class="kw">gorder</span>(g) <span class="op">*</span><span class="st"> </span><span class="fl">0.001</span>)
+g_new =<span class="st"> </span><span class="kw">delete.vertices</span>(g, <span class="kw">names</span>(<span class="kw">round</span>(igraph<span class="op">::</span><span class="kw">betweenness</span>(g),<span class="dv">4</span>)[<span class="dv">1</span><span class="op">:</span>r]))
+comp =<span class="st"> </span><span class="kw">components</span>(g_new)
+comp<span class="op">$</span>no</code></pre></div>
+<pre><code>## [1] 52</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">max</span>(comp<span class="op">$</span>csize) <span class="op">/</span><span class="st"> </span><span class="kw">gorder</span>(g_new)</code></pre></div>
+<pre><code>## [1] 0.9824037</code></pre>
+<p><br></p>
+<ul>
+<li>eigenvector</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">r =<span class="st"> </span><span class="kw">round</span>(<span class="kw">gorder</span>(g) <span class="op">*</span><span class="st"> </span><span class="fl">0.001</span>)
+g_new =<span class="st"> </span><span class="kw">delete.vertices</span>(g, <span class="kw">names</span>(<span class="kw">round</span>(<span class="kw">eigen_centrality</span>(g,<span class="dt">scale=</span><span class="ot">FALSE</span>)<span class="op">$</span>vector,<span class="dv">4</span>)[<span class="dv">1</span><span class="op">:</span>r]))
+comp =<span class="st"> </span><span class="kw">components</span>(g_new)
+comp<span class="op">$</span>no</code></pre></div>
+<pre><code>## [1] 52</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">max</span>(comp<span class="op">$</span>csize) <span class="op">/</span><span class="st"> </span><span class="kw">gorder</span>(g_new)</code></pre></div>
+<pre><code>## [1] 0.9824037</code></pre>
+<p><br></p>
+<ul>
+<li><span class="math inline">\(\alpha\)</span>-centrality with <span class="math inline">\(\alpha\)</span> around half its maximum sensible value (use the functions of the package <strong>rARPACK</strong> to compute fast the first eigenvalue).</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">r =<span class="st"> </span><span class="kw">round</span>(<span class="kw">gorder</span>(g) <span class="op">*</span><span class="st"> </span><span class="fl">0.001</span>)
+g_new =<span class="st"> </span><span class="kw">delete.vertices</span>(g, <span class="kw">names</span>(<span class="kw">sort</span>(<span class="kw">alpha_centrality</span>(g,<span class="dt">alpha=</span><span class="fl">0.5</span>), <span class="dt">decreasing=</span><span class="ot">TRUE</span>))[<span class="dv">1</span><span class="op">:</span>r])
+comp =<span class="st"> </span><span class="kw">components</span>(g_new)
+comp<span class="op">$</span>no</code></pre></div>
+<pre><code>## [1] 2</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">max</span>(comp<span class="op">$</span>csize) <span class="op">/</span><span class="st"> </span><span class="kw">gorder</span>(g_new)</code></pre></div>
+<pre><code>## [1] 0.999668</code></pre>
+<p><br></p>
 <p><em>d)</em> Repeat the last two points replacing 0.1% by 1%.</p>
+<ul>
+<li>degree</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">r =<span class="st"> </span><span class="kw">round</span>(<span class="kw">gorder</span>(g) <span class="op">*</span><span class="st"> </span><span class="fl">0.01</span>)
+g_new =<span class="st"> </span><span class="kw">delete.vertices</span>(g, <span class="kw">names</span>(<span class="kw">round</span>(igraph<span class="op">::</span><span class="kw">degree</span>(g,<span class="dt">normalized=</span><span class="ot">TRUE</span>),<span class="dv">4</span>)[<span class="dv">1</span><span class="op">:</span>r]))
+comp =<span class="st"> </span><span class="kw">components</span>(g_new)
+comp<span class="op">$</span>no</code></pre></div>
+<pre><code>## [1] 758</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">max</span>(comp<span class="op">$</span>csize) <span class="op">/</span><span class="st"> </span><span class="kw">gorder</span>(g_new)</code></pre></div>
+<pre><code>## [1] 0.721608</code></pre>
+<p><br></p>
+<ul>
+<li>connectedness</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">r =<span class="st"> </span><span class="kw">round</span>(<span class="kw">gorder</span>(g) <span class="op">*</span><span class="st"> </span><span class="fl">0.01</span>)
+g_new =<span class="st"> </span><span class="kw">delete.vertices</span>(g, <span class="kw">names</span>(<span class="kw">round</span>(<span class="kw">sort</span>(<span class="dv">1</span><span class="op">/</span><span class="kw">eccentricity</span>(g),<span class="dt">decreasing =</span><span class="ot">TRUE</span>),<span class="dv">4</span>)[<span class="dv">1</span><span class="op">:</span>r]))
+comp =<span class="st"> </span><span class="kw">components</span>(g_new)
+comp<span class="op">$</span>no</code></pre></div>
+<pre><code>## [1] 714</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">max</span>(comp<span class="op">$</span>csize) <span class="op">/</span><span class="st"> </span><span class="kw">gorder</span>(g_new)</code></pre></div>
+<pre><code>## [1] 0.7423786</code></pre>
+<p><br></p>
+<ul>
+<li>decay with <span class="math inline">\(\delta=0.5\)</span></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">r =<span class="st"> </span><span class="kw">round</span>(<span class="kw">gorder</span>(g) <span class="op">*</span><span class="st"> </span><span class="fl">0.01</span>)
+g_new =<span class="st"> </span><span class="kw">delete.vertices</span>(g, <span class="kw">names</span>(<span class="kw">round</span>(<span class="kw">sort</span>(<span class="kw">decay</span>(g, <span class="dt">decay=</span><span class="fl">0.5</span>),<span class="dt">decreasing=</span><span class="ot">TRUE</span>),<span class="dv">4</span>)[<span class="dv">1</span><span class="op">:</span>r]))
+comp =<span class="st"> </span><span class="kw">components</span>(g_new)
+comp<span class="op">$</span>no</code></pre></div>
+<pre><code>## [1] 1006</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">max</span>(comp<span class="op">$</span>csize) <span class="op">/</span><span class="st"> </span><span class="kw">gorder</span>(g_new)</code></pre></div>
+<pre><code>## [1] 0.6050251</code></pre>
+<p><br></p>
+<ul>
+<li>betweenness</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">r =<span class="st"> </span><span class="kw">round</span>(<span class="kw">gorder</span>(g) <span class="op">*</span><span class="st"> </span><span class="fl">0.01</span>)
+g_new =<span class="st"> </span><span class="kw">delete.vertices</span>(g, <span class="kw">names</span>(<span class="kw">round</span>(igraph<span class="op">::</span><span class="kw">betweenness</span>(g),<span class="dv">4</span>)[<span class="dv">1</span><span class="op">:</span>r]))
+comp =<span class="st"> </span><span class="kw">components</span>(g_new)
+comp<span class="op">$</span>no</code></pre></div>
+<pre><code>## [1] 758</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">max</span>(comp<span class="op">$</span>csize) <span class="op">/</span><span class="st"> </span><span class="kw">gorder</span>(g_new)</code></pre></div>
+<pre><code>## [1] 0.721608</code></pre>
+<p><br></p>
+<ul>
+<li>eigenvector</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">r =<span class="st"> </span><span class="kw">round</span>(<span class="kw">gorder</span>(g) <span class="op">*</span><span class="st"> </span><span class="fl">0.01</span>)
+g_new =<span class="st"> </span><span class="kw">delete.vertices</span>(g, <span class="kw">names</span>(<span class="kw">round</span>(<span class="kw">eigen_centrality</span>(g,<span class="dt">scale=</span><span class="ot">FALSE</span>)<span class="op">$</span>vector,<span class="dv">4</span>)[<span class="dv">1</span><span class="op">:</span>r]))
+comp =<span class="st"> </span><span class="kw">components</span>(g_new)
+comp<span class="op">$</span>no</code></pre></div>
+<pre><code>## [1] 758</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">max</span>(comp<span class="op">$</span>csize) <span class="op">/</span><span class="st"> </span><span class="kw">gorder</span>(g_new)</code></pre></div>
+<pre><code>## [1] 0.721608</code></pre>
+<p><br></p>
+<ul>
+<li><span class="math inline">\(\alpha\)</span>-centrality with <span class="math inline">\(\alpha\)</span> around half its maximum sensible value (use the functions of the package <strong>rARPACK</strong> to compute fast the first eigenvalue).</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">r =<span class="st"> </span><span class="kw">round</span>(<span class="kw">gorder</span>(g) <span class="op">*</span><span class="st"> </span><span class="fl">0.01</span>)
+g_new =<span class="st"> </span><span class="kw">delete.vertices</span>(g, <span class="kw">names</span>(<span class="kw">sort</span>(<span class="kw">alpha_centrality</span>(g,<span class="dt">alpha=</span><span class="fl">0.5</span>), <span class="dt">decreasing=</span><span class="ot">TRUE</span>))[<span class="dv">1</span><span class="op">:</span>r])
+comp =<span class="st"> </span><span class="kw">components</span>(g_new)
+comp<span class="op">$</span>no</code></pre></div>
+<pre><code>## [1] 24</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">max</span>(comp<span class="op">$</span>csize) <span class="op">/</span><span class="st"> </span><span class="kw">gorder</span>(g_new)</code></pre></div>
+<pre><code>## [1] 0.9919598</code></pre>
+<p><br></p>
 <p><em>e)</em> Comment the results obtained.</p>
+<p>Todos los valores obtenidos son el resultado de eliminar una cantidad de nodos “centrales” según un tipo de centralidad u otra. Después de la eliminación, analizamos el número de componendes desconectadas que obtenemos y cuanto mayor es este valor, mayor es la importancia de estos nodos eliminados. Su “centralidad” es elevada.</p>
+<p><br></p>
 <p><strong>2)</strong> What 0.5% of the nodes do you consider more “central” in the Facebook network studied in Handout 4? What kind of centrality (or centralities) do you use and why? Do, for your centrality index or indices, the corresponding 0.5% most central nodes contain good candidates to be the users around which the network was built? What candidates?</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dff =<span class="st"> </span><span class="kw">read.csv</span>(<span class="st">&quot;datasets/facebook_sample_anon.txt&quot;</span>, <span class="dt">sep =</span> <span class="st">&quot; &quot;</span>)
+gf =<span class="st"> </span><span class="kw">graph_from_data_frame</span>(dff, <span class="dt">directed =</span> <span class="ot">FALSE</span>)</code></pre></div>
+<p><br></p>
+<p>Connectedness</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">r =<span class="st"> </span><span class="kw">round</span>(<span class="kw">gorder</span>(gf) <span class="op">*</span><span class="st"> </span><span class="fl">0.005</span>)
+<span class="kw">names</span>(<span class="kw">round</span>(<span class="kw">sort</span>(<span class="dv">1</span><span class="op">/</span><span class="kw">eccentricity</span>(gf), <span class="dt">decreasing =</span> <span class="ot">TRUE</span>), <span class="dv">4</span>)[<span class="dv">1</span><span class="op">:</span>r])</code></pre></div>
+<pre><code>##  [1] &quot;58&quot;  &quot;107&quot; &quot;171&quot; &quot;348&quot; &quot;353&quot; &quot;360&quot; &quot;370&quot; &quot;373&quot; &quot;374&quot; &quot;376&quot; &quot;387&quot;
+## [12] &quot;388&quot; &quot;391&quot; &quot;392&quot; &quot;395&quot; &quot;400&quot; &quot;402&quot; &quot;412&quot; &quot;414&quot; &quot;416&quot;</code></pre>
+<p><br></p>
+<p>Son los nodos más “centrales” considerando su nivel de <em>connectedness</em>, ya que una vez eliminados estos nodos, obtenemos el mayor número de componentes desconectadas de la red de Facebook.</p>
+<p><br></p>
 <p><strong>3)</strong> What fraction of individuals in the Facebook network studied in Handout 4 have a number of friends smaller than the mean number of friends of their friends? And what fraction of individuals in that network have less friends than every friend of theirs?</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mean_neigh_friends =<span class="st"> </span><span class="kw">c</span>()
+min_neigh_friends =<span class="st"> </span><span class="kw">c</span>()
+dg =<span class="st"> </span><span class="kw">degree</span>(gf)
+
+<span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="kw">gorder</span>(gf)) {
+  neigh =<span class="st"> </span><span class="kw">neighbors</span>(gf, i)
+  mean_neigh_friends =<span class="st"> </span><span class="kw">c</span>(mean_neigh_friends, <span class="kw">mean</span>(<span class="kw">degree</span>(gf, neigh) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>))
+  min_neigh_friends =<span class="st"> </span><span class="kw">c</span>(min_neigh_friends, <span class="kw">min</span>(<span class="kw">degree</span>(gf, neigh) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>))
+}</code></pre></div>
+<p><br></p>
+<p>El número y la fracción de individuos que tienen un número de amigos más pequeño que el número medio de amigos de sus amigos es el siguiente:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">v_mean =<span class="st"> </span><span class="kw">sum</span>(dg <span class="op">&lt;</span><span class="st"> </span>mean_neigh_friends)
+v_mean</code></pre></div>
+<pre><code>## [1] 3519</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">v_mean <span class="op">/</span><span class="st"> </span><span class="kw">gorder</span>(gf)</code></pre></div>
+<pre><code>## [1] 0.8712553</code></pre>
+<p><br></p>
+<p>El número y la fracción de individuos que tienen un número de amigos menor que cada uno de sus amigos es el siguiente:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">v_min =<span class="st"> </span><span class="kw">sum</span>(dg <span class="op">&lt;</span><span class="st"> </span>min_neigh_friends)
+v_min</code></pre></div>
+<pre><code>## [1] 599</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">v_min <span class="op">/</span><span class="st"> </span><span class="kw">gorder</span>(gf)</code></pre></div>
+<pre><code>## [1] 0.148304</code></pre>
+<p><br></p>
 
 
 
