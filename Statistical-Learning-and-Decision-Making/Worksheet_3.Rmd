@@ -66,7 +66,7 @@ editor_options:
 ***       
 
 
-```{r}
+```{r, warning=FALSE}
 library(stats)
 library(ggplot2)
 ```
@@ -83,6 +83,8 @@ El método se basa en buscar cuál es la mejor regresión ($\tilde{X}$) de la va
 
 (a) **Explica cómo se utilizaría la validación cruzada para evaluar que combinación de instrumentos da los mejores resultados. **
 
+<ul>
+
 El problema a resolver es el siguiente: 
 
 $$\tilde{X} = \alpha Z_1 +\beta Z_2 +\gamma Z_3 $$
@@ -93,11 +95,17 @@ Se realizaran 5 (o 10) particiones de los datos, y en cada modelo se realiazará
 
 Este mismo proceso se realiza con los otros siete modelos posibles restantes y nos quedamos con el que obtengamos un error de predicción mínimo.
 
+</ul>
+
 <br>
 
 (b) **Explica cómo se utilizaría el bootstrap para calcular la desviación estándar del coeficiente de regresión de $Y$ sobre $X$.**
 
+<ul>
+
 Una vez tenemos el modelo de regresión $Y = \alpha X$ , queremos saber cómo es de fiable el parámetro $\alpha$ que hemos estimado. Para ello cogeremos 1000 muestras aleatorias simples de los datos de los que disponemos con reemplazo y calculamos para cada m.a.s. el coeficiente de la regresión. Una vez tengamos estimados el coeficiente $\alpha$ para cada regresión calculamos su desviación típica del vector de coeficientes. De este modo obtendremos la desviación estándar del coeficiente de regresión de $Y$ sobre $X$.
+
+</ul>
 
 <br>
 
@@ -106,6 +114,21 @@ Una vez tenemos el modelo de regresión $Y = \alpha X$ , queremos saber cómo es
 
 **Dibuja el resultado de una predicción de 2 vecinos más cercanos de una regresión de los puntos en un examen sobre horas estudiadas. ¿Cómo te parece la elección de $K=2$?**
 
+
+
+```{r somePlot, echo=FALSE, fig.align='center'}
+horas_estudiadas = c(0,1,1,2,3,4,5,5,5,6,6,6,7,7,7,7,9,9,9,10,2,3,3,2,4)
+nota_sacadas = c(2,2,2,3,4,4,5,5,5,6,6,7,7,8,8,9,9,9,10,10,7,6,5,5,8)
+datos = c(c(horas_estudiadas), c(nota_sacadas))
+datos_m = matrix(datos, nrow=25, ncol=2, byrow = FALSE) 
+plot(datos_m, xlab = "horas estudiadas", ylab = "nota sacada")
+datos_l = matrix(c(0.5,2,1.5,2.5,2,5,3,5,4,6,5,5,6,6.5,7,8,8,8,9,9.5,10,10), nrow=11, ncol=2, byrow = TRUE)  
+lines(datos_l)
+```
+
+Dentro de un conjunto de muestras como el anterior, el resultado de realizar una predicción de sólamente 2 vecinos más cercanos puede resultar en un sobreajuste del conjunto de muestras, lo cual no aporta mucha utilidad ya que si fueramos a utilizar esta predicción sobre futuras muestras, sería muy probable que la predicción sea errónea.
+
+
 <br>
 
 
@@ -113,28 +136,43 @@ Una vez tenemos el modelo de regresión $Y = \alpha X$ , queremos saber cómo es
 
 **Analizamos 3 variables con la matriz de correlaciÛn dada por**
 
+$$
+\begin{pmatrix}
+1 & 0.1 & -0.05\\
+0.1 & 1 & -0.1 \\
+-0.05 & -0.1 & 1
+\end{pmatrix}
+$$
+
 (a) **¿Tiene sentido hacer un análisis de componentes principales?**
 
-No
+<ul>
+No tiene mucho sentido hacer un análisis de componentes principales sobre un conjunto de variables que no tienen casi correlación entre ellas, como es el caso anterior.
+</ul>
 
 <br>
 
+
 (b) **¿Cuántos componentes principales crees que encontramos (elegimos)?**
 
-3
+<ul>
+Como casi no existe correlación entre las variables, obtendriamos 3 componentes principales (todos).
+</ul>
 
 <br>
 
 (c) **¿Qué porcentaje de la varianza total explica aproximadamente cada componente principal?** 
 
-1/3
+<ul>
+Obtendriamos aproximadamente un $1/3$ de la varianza total.
+</ul>
 
 <br>
 
 
 #Ejercicio 13
 
-**Te gustaría invertir dinero en acciones. Algún amigo comenta que acciones de tecnologia han crecido los últimos años más rápidamente. Sin embargo quieres basar tu decisión en datos y comparas los rendimientos de acciones de tecnología con los demás. Encuentras que la diferencia es positiva y altamente signicativa. Por eso inviertes. Te parece bien el análisis?**
+**Te gustaría invertir dinero en acciones. Algún amigo comenta que acciones de tecnologia han crecido los últimos años más rápidamente. Sin embargo quieres basar tu decisión en datos y comparas los rendimientos de acciones de tecnología con los demás. Encuentras que la diferencia es positiva y altamente significativa. Por eso inviertes. Te parece bien el análisis?**
 
 En primer lugar, debemos comentar que el estudio que quiere realizar la persona que quiere invertir es insuficiente y elemental. Nosotros propondríamos un estudio basado en buscar correlaciones positivas y negativas en diferentes sectores y que estos sectores fueran más específicos (y no: o tecnnolgia o no tecnologia). Además en el supuesto del eunciado no se contempla el hecho de que se pueda producir un suceso externo que provoque la caída del precio de las acciones.
 
@@ -280,7 +318,7 @@ El valor de proporción aculada para esta componente 14 es 0.80286.
 
 Aunque no podemos dibujar las 14 componentes principales, sí podemos representar las dos primeras tal como sigue.
 
-```{r}
+```{r, fig.align='center'}
 PCbiplot = function(PC, x="PC1", y="PC2", colors=c('black', 'black', 'red', 'red')) {
         data = data.frame(obsnames=row.names(PC$x), PC$x)
         
@@ -313,7 +351,7 @@ PCbiplot = function(PC, x="PC1", y="PC2", colors=c('black', 'black', 'red', 'red
         
         plot
 }
-PCbiplot(pc_satisfaccion, colors=c("black", "black", "red2", "tan1"))
+PCbiplot(pc_satisfaccion, colors=c("black", "black", "#0040FF", "tan1"))
 ```
 
 
