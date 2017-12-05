@@ -37,11 +37,11 @@ comp$no
 
 ```{r}
 mean_neigh_friends = c()
-dg = degree(g)
+dg = degree(g, mode = "in")
 
 for (i in 1:gorder(g)) {
-  neigh = neighbors(g, i)
-  mean_neigh_friends = c(mean_neigh_friends, mean(degree(g, neigh) - 1))
+  neigh = neighbors(g, i, mode = "out")
+  mean_neigh_friends = c(mean_neigh_friends, mean(degree(g, neigh, mode = "in") - 1))
 }
 ```
 
@@ -49,9 +49,10 @@ for (i in 1:gorder(g)) {
 
 El número y la fracción de individuos que tienen un número de votaciones más pequeño que el número medio de votaciones de aquellos que votaron:
 ```{r}
+mean_neigh_friends[is.na(mean_neigh_friends)] = 0
 v_mean = sum(dg < mean_neigh_friends)
 v_mean
-v_mean / gorder(gf)
+v_mean / gorder(g)
 ```
 
 **3)** Consider the weighted directed network describing the main crude petrol trade among countries in 2003, downloaded from UN COMTRADE (https://comtrade.un.org/data/). The links in this network are contained in the file **WT_petrol.txt**: a link $x\to y$ with weight $w$ means that $x$ exported to $y$ for an amount of $w$ kg. The names of the countries and their ISO3 are contained in the file **Countries.txt**.
@@ -87,6 +88,8 @@ El atributo más adecuado para el peso de una arista depende del estudio que se 
 ```{r}
 components(gwd)$no
 ```
+
+
 ```{r}
 components(gwu)$no
 ```
