@@ -6,53 +6,258 @@ output: html_document
 
 ```{r global_options, include=FALSE}
 knitr::opts_chunk$set(fig.width=8, fig.height=8, fig.align="center", echo=TRUE, warning=FALSE, message=FALSE)
-library(knitr)
+library(centiserve)
 library(printr)
 ```
 
 
 **1)** What 0.5% of the nodes do you consider more ``prestigious'' in the WikiVote network studied in Handout 4? What kind of centrality (or centralities) do you use to measure this prestige and why? 
 ```{r}
-df_wv = read.csv("datasets/WikiVote.txt", sep = "\t")
-g_wv = graph_from_data_frame(df_wv, directed = FALSE)
+df = read.csv("datasets/WikiVote.txt", sep = "\t")
+g = graph_from_data_frame(df, directed = TRUE)
 ```
 
-```{r}
-r = round(gorder(g_wv) * 0.005)
-names(round(igraph::betweenness(g_wv),4)[1:r])
-```
+Lo mostrado a continuación son el 0.5% de nodos más prestigiosos analizados según su grado.
 
 ```{r}
-r = round(gorder(g_wv) * 0.005)
-g_new = delete.vertices(g_wv, names(round(igraph::betweenness(g_wv),4)[1:r]))
+r = round(gorder(g) * 0.005)
+names(round(igraph::betweenness(g,normalized = TRUE),4)[1:r])
+```
+
+Hemos elegido este análisis porque en la red estudiada de _Wikivote_ se trata de una simple red de quién ha votado a quién. Por lo que definimos como "prestigiosos" aquellos nodos que simplemente has sido votado (arista entrantes en ellos) más. Además, eliminando estos nodos más prestigiosos, obtenemos la mayor cantidad de grafos no conexos, lo que muestra una adicional importancia.
+
+```{r}
+r = round(gorder(g) * 0.005)
+g_new = delete.vertices(g, names(round(igraph::degree(g,normalized=TRUE),4)[1:r]))
 comp = components(g_new)
 comp$no
-max(comp$csize) / gorder(g_new)
 ```
 
-**2)** What fraction of individuals in this network received less votes than the mean number of votes received by the people they voted? 
+**2)** What fraction of individuals in this network received less votes than the mean number of votes received by the people they voted?
+
+```{r}
+mean_neigh_friends = c()
+dg = degree(g)
+
+for (i in 1:gorder(g)) {
+  neigh = neighbors(g, i)
+  mean_neigh_friends = c(mean_neigh_friends, mean(degree(g, neigh) - 1))
+}
+```
+
+<br>
+
+El número y la fracción de individuos que tienen un número de votaciones más pequeño que el número medio de votaciones de aquellos que votaron:
+```{r}
+v_mean = sum(dg < mean_neigh_friends)
+v_mean
+v_mean / gorder(gf)
+```
 
 **3)** Consider the weighted directed network describing the main crude petrol trade among countries in 2003, downloaded from UN COMTRADE (https://comtrade.un.org/data/). The links in this network are contained in the file **WT_petrol.txt**: a link $x\to y$ with weight $w$ means that $x$ exported to $y$ for an amount of $w$ kg. The names of the countries and their ISO3 are contained in the file **Countries.txt**.
 
 Download it on your computer and upload it to R as a dataframe. Define a directed graph with this list of arcs. Check that it is a weighted simple network. 
 
+```{r}
+dfc = read.csv("datasets/comtrade.csv", sep = ",")
+```
+
+```{r}
+dfp = read.csv("datasets/WT_petrol.txt", sep = " ")
+gwd = graph_from_data_frame(dfp, directed = TRUE)
+gwu = graph_from_data_frame(dfp, directed = FALSE)
+```
+
+```{r}
+is_weighted(gwd)
+```
+
+```{r}
+is_simple(gwd)
+```
+
 *a)* It is reasonable to use the weights as distances? Why? If your answer is negative, take it into account when computing centralities.
+
+El atributo más adecuado para el peso de una arista depende del estudio que se quiere realizar sobre la red determinada. Por ejemplo, si el estudio consiste simplemente en analizar las conexiones de esta red para estudiar, por ejemplo, recorridos mínimos, la distacia es un atributo adecuado. Por otro lado, si por ejemplo se trata de analizar cuanta presión necesita cada conexión de la red, la distancia no es adecuada, porque la presión no depende únicamente de la distancia, sino también por ejemplo de la cantidad de petroleo que pasa por cada conexión.
 
 *b)* Remove the isolated nodes from the network. 
 
+¿¿No tiene nodos aislados??
+
+```{r}
+components(gwd)$no
+```
+```{r}
+components(gwu)$no
+```
+
 *c)*  Compute the basic indices of the resulting network's topology: order, size, density, number of weak and strong connected components, directed and undirected diameter, undirected transitivity.
+
+Orden y tamaño del grafo dirigido _gwd_:
+
+```{r}
+gorder(gwd)
+ecount(gwd)
+```
+Orden y tamaño del grafo no dirigido _gwu_:
+
+```{r}
+gorder(gwu)
+ecount(gwu)
+```
+
+Densidad de _gwd_:
+
+```{r}
+edge_density(gwd, loops = FALSE)
+```
+
+Densidad de _gwu_:
+
+```{r}
+edge_density(gwu, loops = FALSE)
+```
+
+Componente conexo gigante débilmente conectado:
+
+```{r}
+gorder(induced_subgraph(gwd, v=groups(components(gwd, mode = "weak"))[[1]]))
+```
+
+Sí tiene un componente conexo gigante débilmente conectado de 235 nodos.
+
+Componente conexa gigante fuertemente conectado:
+
+```{r}
+gorder(induced_subgraph(gwd, v=groups(components(gwd, mode = "strong"))[[1]]))
+```
+No tiene un componente conexa gigante fuertemente conectado ya que el orden es 1.
+
+Diametro dirigido:
+
+```{r}
+diameter(gwd, directed = TRUE)
+```
+
+Diametro no dirigido:
+
+```{r}
+diameter(gwu, directed = FALSE)
+```
+
+Coeficiente de transitividad no dirigido:
+
+```{r}
+round(transitivity(gwu),4)
+```
 
 *d)* What fraction of adjacent pairs are mutual (of the form $x\leftrightarrow y$)? What do mutual pairs of nodes mean, in the context of this network, and how do you consider they could affect the notion of centrality in this network?
 
-*e)* There is on "important" type of centrality that is not relevant in this network. Which one and why?
+```{r}
+for (i in 1:gorder(gwd)){
+  a = dfp[i,1]
+  b = dfp[i,2]
+  for (j in i+1:gorder(gwd)){
+    c = dfp[j,1]
+    d = dfp[j,2]
+    if ((a == d)&(b == c)&(i != j)){
+      cat(a,"->",b,"Peso:",dfp[i,3],"\n")
+      cat(c,"->",d,"Peso:",dfp[j,3],"\n")
+    }
+  }
+}
+```
+
+Una conexión mútua en esta red significa que hay dos conexiones petrolíferas entre estos paises, dado que estas conexiones tienen pesos diferentes. Aún con pesos iguales supondriamos que se trata de dos conexiones diferentes dado que es imposible (por temas de física...) tener una misma conexión que transporta petroleo en ambas direcciones.
+
+Por el tema de centralidad, tener un conjunto de nodos que están enlazados entre ellos en ambas direcciones causaría que, para cualquier estudio de centralidad, el valor de estos nodos incrementaría.
+
+*e)* There is one "important" type of centrality that is not relevant in this network. Which one and why?
+
+La importancia de la centralidad según el _decay_ no tiene relevancia en una red que no tiene un componente conexa gigante fuertemente conectado.
+
+```{r}
+r = round(gorder(gwd) * 0.01)
+#g_new = delete.vertices(gwd, names(round(sort(decay(gwd, decay=0.5),decreasing=TRUE),4)[1:r]))
+#comp = components(g_new)
+#comp$no
+```
 
 *f)* What are the 5% most central nodes in this network according to the different sensible and relevant centrality indices discussed in the course? (Remember to distinguish between incoming arcs and outcoming arcs, and recall that the network is weighted.) Comment the results, including the meaning of the centralities used in the context of this network ans why you use them.
 
+```{r}
+r = round(gorder(gwd) * 0.05)
+Cent.Deg.in=round(sort(degree(gwd, mode = "in"), decreasing=TRUE),4)[1:r]
+Cent.Str.in=round(sort(strength(gwd, mode = "in"), decreasing=TRUE),4)[1:r]
+Cent.Clo.in=round(sort(estimate_closeness(gwd, normalized=TRUE, weights=1/edge_attr(gwd)$weight, cutoff=6, mode = "in"),decreasing=TRUE),4)[1:r] 
+#¿Qué distancia coger?
+
+Cent.Bet=round(sort(estimate_betweenness(gwd, cutoff=6, weights=1/edge_attr(gwd)$weight),decreasing=TRUE),4)[1:r]
+Cent.Eig=round(sort(eigen_centrality(gwd,weights=edge_attr(gwd)$weight)$vector,decreasing =TRUE),4)[1:r]
+
+Cent.Deg.out=round(sort(degree(gwd, mode = "out"), decreasing=TRUE),4)[1:r]
+Cent.Str.out=round(sort(strength(gwd, mode = "out"), decreasing=TRUE),4)[1:r]
+Cent.Clo.out=round(sort(estimate_closeness(gwd, normalized=TRUE, weights=1/edge_attr(gwd)$weight, cutoff=6, mode = "out"),decreasing=TRUE),4)[1:r]
+```
+
+```{r}
+DEG.in=attr(Cent.Deg.in,"names")
+STR.in=attr(Cent.Str.in,"names")
+CLO.in=attr(Cent.Clo.in,"names")
+DEG.out=attr(Cent.Deg.out,"names")
+STR.out=attr(Cent.Str.out,"names")
+CLO.out=attr(Cent.Clo.out,"names")
+BET.n=attr(Cent.Bet,"names")
+EIG.n=attr(Cent.Eig,"names")
+
+Most.central=data.frame(DEG.in,DEG.out,STR.in,STR.out,CLO.in,CLO.out,BET.n,EIG.n)
+names(Most.central)=c("Degree In","Degree Out","Strength In","Strength Out","Clos. In","Clos. Out","Betw.", "Eigenv.")
+row.names(Most.central)=1:r
+Most.central
+```
+
 *g)* What are the Spearman correlations between the centralities computed in the previous point? Do these centralities sort the countries in a similar way? 
+
+
 
 *h)* What would you consider the 5% most important nodes in this network? Explain your decision.
 
-*i)* Plot the induced subgraph supported on the set of cuntries consisting of the union of the 5% most central nodes w.r.t. in-strength and the 5% most central nodes w.r.t. out-strength. The size of the nodes must represent some sensible centrality (choose which one and justify your choice) and the width of the arrows their weight.
+```{r}
+CLO.in
+```
+
+```{r}
+CLO.out
+```
+
+En este caso, el 5% de los nodos más importantes podrían ser los nodos más centrales según su cercanía a los demás nodos, ya que estamos trabajando con una red donde el peso significa distancia entre dos nodos y en este caso, tener menor distancia en una red petrolífera es mejor.
+
+*i)* Plot the induced subgraph supported on the set of countries consisting of the union of the 5% most central nodes w.r.t. in-strength and the 5% most central nodes w.r.t. out-strength. The size of the nodes must represent some sensible centrality (choose which one and justify your choice) and the width of the arrows their weight.
+
+```{r}
+for (i in STR.in){
+  for (j in 1:gorder(gwd)){
+    
+  }
+}
+```
 
 *j)* Is this network robust against the removal of a few central nodes?
 
+```{r}
+DEG.in.comp = components(delete.vertices(gwd, DEG.in))$no
+DEG.out.comp = components(delete.vertices(gwd, DEG.out))$no
+STR.in.comp = components(delete.vertices(gwd, STR.in))$no
+STR.out.comp = components(delete.vertices(gwd, STR.out))$no
+CLO.in.comp = components(delete.vertices(gwd, CLO.in))$no
+CLO.out.comp = components(delete.vertices(gwd, CLO.out))$no
+BET.n.comp = components(delete.vertices(gwd, BET.n))$no
+EIG.n.comp = components(delete.vertices(gwd, EIG.n))$no
+
+Comp.central=data.frame(DEG.in.comp,DEG.out.comp,STR.in.comp,STR.out.comp,CLO.in.comp,CLO.out.comp,BET.n.comp,EIG.n.comp)
+names(Comp.central)=c("Degree In","Degree Out","Strength In","Strength Out","Clos. In","Clos. Out","Betw.", "Eigenv.")
+row.names(Comp.central)=1:1
+Comp.central
+```
+
+A partir de los números relativamente bajos de la tabla anterior, podemos considerar esta red bastante robusta a la eliminación de nodos centrales.
