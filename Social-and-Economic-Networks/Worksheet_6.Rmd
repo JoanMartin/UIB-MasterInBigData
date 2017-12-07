@@ -12,6 +12,7 @@ library(printr)
 
 
 **1)** What 0.5% of the nodes do you consider more ``prestigious'' in the WikiVote network studied in Handout 4? What kind of centrality (or centralities) do you use to measure this prestige and why? 
+
 ```{r}
 df = read.csv("datasets/WikiVote.txt", sep = "\t")
 g = graph_from_data_frame(df, directed = TRUE)
@@ -66,7 +67,6 @@ dfc = read.csv("datasets/comtrade.csv", sep = ",")
 ```{r}
 dfp = read.csv("datasets/WT_petrol.txt", sep = " ")
 gwd = graph_from_data_frame(dfp, directed = TRUE)
-gwu = graph_from_data_frame(dfp, directed = FALSE)
 ```
 
 ```{r}
@@ -83,16 +83,11 @@ El atributo más adecuado para el peso de una arista depende del estudio que se 
 
 *b)* Remove the isolated nodes from the network. 
 
-¿¿No tiene nodos aislados??
-
 ```{r}
 components(gwd)$no
 ```
 
-
-```{r}
-components(gwu)$no
-```
+No hace falta simplificar/eliminar nodos, ya que no hay nodos aislados.
 
 *c)*  Compute the basic indices of the resulting network's topology: order, size, density, number of weak and strong connected components, directed and undirected diameter, undirected transitivity.
 
@@ -102,23 +97,11 @@ Orden y tamaño del grafo dirigido _gwd_:
 gorder(gwd)
 ecount(gwd)
 ```
-Orden y tamaño del grafo no dirigido _gwu_:
-
-```{r}
-gorder(gwu)
-ecount(gwu)
-```
 
 Densidad de _gwd_:
 
 ```{r}
 edge_density(gwd, loops = FALSE)
-```
-
-Densidad de _gwu_:
-
-```{r}
-edge_density(gwu, loops = FALSE)
 ```
 
 Componente conexo gigante débilmente conectado:
@@ -145,13 +128,13 @@ diameter(gwd, directed = TRUE)
 Diametro no dirigido:
 
 ```{r}
-diameter(gwu, directed = FALSE)
+diameter(gwd, directed = FALSE)
 ```
 
 Coeficiente de transitividad no dirigido:
 
 ```{r}
-round(transitivity(gwu),4)
+round(transitivity(gwd),4)
 ```
 
 *d)* What fraction of adjacent pairs are mutual (of the form $x\leftrightarrow y$)? What do mutual pairs of nodes mean, in the context of this network, and how do you consider they could affect the notion of centrality in this network?
@@ -171,20 +154,23 @@ for (i in 1:gorder(gwd)){
 }
 ```
 
+```{r}
+2/gorder(gwd)
+```
+
+La fraction de esos nodos adjacentes:
+
+```{r}
+reciprocity(gwd, ignore.loops = TRUE)
+```
+
 Una conexión mútua en esta red significa que hay dos conexiones petrolíferas entre estos paises, dado que estas conexiones tienen pesos diferentes. Aún con pesos iguales supondriamos que se trata de dos conexiones diferentes dado que es imposible (por temas de física...) tener una misma conexión que transporta petroleo en ambas direcciones.
 
 Por el tema de centralidad, tener un conjunto de nodos que están enlazados entre ellos en ambas direcciones causaría que, para cualquier estudio de centralidad, el valor de estos nodos incrementaría.
 
 *e)* There is one "important" type of centrality that is not relevant in this network. Which one and why?
 
-La importancia de la centralidad según el _decay_ no tiene relevancia en una red que no tiene un componente conexa gigante fuertemente conectado.
-
-```{r}
-r = round(gorder(gwd) * 0.01)
-#g_new = delete.vertices(gwd, names(round(sort(decay(gwd, decay=0.5),decreasing=TRUE),4)[1:r]))
-#comp = components(g_new)
-#comp$no
-```
+Por definición propia del tipo de centralidad, la 'Betweenness' no tiene sentido en una red que muestra el tráfico petrolífero entre paises. Si un país 'A' está conectado en esta red con un país 'B' y, a su vez, el país 'B' está conectado con un país 'C', no significa que el país 'A' está realizando comercio de petroleo con el país 'C'. Por esto, darle más importancia a nodos intermedios no tiene sentido en esta red.
 
 *f)* What are the 5% most central nodes in this network according to the different sensible and relevant centrality indices discussed in the course? (Remember to distinguish between incoming arcs and outcoming arcs, and recall that the network is weighted.) Comment the results, including the meaning of the centralities used in the context of this network ans why you use them.
 
@@ -237,13 +223,7 @@ En este caso, el 5% de los nodos más importantes podrían ser los nodos más ce
 
 *i)* Plot the induced subgraph supported on the set of countries consisting of the union of the 5% most central nodes w.r.t. in-strength and the 5% most central nodes w.r.t. out-strength. The size of the nodes must represent some sensible centrality (choose which one and justify your choice) and the width of the arrows their weight.
 
-```{r}
-for (i in STR.in){
-  for (j in 1:gorder(gwd)){
-    
-  }
-}
-```
+
 
 *j)* Is this network robust against the removal of a few central nodes?
 
