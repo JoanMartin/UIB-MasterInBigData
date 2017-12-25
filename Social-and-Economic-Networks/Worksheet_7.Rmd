@@ -1,0 +1,103 @@
+---
+title: "Handout 7"
+output: html_document
+---
+
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=8, fig.height=8, fig.align="center", echo=TRUE, warning=FALSE, message=FALSE,autodep = TRUE,cache=TRUE)
+library(knitr)
+library(printr)
+library(igraph)
+library(ergm)
+```
+
+
+**1)** The file **euroroad.txt** contains the links of the international E-road network (https://en.wikipedia.org/wiki/International_E-road_network) between the European cities given in the file **euroroad_city_names.txt**. Each node in this network represents a city and an edge between two nodes denotes that they are connected by an E-road without any other city in-between. 
+
+```{r}
+df = read.csv("datasets/euroroad.txt", sep = " ")
+g = graph_from_data_frame(df, directed = FALSE)
+```
+
+*a)* Provide a statistical summary of it. What are its most central cities?
+
+```{r}
+summary_g=as.network(as.matrix(as_adjacency_matrix(g)),directed=FALSE)
+summary_g
+```
+
+
+```{r}
+g_new = delete.vertices(g, names(round(igraph::betweenness(g),4)[1:r]))
+comp = components(g_new)
+comp$no
+```
+
+Betweeness. Simplemente la ciudad por donde tienen que pasar más para llegar a esta misma ciudad o a las demas ciudades conectadas a esta más central.
+
+*b)* How do you think a road network is formed?
+
+
+*c)* Is this road network compatible with the E-R model, the configuration model, or the basic Barabasi-Albert's model? Justify your answer, and comment whether you expected it.
+
+Obtener orden, tamaño y densidad de $g$:
+
+```{r}
+o_g = gorder(g)
+s_g = gsize(g)
+den_g = edge_density(g, loops = FALSE)
+```
+
+```{r}
+g2 = sample_gnm(o_g, s_g, directed = FALSE, loops = FALSE)
+```
+
+Barabasi. Si hay nodos con aristas en las dos direcciones, no serÃ¡ compatible...?
+
+```{r}
+F=function(x,y){
+G=sample_gnp(x,y,directed = FALSE, loops = FALSE)
+c(transitivity(G,type="average"), transitivity(G), components(G)$no,diameter(G))
+}
+X=replicate(1000,F(o_g,den_g))
+Results=rbind(c(den_g,den_g,1,round(log(o_g)/log(den_g*o_g)+3*log(o_g)/(den_g*o_g))),round(apply(X,FUN=mean,MARGIN=1),4),round(apply(X,FUN=sd,MARGIN=1),4))
+dimnames(Results)=list(c("Theoretical","Simulated","St. Dev."),c("Av. Clust.","Trans.","No. Conn. Comp.","Diameter"))
+Results
+```
+
+E-R Model:
+
+```{r}
+G_ER=sample_gnp(gorder(g),den_g,directed=FALSE)
+plot(G_ER,vertex.label=NA,vertex.shape="sphere",vertex.size=10,edge.color="black",vertex.color="green",edge.arrow.size=0.3)
+```
+
+Configuration Model:
+
+```{r}
+G_CM=sample_degseq(out.deg=degree(g,mode="out"), in.deg=degree(g,mode="in"), method="simple")
+G_CMs=simplify(G_CM)
+plot(G_CMs,vertex.label=NA,vertex.shape="sphere",vertex.size=10,edge.color="black",vertex.color="green",edge.arrow.size=0.3)
+```
+
+Barabasi-Albert Model:
+
+```{r}
+G_BA=sample_pa(n=gorder(g),m=3,directed=FALSE,out.pref=TRUE)
+plot(G_BA,vertex.shape="sphere",vertex.size=10,vertex.label.cex=0.5,edge.color="black",
+     vertex.color=c(rep("red", 10),rep("blue", 10),rep("green",70),rep("yellow",10)),edge.arrow.size=0.3)
+```
+
+*d)* If we add an initial attractiveness $a$ to all nodes, so that the probability of an old node $v$ to be linked by a new node is proportional to $a+\deg(v)$, the absolute value of the exponent in the power law describing its degree distribution turns out to be $3+a/c$ (with $c$ the mean number of links of the new nodes). This exponent can be estimated with **igraph**'s function **fit_power_law**. 
+
+Now, is the E-road network compatible with Barabasi-Albert's model with initial attractiveness? Justify your answer, and comment whether you expected it.
+
+
+**2)** Consider the WikiVote directed network introduced in the Handout 4.
+
+*a)* Is it compatible with the directed E-R model, the directed configuration model, or the  directed Barabasi-Albert's model (either basic or with initial attractiveness)? Justify your answer, and comment whether you expected it.
+
+*b)* It should be clear that this network does not "grow" and that the number of votes received by each individual is somehow related to some notion of "fitness". **igraph** provides some functions to generate random networks with these features (based on the model explained in https://arxiv.org/pdf/cond-mat/0106565.pdf). Is this WikiVote network compatible with the 
+"Scale-free random graphs with vertex fitness scores" provided by the function **sample_fitness_pl**? Justify and comment your answer.
+
