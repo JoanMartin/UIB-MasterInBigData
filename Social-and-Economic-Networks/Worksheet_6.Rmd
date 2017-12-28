@@ -177,6 +177,8 @@ No hace falta simplificar/eliminar nodos, ya que no hay nodos aislados.
 
 <br>
 
+<br>
+
 *c)*  Compute the basic indices of the resulting network's topology: order, size, density, number of weak and strong connected components, directed and undirected diameter, undirected transitivity.
 
 Orden y tamaño del grafo dirigido _gwd_:
@@ -188,11 +190,16 @@ ecount(gwd)
 
 <br>
 
+<br>
+
 Densidad de _gwd_:
 
 ```{r}
 edge_density(gwd, loops = FALSE)
 ```
+
+<br>
+
 <br>
 
 Componente conexo gigante débilmente conectado:
@@ -261,6 +268,8 @@ Por definición propia del tipo de centralidad, la 'Betweenness' no tiene sentid
 
 <br>
 
+<br>
+
 *f)* What are the 5% most central nodes in this network according to the different sensible and relevant centrality indices discussed in the course? (Remember to distinguish between incoming arcs and outcoming arcs, and recall that the network is weighted.) Comment the results, including the meaning of the centralities used in the context of this network ans why you use them.
 
 ```{r}
@@ -296,8 +305,6 @@ Cent.Bet = round(sort(estimate_betweenness(gwd, cutoff = 6, weights = 1/edge_att
 
 Cent.Eig = round(sort(eigen_centrality(gwd, weights = edge_attr(gwd)$weight)$vector, mode,
                     decreasing = TRUE), 4)[1:r]
-
-
 ```
 
 ```{r}
