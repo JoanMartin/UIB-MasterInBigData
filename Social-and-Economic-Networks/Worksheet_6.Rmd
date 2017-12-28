@@ -349,10 +349,10 @@ DEG_g_ind = induced_subgraph(gwd, v = DEG_most_central_nodes)
 <br>
 
 ```{r}
-plot(DEG_g_ind, 
-     edge.width = E(gwd)$weight * 0.0000001,
-     edge.arrow.size = 0.3,
-     vertex.size = degree(gwd, DEG_most_central_nodes) * 0.1)
+# plot(DEG_g_ind, 
+#      edge.width = E(gwd)$weight * 0.0000001,
+#      edge.arrow.size = 0.3,
+#      vertex.size = degree(gwd, DEG_most_central_nodes) * 0.1)
 ```
 
 <br>
@@ -368,6 +368,8 @@ plot(DEG_g_ind,
 <br>
 <br>
 
+***
+
 ```{r}
 CLO_most_central_nodes = unique(c(CLO.in, CLO.out))
 V(gwd)$vertex_closeness = estimate_closeness(gwd, normalized = TRUE, 
@@ -379,17 +381,56 @@ CLO_g_ind = induced_subgraph(gwd, v = CLO_most_central_nodes)
 <br>
 
 ```{r}
-plot(CLO_g_ind, 
-     edge.width = E(gwd)$weight * 0.000001,
-     edge.arrow.size = 0.3,
-     vertex.size = estimate_closeness(gwd, CLO_most_central_nodes, normalized = TRUE, 
-                                      weights = 1/edge_attr(gwd)$weight,
-                                      cutoff = 6) * 0.01)
+# plot(CLO_g_ind, 
+#      edge.width = E(gwd)$weight * 0.000001,
+#      edge.arrow.size = 0.3,
+#      vertex.size = estimate_closeness(gwd, CLO_most_central_nodes, normalized = TRUE, 
+#                                       weights = 1/edge_attr(gwd)$weight,
+#                                       cutoff = 6) * 0.01)
 ```
 
 <br>
 
 ```{r}
+plot(CLO_g_ind, 
+     edge.width = E(CLO_g_ind)$weight * 0.000001,
+     edge.arrow.size = 0.3,
+     vertex.size = V(CLO_g_ind)$vertex_closeness * 0.01)
+```
+
+<br>
+<br>
+<br>
+
+***
+
+```{r}
+CLO_most_central_nodes = unique(c(CLO.in, CLO.out))
+V(gwd)$vertex_closeness = estimate_closeness(gwd, normalized = TRUE, 
+                                          weights = 1/edge_attr(gwd)$weight, 
+                                          cutoff = 10, mode = 'in')
+CLO_g_ind = induced_subgraph(gwd, v = CLO_most_central_nodes)
+
+plot(CLO_g_ind, 
+     edge.width = E(CLO_g_ind)$weight * 0.000001,
+     edge.arrow.size = 0.3,
+     vertex.size = V(CLO_g_ind)$vertex_closeness * (500))
+```
+
+
+<br>
+<br>
+<br>
+
+***
+
+```{r}
+CLO_most_central_nodes = unique(c(CLO.in, CLO.out))
+V(gwd)$vertex_closeness = estimate_closeness(gwd, normalized = TRUE, 
+                                          weights = 1/edge_attr(gwd)$weight, 
+                                          cutoff = 10, mode = 'out')
+CLO_g_ind = induced_subgraph(gwd, v = CLO_most_central_nodes)
+
 plot(CLO_g_ind, 
      edge.width = E(CLO_g_ind)$weight * 0.000001,
      edge.arrow.size = 0.3,
