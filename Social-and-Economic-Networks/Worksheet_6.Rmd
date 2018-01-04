@@ -69,47 +69,33 @@ editor_options:
 ```{r global_options, include=FALSE}
 knitr::opts_chunk$set(fig.width=8, fig.height=8, fig.align="center", echo=TRUE, warning=FALSE, message=FALSE)
 library(centiserve)
+library(knitr)
 ```
 
 
 **1)** What 0.5% of the nodes do you consider more ``prestigious'' in the WikiVote network studied in Handout 4? What kind of centrality (or centralities) do you use to measure this prestige and why? 
 
 ```{r}
-
-
-
-
-
-
-# No sería de "FEEDBACK CENTRALITY"???
-
-
-
-
-
-
 df = read.csv("datasets/WikiVote.txt", sep = "\t")
 g = graph_from_data_frame(df, directed = TRUE)
 ```
 
 <br>
 
-Lo mostrado a continuación son el 0.5% de nodos más prestigiosos analizados según su grado.
+A continuación, extraemos el 0.5% de los nodos más prestigiosos según el in-degree, ya que este tipo de centralidad representa a los nodos que han sido más votados. Esto se debe a que si un nodo ha sido muy votado, es porque es muy prestigioso.
 
 ```{r}
 r = round(gorder(g) * 0.005)
-names(round(igraph::betweenness(g,normalized = TRUE),4)[1:r])
+names(round(sort(igraph::degree(g, normalized = TRUE, mode = 'in'), decreasing = TRUE), 4)[1:r])
 ```
 
 <br>
 
-Hemos elegido este análisis porque en la red estudiada de _Wikivote_ se trata de una simple red de quién ha votado a quién. Por lo que definimos como "prestigiosos" aquellos nodos que simplemente has sido votado (arista entrantes en ellos) más. Además, eliminando estos nodos más prestigiosos, obtenemos la mayor cantidad de grafos no conexos, lo que muestra una adicional importancia.
+No obstante, también sacamos el 0.5% de los nodos más prestigiosos mediante la centralidad eigenvector, ya que sirve para saber cuán prestigioso es un nodo mediante la influencia que tiene ese nodo en la red.
 
 ```{r}
 r = round(gorder(g) * 0.005)
-g_new = delete.vertices(g, names(round(igraph::degree(g,normalized=TRUE),4)[1:r]))
-comp = components(g_new)
-comp$no
+names(round(sort(eigen_centrality(g, scale = FALSE)$vector, decreasing = TRUE), 4)[1:r])
 ```
 
 <br>
@@ -129,6 +115,7 @@ for (i in 1:gorder(g)) {
 <br>
 
 El número y la fracción de individuos que tienen un número de votaciones más pequeño que el número medio de votaciones de aquellos que votaron:
+
 ```{r}
 mean_neigh_friends[is.na(mean_neigh_friends)] = 0
 v_mean = sum(dg < mean_neigh_friends)
@@ -143,20 +130,21 @@ v_mean / gorder(g)
 Download it on your computer and upload it to R as a dataframe. Define a directed graph with this list of arcs. Check that it is a weighted simple network. 
 
 ```{r}
-dfc = read.csv("datasets/comtrade.csv", sep = ",")
+dfc = read.csv("datasets/Countries.txt", sep = " ")
+dfp = read.csv("datasets/WT_petrol.txt", sep = " ")
+
+dfp = data.frame(from=dfc[match(dfp$from, dfc$code), 'iso3'], to=dfc[match(dfp$to, dfc$code), 'iso3'], weight=dfp$weight)
+dfp
 ```
 
+<br>
+
 ```{r}
-dfp = read.csv("datasets/WT_petrol.txt", sep = " ")
 gwd = graph_from_data_frame(dfp, directed = TRUE)
 ```
 
 ```{r}
 is_weighted(gwd)
-```
-
-```{r}
-is_simple(gwd)
 ```
 
 <br>
@@ -177,8 +165,6 @@ No hace falta simplificar/eliminar nodos, ya que no hay nodos aislados.
 
 <br>
 
-<br>
-
 *c)*  Compute the basic indices of the resulting network's topology: order, size, density, number of weak and strong connected components, directed and undirected diameter, undirected transitivity.
 
 Orden y tamaño del grafo dirigido _gwd_:
@@ -190,15 +176,11 @@ ecount(gwd)
 
 <br>
 
-<br>
-
 Densidad de _gwd_:
 
 ```{r}
 edge_density(gwd, loops = FALSE)
 ```
-
-<br>
 
 <br>
 
@@ -268,8 +250,6 @@ Por definición propia del tipo de centralidad, la 'Betweenness' no tiene sentid
 
 <br>
 
-<br>
-
 *f)* What are the 5% most central nodes in this network according to the different sensible and relevant centrality indices discussed in the course? (Remember to distinguish between incoming arcs and outcoming arcs, and recall that the network is weighted.) Comment the results, including the meaning of the centralities used in the context of this network ans why you use them.
 
 ```{r}
@@ -297,14 +277,9 @@ Cent.Clo.out = round(sort(estimate_closeness(gwd, normalized = TRUE,
                                            cutoff = 10, mode = "out"),
                         decreasing = TRUE), 4)[1:r]
 
-
-
-# HAY QUE CALCULAR ESTAS?
-Cent.Bet = round(sort(estimate_betweenness(gwd, cutoff = 6, weights = 1/edge_attr(gwd)$weight),
-                    decreasing = TRUE), 4)[1:r]
-
-Cent.Eig = round(sort(eigen_centrality(gwd, weights = edge_attr(gwd)$weight)$vector, mode,
-                    decreasing = TRUE), 4)[1:r]
+Cent.Eig = round(sort(eigen_centrality(gwd,
+                                       weights = edge_attr(gwd)$weight)$vector,
+                      decreasing =TRUE),4)[1:r]
 ```
 
 ```{r}
@@ -314,12 +289,11 @@ STR.in = attr(Cent.Str.in, "names")
 STR.out = attr(Cent.Str.out, "names")
 CLO.in = attr(Cent.Clo.in, "names")
 CLO.out = attr(Cent.Clo.out, "names")
-BET.n = attr(Cent.Bet, "names")
-EIG.n = attr(Cent.Eig, "names")
+Eig = attr(Cent.Eig, "names")
 
-Most.central = data.frame(DEG.in, DEG.out, STR.in, STR.out, CLO.in, CLO.out, BET.n, EIG.n)
-names(Most.central) = c("Degree In", "Degree Out", "Strength In", "Strength Out", 
-                        "Clos. In", "Clos. Out", "Betw.",  "Eigenv.")
+Most.central = data.frame(DEG.in, DEG.out, STR.in, STR.out, CLO.in, CLO.out, Eig)
+names(Most.central) = c("Degree In", "Degree Out", "Strength In", 
+                        "Strength Out", "Clos. In", "Clos. Out", "Eigenv.")
 row.names(Most.central) = 1:r
 Most.central
 ```
@@ -328,7 +302,35 @@ Most.central
 
 *g)* What are the Spearman correlations between the centralities computed in the previous point? Do these centralities sort the countries in a similar way? 
 
+```{r}
+Spe.DEG.in = degree(gwd, mode = "in")
+Spe.DEG.out = degree(gwd, mode = "out")
+Spe.STR.in = strength(gwd, mode = "in")
+Spe.STR.out = strength(gwd, mode = "out")
+Spe.CLO.in = estimate_closeness(gwd, normalized = TRUE, 
+                            weights = 1/edge_attr(gwd)$weight, 
+                            cutoff = 10, mode = "in")
+Spe.CLO.out = estimate_closeness(gwd, normalized = TRUE, 
+                            weights = 1/edge_attr(gwd)$weight, 
+                            cutoff = 10, mode = "out")
+Spe.Eig = eigen_centrality(gwd,
+                       weights = edge_attr(gwd)$weight)$vector
 
+Centralities = data.frame(Spe.DEG.in, Spe.DEG.out, Spe.STR.in, 
+                     Spe.STR.out, Spe.CLO.in, Spe.CLO.out, Spe.Eig)
+names(Centralities) = c("Degree In", "Degree Out", "Strength In", 
+                        "Strength Out", "Clos. In", "Clos. Out", "Eigenv.")
+
+kable(round(cor(Centralities, method = "spearman"), 4))
+```
+
+<br>
+
+```{r}
+plot(hclust(as.dist(1 - cor(Centralities, method = "spearman")), method = "average"), 
+     main = "Centralities' similarities according to Spearman correlation", 
+     xlab = "", ylab = "", sub = "")
+```
 
 <br>
 
@@ -347,101 +349,19 @@ En este caso, el 5% de los nodos más importantes podrían ser los nodos más ce
 <br>
 
 *i)* Plot the induced subgraph supported on the set of countries consisting of the union of the 5% most central nodes w.r.t. in-strength and the 5% most central nodes w.r.t. out-strength. The size of the nodes must represent some sensible centrality (choose which one and justify your choice) and the width of the arrows their weight.
+
 ```{r}
-DEG_most_central_nodes = unique(c(DEG.in, DEG.out))
-V(gwd)$vertex_degree = degree(gwd)
-DEG_g_ind = induced_subgraph(gwd, v = DEG_most_central_nodes)
+STR_most_central_nodes = unique(c(STR.in, STR.out))
+V(gwd)$vertex_strength = strength(gwd)
+STR_g_ind = induced_subgraph(gwd, v = STR_most_central_nodes)
 ```
 
-<br>
-
 ```{r}
-# plot(DEG_g_ind, 
-#      edge.width = E(gwd)$weight * 0.0000001,
-#      edge.arrow.size = 0.3,
-#      vertex.size = degree(gwd, DEG_most_central_nodes) * 0.1)
-```
-
-<br>
-
-```{r}
-plot(DEG_g_ind, 
-     edge.width = E(DEG_g_ind)$weight * 0.00000001,
-     edge.arrow.size = 0.3,
-     vertex.size = V(DEG_g_ind)$vertex_degree * 0.1)
-```
-
-<br>
-<br>
-<br>
-
-***
-
-```{r}
-CLO_most_central_nodes = unique(c(CLO.in, CLO.out))
-V(gwd)$vertex_closeness = estimate_closeness(gwd, normalized = TRUE, 
-                                          weights = 1/edge_attr(gwd)$weight, 
-                                          cutoff = 6)
-CLO_g_ind = induced_subgraph(gwd, v = CLO_most_central_nodes)
-```
-
-<br>
-
-```{r}
-# plot(CLO_g_ind, 
-#      edge.width = E(gwd)$weight * 0.000001,
-#      edge.arrow.size = 0.3,
-#      vertex.size = estimate_closeness(gwd, CLO_most_central_nodes, normalized = TRUE, 
-#                                       weights = 1/edge_attr(gwd)$weight,
-#                                       cutoff = 6) * 0.01)
-```
-
-<br>
-
-```{r}
-plot(CLO_g_ind, 
-     edge.width = E(CLO_g_ind)$weight * 0.000001,
-     edge.arrow.size = 0.3,
-     vertex.size = V(CLO_g_ind)$vertex_closeness * 0.01)
-```
-
-<br>
-<br>
-<br>
-
-***
-
-```{r}
-CLO_most_central_nodes = unique(c(CLO.in, CLO.out))
-V(gwd)$vertex_closeness = estimate_closeness(gwd, normalized = TRUE, 
-                                          weights = 1/edge_attr(gwd)$weight, 
-                                          cutoff = 10, mode = 'in')
-CLO_g_ind = induced_subgraph(gwd, v = CLO_most_central_nodes)
-
-plot(CLO_g_ind, 
-     edge.width = E(CLO_g_ind)$weight * 0.000001,
-     edge.arrow.size = 0.3,
-     vertex.size = V(CLO_g_ind)$vertex_closeness * (500))
-```
-
-
-<br>
-<br>
-<br>
-
-***
-
-```{r}
-CLO_most_central_nodes = unique(c(CLO.in, CLO.out))
-V(gwd)$vertex_closeness = estimate_closeness(gwd, normalized = TRUE, 
-                                          weights = 1/edge_attr(gwd)$weight, 
-                                          cutoff = 10, mode = 'out')
-CLO_g_ind = induced_subgraph(gwd, v = CLO_most_central_nodes)
-
-plot(CLO_g_ind, 
-     edge.width = E(CLO_g_ind)$weight * 0.000001,
-     edge.arrow.size = 0.3,
-     vertex.size = V(CLO_g_ind)$vertex_closeness * 0.01)
+plot(STR_g_ind, 
+     edge.width = E(STR_g_ind)$weight * 0.00000001,
+     edge.arrow.size = 0.2,
+     vertex.size = V(STR_g_ind)$vertex_strength * 0.000000012,
+     layout=layout_in_circle)
 ```
 
 <br>
@@ -455,13 +375,16 @@ STR.in.comp = components(delete.vertices(gwd, STR.in))$no
 STR.out.comp = components(delete.vertices(gwd, STR.out))$no
 CLO.in.comp = components(delete.vertices(gwd, CLO.in))$no
 CLO.out.comp = components(delete.vertices(gwd, CLO.out))$no
-BET.n.comp = components(delete.vertices(gwd, BET.n))$no
-EIG.n.comp = components(delete.vertices(gwd, EIG.n))$no
+Eig.comp = components(delete.vertices(gwd, Eig))$no
 
-Comp.central = data.frame(DEG.in.comp, DEG.out.comp, STR.in.comp, STR.out.comp, CLO.in.comp, CLO.out.comp, BET.n.comp, EIG.n.comp)
-names(Comp.central) = c("Degree In", "Degree Out", "Strength In", "Strength Out", "Clos. In", "Clos. Out", "Betw.", "Eigenv.")
+Comp.central = data.frame(DEG.in.comp, DEG.out.comp, STR.in.comp, 
+                          STR.out.comp, CLO.in.comp, CLO.out.comp, Eig.comp)
+names(Comp.central) = c("Degree In", "Degree Out", "Strength In", 
+                        "Strength Out", "Clos. In", "Clos. Out", "Eigenv.")
 row.names(Comp.central) = 1:1
 Comp.central
 ```
 
 A partir de los números relativamente bajos de la tabla anterior, podemos considerar esta red bastante robusta a la eliminación de nodos centrales.
+
+<br>

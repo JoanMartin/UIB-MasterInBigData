@@ -1,15 +1,76 @@
 ---
-title: "Handout 7"
-output: html_document
+title: "Social and economic networks"
+subtitle: "Handout 7"
+author: "Juan José Martín y Christian Strasser"
+output:
+  html_document:
+    number_sections: false
+    highlight: tango
+    toc: yes
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
 ---
+
+
+
+<style type="text/css">
+
+  body {
+    background-color: #f6f7fd; 
+  }
+  
+  a:link {
+    color: #0174DF;
+  }
+  
+  code.r {
+    font-size: 14px;
+  } 
+  
+  div pre {
+    background-color:#E0ECF8;
+  }
+  pre {
+    font-size: 14px 
+  }
+ 
+  p {
+    text-align: justify;
+  }
+ 
+    
+  h1, h2, h3, h4, h5, h6 {
+    color: #737aaa;
+  }
+
+  th {  
+    background-color:#737aaa;
+    color: #FAFAFA;
+    padding:5px;
+  }
+  
+  td {
+    font-size: 11.5pt;
+  } 
+  
+  tr:nth-child(even){
+    background: white;
+  }
+  
+  tr:nth-child(odd){ 
+    background-color: #EFF8FB;
+  }
+</style>
+
+***  
 
 
 ```{r global_options, include=FALSE}
 knitr::opts_chunk$set(fig.width=8, fig.height=8, fig.align="center", echo=TRUE, warning=FALSE, message=FALSE,autodep = TRUE,cache=TRUE)
 library(knitr)
-library(printr)
+# library(statnet) #Includes sna, ergm, network
 library(igraph)
-library(ergm)
 ```
 
 
@@ -17,19 +78,20 @@ library(ergm)
 
 ```{r}
 df = read.csv("datasets/euroroad.txt", sep = " ")
-g = graph_from_data_frame(df, directed = FALSE)
+g = graph_from_data_frame(df, directed = TRUE)
 ```
 
 *a)* Provide a statistical summary of it. What are its most central cities?
 
 ```{r}
-summary_g=as.network(as.matrix(as_adjacency_matrix(g)),directed=FALSE)
+summary_g = as.network(as.matrix(as_adjacency_matrix(g)), directed = TRUE)
 summary_g
 ```
 
 
 ```{r}
-g_new = delete.vertices(g, names(round(igraph::betweenness(g),4)[1:r]))
+r = round(gorder(g) * 0.005)
+g_new = delete.vertices(g, names(round(igraph::betweenness(g), 4)[1:r]))
 comp = components(g_new)
 comp$no
 ```
@@ -53,7 +115,7 @@ den_g = edge_density(g, loops = FALSE)
 g2 = sample_gnm(o_g, s_g, directed = FALSE, loops = FALSE)
 ```
 
-Barabasi. Si hay nodos con aristas en las dos direcciones, no serÃ¡ compatible...?
+Barabasi. Si hay nodos con aristas en las dos direcciones, no será compatible...?
 
 ```{r}
 F=function(x,y){
