@@ -133,7 +133,9 @@ Download it on your computer and upload it to R as a dataframe. Define a directe
 dfc = read.csv("datasets/Countries.txt", sep = " ")
 dfp = read.csv("datasets/WT_petrol.txt", sep = " ")
 
-dfp = data.frame(from=dfc[match(dfp$from, dfc$code), 'iso3'], to=dfc[match(dfp$to, dfc$code), 'iso3'], weight=dfp$weight)
+dfp = data.frame(from=dfc[match(dfp$from, dfc$code), 'iso3'], 
+                 to=dfc[match(dfp$to, dfc$code), 'iso3'], 
+                 weight=dfp$weight)
 dfp
 ```
 
@@ -250,7 +252,7 @@ Por definición propia del tipo de centralidad, la 'Betweenness' no tiene sentid
 
 <br>
 
-*f)* What are the 5% most central nodes in this network according to the different sensible and relevant centrality indices discussed in the course? (Remember to distinguish between incoming arcs and outcoming arcs, and recall that the network is weighted.) Comment the results, including the meaning of the centralities used in the context of this network ans why you use them.
+*f)* What are the 5% most central nodes in this network according to the different sensible and relevant centrality indices discussed in the course? (Remember to distinguish between incoming arcs and outcoming arcs, and recall that the network is weighted.) Comment the results, including the meaning of the centralities used in the context of this network and why you use them.
 
 ```{r}
 r = round(gorder(gwd) * 0.05)
@@ -337,14 +339,10 @@ plot(hclust(as.dist(1 - cor(Centralities, method = "spearman")), method = "avera
 *h)* What would you consider the 5% most important nodes in this network? Explain your decision.
 
 ```{r}
-CLO.in
+STR.out
 ```
 
-```{r}
-CLO.out
-```
-
-En este caso, el 5% de los nodos más importantes podrían ser los nodos más centrales según su cercanía a los demás nodos, ya que estamos trabajando con una red donde el peso significa distancia entre dos nodos y en este caso, tener menor distancia en una red petrolífera es mejor.
+Consideramos el 5% de nodos más importantes aquellos que envían petróleo a una mayor cantidad de países, por esta razón utilizamos el out-strength. De esta forma podríamos examinar (independientemente de la cantidad de petróleo que se envíe) por qué a un país le compran tanto petróleo (precios más baratos, fronteras más abiertas, etc.).
 
 <br>
 
@@ -352,15 +350,19 @@ En este caso, el 5% de los nodos más importantes podrían ser los nodos más ce
 
 ```{r}
 STR_most_central_nodes = unique(c(STR.in, STR.out))
-V(gwd)$vertex_strength = strength(gwd)
+V(gwd)$vertex_strength = strength(gwd, mode = 'out')
 STR_g_ind = induced_subgraph(gwd, v = STR_most_central_nodes)
 ```
+
+Elegimos la centralidad out-strength para representar el tamaño de los nodos por el motivo explicado en el apartado anterior. De esta forma podremos analizar gráficamente qué países exportan petróleo a una mayor cantidad de países.
+
+<br>
 
 ```{r}
 plot(STR_g_ind, 
      edge.width = E(STR_g_ind)$weight * 0.00000001,
      edge.arrow.size = 0.2,
-     vertex.size = V(STR_g_ind)$vertex_strength * 0.000000012,
+     vertex.size = V(STR_g_ind)$vertex_strength * 0.000000023,
      layout=layout_in_circle)
 ```
 

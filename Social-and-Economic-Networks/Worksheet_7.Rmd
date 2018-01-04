@@ -1,7 +1,7 @@
 ---
 title: "Social and economic networks"
 subtitle: "Handout 7"
-author: "Juan José Martín y Christian Strasser"
+author: "Juan Jos? Mart?n y Christian Strasser"
 output:
   html_document:
     number_sections: false
@@ -81,6 +81,8 @@ df = read.csv("datasets/euroroad.txt", sep = " ")
 g = graph_from_data_frame(df, directed = TRUE)
 ```
 
+<br>
+
 *a)* Provide a statistical summary of it. What are its most central cities?
 
 ```{r}
@@ -88,22 +90,24 @@ summary_g = as.network(as.matrix(as_adjacency_matrix(g)), directed = TRUE)
 summary_g
 ```
 
+<br>
 
 ```{r}
 r = round(gorder(g) * 0.005)
-g_new = delete.vertices(g, names(round(igraph::betweenness(g), 4)[1:r]))
-comp = components(g_new)
-comp$no
+Cent.Bet = names(round(sort(igraph::betweenness(g), decreasing = TRUE), 4)[1:r])
+Cent.Bet
 ```
 
-Betweeness. Simplemente la ciudad por donde tienen que pasar más para llegar a esta misma ciudad o a las demas ciudades conectadas a esta más central.
+Betweeness, ya que muestra las ciudades por donde se ha de pasar mÃ¡s para llegar a las demÃ¡s ciudades.
+
+<br>
 
 *b)* How do you think a road network is formed?
 
 
 *c)* Is this road network compatible with the E-R model, the configuration model, or the basic Barabasi-Albert's model? Justify your answer, and comment whether you expected it.
 
-Obtener orden, tamaño y densidad de $g$:
+Obtener orden, tamaÃ±o y densidad de $g$:
 
 ```{r}
 o_g = gorder(g)
@@ -115,7 +119,7 @@ den_g = edge_density(g, loops = FALSE)
 g2 = sample_gnm(o_g, s_g, directed = FALSE, loops = FALSE)
 ```
 
-Barabasi. Si hay nodos con aristas en las dos direcciones, no será compatible...?
+Barabasi. Si hay nodos con aristas en las dos direcciones, no ser? compatible...?
 
 ```{r}
 F=function(x,y){
