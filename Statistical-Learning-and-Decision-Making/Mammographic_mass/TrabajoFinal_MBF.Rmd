@@ -1,0 +1,109 @@
+---
+title: "Còdigo del Trabajo Final"
+subtitle: '**Aprendizaje supervisado y toma de decisiones**'
+author: Maria del Mar Bibiloni Femenias
+output:
+  html_document:
+    number_sections: false
+    theme: default
+    highlight: tango
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+---
+
+
+<style type="text/css">
+  
+  a:link {
+    color: #0174DF;
+  }
+  
+  code.r {
+    font-size: 14px;
+  } 
+  
+  div pre {
+    background-color:#E0ECF8;
+  }
+  pre {
+    font-size: 14px 
+  }
+ 
+  p {
+    text-align: justify;
+  }
+ 
+  h1, h2, h3, h4, h5, h6 {
+    color: #088A85;
+  }
+
+  th {  
+    background-color:#088A85;
+    color: #FAFAFA;
+    padding:5px;
+  }
+  
+  td {
+    font-size: 11.5pt;
+  } 
+  
+  tr:nth-child(even){
+    background: white;
+  }
+  
+  tr:nth-child(odd){ 
+    background-color: #EFF8FB;
+  }
+</style>
+
+<br>
+
+***
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+En este documento se prentende mostrar todo el código utilizado para realizar el trabajo final de la asignatura _Aprendizaje estadístico y toma de deciciones_.
+
+##Sobre los datos originales
+
+Los datos de mamografías a mujeres con tumores benignos y malignos se pueden descargar del repositiorio UCI, [aquí](http://archive.ics.uci.edu/ml/datasets/Mammographic+Mass).
+
+
+Cargamos los datos.
+```{r}
+original_data= read.table("mammographic_masses.data.txt", sep=",", header=FALSE) 
+```
+
+Nombramos las columnas.
+
+```{r}
+colnames(original_data) <- c("BI-RADS", "Age", "Shape", "Margin", "Density", "Severity")
+```
+
+
+Vemos las primeras filas.
+```{r}
+head(original_data,10)
+```
+
+Dimensiones.
+```{r}
+matrix(dim(original_data),nrow=2, ncol=1, dimnames=list(c("Observations: ","Predictors:"), ""))
+```
+
+Benign-Malign
+```{r}
+table(original_data$Severity)
+```
+
+
+###Train-Test
+
+Toamos el 25% de los datos aleatoriamente y los guardamos como test.
+Éste conjunto de prueba no se va a modificar durante todo el trabajo, ya que se tratará como _nuevos datos_ una vez escogido el mejor modelo. 
+
+
