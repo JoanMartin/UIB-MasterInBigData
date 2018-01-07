@@ -68,6 +68,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 En este documento se prentende mostrar todo el código utilizado para realizar el trabajo final de la asignatura _Aprendizaje estadístico y toma de deciciones_.
 
+_No terminado; sólo aparecen algunas notas._
+
 ##Sobre los datos originales
 
 Los datos de mamografías a mujeres con tumores benignos y malignos se pueden descargar del repositiorio UCI, [aquí](http://archive.ics.uci.edu/ml/datasets/Mammographic+Mass).
@@ -97,13 +99,85 @@ matrix(dim(original_data),nrow=2, ncol=1, dimnames=list(c("Observations: ","Pred
 
 Benign-Malign
 ```{r}
-table(original_data$Severity)
+apply(original_data[,-2], 2, function(x) table(x))
+```
+
+En BI-RADS un valor se nos sale del rango: 55.
+Podemos suponer que es 5 o quitar la observación. La quitamos.
+
+```{r}
+data<-original_data
+data=data[-which(original_data$`BI-RADS`==55),]
+apply(data[,-2], 2, function(x) table(x))
+```
+
+
+###NaN
+
+Veamos cuantos NaN tenemos por columna.
+```{r}
+data[data=="?"]<- NaN
+apply(data, 2, function(x) sum(is.na(x)))
+```
+
+Salvo la edad, no es conveniente cambiar los NaN por algun otro valor.
+(edad solo 2 NaN)
+Así, nos quedamos sólo con las observaciones completas.
+
+```{r}
+data <- data[complete.cases(data),]
+dim(data)
 ```
 
 
 ###Train-Test
 
-Toamos el 25% de los datos aleatoriamente y los guardamos como test.
-Éste conjunto de prueba no se va a modificar durante todo el trabajo, ya que se tratará como _nuevos datos_ una vez escogido el mejor modelo. 
+Tomamos 2/3 de los datos aleatoriamente y los guardamos como train.
+La idea es no usar este conjunto para entrenar ningún modelo y así evitar el overfitting.
+
+```{r}
+set.seed(1123)
+train=sample(nrow(data), size = ceiling(2/3*nrow(data)) )
+test=c(1:nrow(data))[-train]
+```
+
+En los daos originales hay una buena proporción de casos de tumor benigno y maligno, es decir, no es un problema no balanceado. No hay que modificar la muestra.
+
+Hay que comprobar si se mantiene, aproximadamente, la proporción en _test_ y _train_.
+
+```{r}
+matrix(c( table(original_data$Severity)/nrow(original_data),
+table(data[train,]$Severity)/length(train),
+table(data[test,]$Severity)/length(test) ), nrow=3, ncol=2, byrow = TRUE,
+dimnames=list(c("Original set ","Train set", "Test set"), c("Benign (0)","Malign(1)")) )
+```
+
+Se mantiene. Ya tenemos los conjuntos de entrenamiento y validación.
+
+###Variables Dummy
+
+Tenemos varias variabes cuantitativas (ordinales y nominales), por tanto, para usar varios métodos de regresión necesitaremos crear variables dummies.
 
 
+Crear dummies:
+```{r}
+library("dummies")
+data_dum <-dummy.data.frame(data, names=c("BI-RADS","Shape", "Margin", "Density"), sep="_")
+head(data_dum)
+```
+
+Quitamos las columnas que seran la categoria referencia.
+
+* BI_RADS: 0, incompleto.
+* Shape: 4, más común.
+* MArgin: 1, más común.
+* Density: 3, bajo. (Además, el más común)
+
+```{r}
+refCategory=names(data_dum) %in% c("BI-RADS_0", "Shape_4", "Margin_1", "Density_3")
+data_dum = data_dum[, !refCategory]
+head(data_dum)
+```
+
+
+<br>

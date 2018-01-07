@@ -199,6 +199,7 @@ $(document).ready(function () {
 <p><br></p>
 <hr />
 <p>En este documento se prentende mostrar todo el código utilizado para realizar el trabajo final de la asignatura <em>Aprendizaje estadístico y toma de deciciones</em>.</p>
+<p><em>No terminado; sólo aparecen algunas notas.</em></p>
 <div id="sobre-los-datos-originales" class="section level2">
 <h2>Sobre los datos originales</h2>
 <p>Los datos de mamografías a mujeres con tumores benignos y malignos se pueden descargar del repositiorio UCI, <a href="http://archive.ics.uci.edu/ml/datasets/Mammographic+Mass">aquí</a>.</p>
@@ -219,13 +220,118 @@ $(document).ready(function () {
 ## Observations:  961
 ## Predictors:      6</code></pre>
 <p>Benign-Malign</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">table</span>(original_data<span class="op">$</span>Severity)</code></pre></div>
-<pre><code>## 
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">apply</span>(original_data[,<span class="op">-</span><span class="dv">2</span>], <span class="dv">2</span>, <span class="cf">function</span>(x) <span class="kw">table</span>(x))</code></pre></div>
+<pre><code>## $`BI-RADS`
+## x
+##   ?   0   2   3   4   5  55   6 
+##   2   5  14  36 547 345   1  11 
+## 
+## $Shape
+## x
+##   ?   1   2   3   4 
+##  31 224 211  95 400 
+## 
+## $Margin
+## x
+##   ?   1   2   3   4   5 
+##  48 357  24 116 280 136 
+## 
+## $Density
+## x
+##   ?   1   2   3   4 
+##  76  16  59 798  12 
+## 
+## $Severity
+## x
 ##   0   1 
 ## 516 445</code></pre>
+<p>En BI-RADS un valor se nos sale del rango: 55. Podemos suponer que es 5 o quitar la observación. La quitamos.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">data&lt;-original_data
+data=data[<span class="op">-</span><span class="kw">which</span>(original_data<span class="op">$</span><span class="st">`</span><span class="dt">BI-RADS</span><span class="st">`</span><span class="op">==</span><span class="dv">55</span>),]
+<span class="kw">apply</span>(data[,<span class="op">-</span><span class="dv">2</span>], <span class="dv">2</span>, <span class="cf">function</span>(x) <span class="kw">table</span>(x))</code></pre></div>
+<pre><code>## $`BI-RADS`
+## x
+##   ?   0   2   3   4   5   6 
+##   2   5  14  36 547 345  11 
+## 
+## $Shape
+## x
+##   ?   1   2   3   4 
+##  31 224 211  95 399 
+## 
+## $Margin
+## x
+##   ?   1   2   3   4   5 
+##  48 357  24 115 280 136 
+## 
+## $Density
+## x
+##   ?   1   2   3   4 
+##  76  16  59 797  12 
+## 
+## $Severity
+## x
+##   0   1 
+## 516 444</code></pre>
+<div id="nan" class="section level3">
+<h3>NaN</h3>
+<p>Veamos cuantos NaN tenemos por columna.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">data[data<span class="op">==</span><span class="st">&quot;?&quot;</span>]&lt;-<span class="st"> </span><span class="ot">NaN</span>
+<span class="kw">apply</span>(data, <span class="dv">2</span>, <span class="cf">function</span>(x) <span class="kw">sum</span>(<span class="kw">is.na</span>(x)))</code></pre></div>
+<pre><code>##  BI-RADS      Age    Shape   Margin  Density Severity 
+##        2        5       31       48       76        0</code></pre>
+<p>Salvo la edad, no es conveniente cambiar los NaN por algun otro valor. (edad solo 2 NaN) Así, nos quedamos sólo con las observaciones completas.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">data &lt;-<span class="st"> </span>data[<span class="kw">complete.cases</span>(data),]
+<span class="kw">dim</span>(data)</code></pre></div>
+<pre><code>## [1] 829   6</code></pre>
+</div>
 <div id="train-test" class="section level3">
 <h3>Train-Test</h3>
-<p>Toamos el 25% de los datos aleatoriamente y los guardamos como test. Éste conjunto de prueba no se va a modificar durante todo el trabajo, ya que se tratará como <em>nuevos datos</em> una vez escogido el mejor modelo.</p>
+<p>Tomamos el 25% de los datos aleatoriamente y los guardamos como train. La idea es no usar este conjunto para entrenar ningún modelo y así evitar el overfitting.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">1123</span>)
+train=<span class="kw">sample</span>(<span class="kw">nrow</span>(data), <span class="dt">size =</span> <span class="kw">ceiling</span>(<span class="dv">2</span><span class="op">/</span><span class="dv">3</span><span class="op">*</span><span class="kw">nrow</span>(data)) )
+test=<span class="kw">c</span>(<span class="dv">1</span><span class="op">:</span><span class="kw">nrow</span>(data))[<span class="op">-</span>train]</code></pre></div>
+<p>En los daos originales hay una buena proporción de casos de tumor benigno y maligno, es decir, no es un problema no balanceado. No hay que modificar la muestra.</p>
+<p>Hay que comprobar si se mantiene, aproximadamente, la proporción en <em>test</em> y <em>train</em>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">matrix</span>(<span class="kw">c</span>( <span class="kw">table</span>(original_data<span class="op">$</span>Severity)<span class="op">/</span><span class="kw">nrow</span>(original_data),
+<span class="kw">table</span>(data[train,]<span class="op">$</span>Severity)<span class="op">/</span><span class="kw">length</span>(train),
+<span class="kw">table</span>(data[test,]<span class="op">$</span>Severity)<span class="op">/</span><span class="kw">length</span>(test) ), <span class="dt">nrow=</span><span class="dv">3</span>, <span class="dt">ncol=</span><span class="dv">2</span>, <span class="dt">byrow =</span> <span class="ot">TRUE</span>,
+<span class="dt">dimnames=</span><span class="kw">list</span>(<span class="kw">c</span>(<span class="st">&quot;Original set &quot;</span>,<span class="st">&quot;Train set&quot;</span>, <span class="st">&quot;Test set&quot;</span>), <span class="kw">c</span>(<span class="st">&quot;Benign (0)&quot;</span>,<span class="st">&quot;Malign(1)&quot;</span>)) )</code></pre></div>
+<pre><code>##               Benign (0) Malign(1)
+## Original set   0.5369407 0.4630593
+## Train set      0.5099458 0.4900542
+## Test set       0.5253623 0.4746377</code></pre>
+<p>Se mantiene. Ya tenemos los conjuntos de entrenamiento y validación.</p>
+</div>
+<div id="variables-dummy" class="section level3">
+<h3>Variables Dummy</h3>
+<p>Tenemos varias variabes cuantitativas (ordinales y nominales), por tanto, para usar varios métodos de regresión necesitaremos crear variables dummies.</p>
+<p>Crear dummies:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(<span class="st">&quot;dummies&quot;</span>)</code></pre></div>
+<pre><code>## dummies-1.5.6 provided by Decision Patterns</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">data_dum &lt;-<span class="kw">dummy.data.frame</span>(data, <span class="dt">names=</span><span class="kw">c</span>(<span class="st">&quot;BI-RADS&quot;</span>,<span class="st">&quot;Shape&quot;</span>, <span class="st">&quot;Margin&quot;</span>, <span class="st">&quot;Density&quot;</span>), <span class="dt">sep=</span><span class="st">&quot;_&quot;</span>)
+<span class="kw">head</span>(data_dum)</code></pre></div>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["BI-RADS_0"],"name":[1],"type":["int"],"align":["right"]},{"label":["BI-RADS_2"],"name":[2],"type":["int"],"align":["right"]},{"label":["BI-RADS_3"],"name":[3],"type":["int"],"align":["right"]},{"label":["BI-RADS_4"],"name":[4],"type":["int"],"align":["right"]},{"label":["BI-RADS_5"],"name":[5],"type":["int"],"align":["right"]},{"label":["BI-RADS_6"],"name":[6],"type":["int"],"align":["right"]},{"label":["Age"],"name":[7],"type":["fctr"],"align":["left"]},{"label":["Shape_1"],"name":[8],"type":["int"],"align":["right"]},{"label":["Shape_2"],"name":[9],"type":["int"],"align":["right"]},{"label":["Shape_3"],"name":[10],"type":["int"],"align":["right"]},{"label":["Shape_4"],"name":[11],"type":["int"],"align":["right"]},{"label":["Margin_1"],"name":[12],"type":["int"],"align":["right"]},{"label":["Margin_2"],"name":[13],"type":["int"],"align":["right"]},{"label":["Margin_3"],"name":[14],"type":["int"],"align":["right"]},{"label":["Margin_4"],"name":[15],"type":["int"],"align":["right"]},{"label":["Margin_5"],"name":[16],"type":["int"],"align":["right"]},{"label":["Density_1"],"name":[17],"type":["int"],"align":["right"]},{"label":["Density_2"],"name":[18],"type":["int"],"align":["right"]},{"label":["Density_3"],"name":[19],"type":["int"],"align":["right"]},{"label":["Density_4"],"name":[20],"type":["int"],"align":["right"]},{"label":["Severity"],"name":[21],"type":["int"],"align":["right"]}],"data":[{"1":"0","2":"0","3":"0","4":"0","5":"1","6":"0","7":"67","8":"0","9":"0","10":"1","11":"0","12":"0","13":"0","14":"0","15":"0","16":"1","17":"0","18":"0","19":"1","20":"0","21":"1","_rn_":"1"},{"1":"0","2":"0","3":"0","4":"0","5":"1","6":"0","7":"58","8":"0","9":"0","10":"0","11":"1","12":"0","13":"0","14":"0","15":"0","16":"1","17":"0","18":"0","19":"1","20":"0","21":"1","_rn_":"3"},{"1":"0","2":"0","3":"0","4":"1","5":"0","6":"0","7":"28","8":"1","9":"0","10":"0","11":"0","12":"1","13":"0","14":"0","15":"0","16":"0","17":"0","18":"0","19":"1","20":"0","21":"0","_rn_":"4"},{"1":"0","2":"0","3":"0","4":"0","5":"1","6":"0","7":"57","8":"1","9":"0","10":"0","11":"0","12":"0","13":"0","14":"0","15":"0","16":"1","17":"0","18":"0","19":"1","20":"0","21":"1","_rn_":"9"},{"1":"0","2":"0","3":"0","4":"0","5":"1","6":"0","7":"76","8":"1","9":"0","10":"0","11":"0","12":"0","13":"0","14":"0","15":"1","16":"0","17":"0","18":"0","19":"1","20":"0","21":"1","_rn_":"11"},{"1":"0","2":"0","3":"1","4":"0","5":"0","6":"0","7":"42","8":"0","9":"1","10":"0","11":"0","12":"1","13":"0","14":"0","15":"0","16":"0","17":"0","18":"0","19":"1","20":"0","21":"1","_rn_":"12"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+<p>Quitamos las columnas que seran la categoria referencia.</p>
+<ul>
+<li>BI_RADS: 0, incompleto.</li>
+<li>Shape: 4, más común.</li>
+<li>MArgin: 1, más común.</li>
+<li>Density: 3, bajo. (Además, el más común)</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">refCategory=<span class="kw">names</span>(data_dum) <span class="op">%in%</span><span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;BI-RADS_0&quot;</span>, <span class="st">&quot;Shape_4&quot;</span>, <span class="st">&quot;Margin_1&quot;</span>, <span class="st">&quot;Density_3&quot;</span>)
+data_dum =<span class="st"> </span>data_dum[, <span class="op">!</span>refCategory]
+<span class="kw">head</span>(data_dum)</code></pre></div>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["BI-RADS_2"],"name":[1],"type":["int"],"align":["right"]},{"label":["BI-RADS_3"],"name":[2],"type":["int"],"align":["right"]},{"label":["BI-RADS_4"],"name":[3],"type":["int"],"align":["right"]},{"label":["BI-RADS_5"],"name":[4],"type":["int"],"align":["right"]},{"label":["BI-RADS_6"],"name":[5],"type":["int"],"align":["right"]},{"label":["Age"],"name":[6],"type":["fctr"],"align":["left"]},{"label":["Shape_1"],"name":[7],"type":["int"],"align":["right"]},{"label":["Shape_2"],"name":[8],"type":["int"],"align":["right"]},{"label":["Shape_3"],"name":[9],"type":["int"],"align":["right"]},{"label":["Margin_2"],"name":[10],"type":["int"],"align":["right"]},{"label":["Margin_3"],"name":[11],"type":["int"],"align":["right"]},{"label":["Margin_4"],"name":[12],"type":["int"],"align":["right"]},{"label":["Margin_5"],"name":[13],"type":["int"],"align":["right"]},{"label":["Density_1"],"name":[14],"type":["int"],"align":["right"]},{"label":["Density_2"],"name":[15],"type":["int"],"align":["right"]},{"label":["Density_4"],"name":[16],"type":["int"],"align":["right"]},{"label":["Severity"],"name":[17],"type":["int"],"align":["right"]}],"data":[{"1":"0","2":"0","3":"0","4":"1","5":"0","6":"67","7":"0","8":"0","9":"1","10":"0","11":"0","12":"0","13":"1","14":"0","15":"0","16":"0","17":"1","_rn_":"1"},{"1":"0","2":"0","3":"0","4":"1","5":"0","6":"58","7":"0","8":"0","9":"0","10":"0","11":"0","12":"0","13":"1","14":"0","15":"0","16":"0","17":"1","_rn_":"3"},{"1":"0","2":"0","3":"1","4":"0","5":"0","6":"28","7":"1","8":"0","9":"0","10":"0","11":"0","12":"0","13":"0","14":"0","15":"0","16":"0","17":"0","_rn_":"4"},{"1":"0","2":"0","3":"0","4":"1","5":"0","6":"57","7":"1","8":"0","9":"0","10":"0","11":"0","12":"0","13":"1","14":"0","15":"0","16":"0","17":"1","_rn_":"9"},{"1":"0","2":"0","3":"0","4":"1","5":"0","6":"76","7":"1","8":"0","9":"0","10":"0","11":"0","12":"1","13":"0","14":"0","15":"0","16":"0","17":"1","_rn_":"11"},{"1":"0","2":"1","3":"0","4":"0","5":"0","6":"42","7":"0","8":"1","9":"0","10":"0","11":"0","12":"0","13":"0","14":"0","15":"0","16":"0","17":"1","_rn_":"12"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+<p><br></p>
 </div>
 </div>
 
