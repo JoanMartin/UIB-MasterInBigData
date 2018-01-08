@@ -129,6 +129,11 @@ data <- data[complete.cases(data),]
 dim(data)
 ```
 
+Tipo numerico.
+```{r}
+data <- as.data.frame(apply(data, 2, as.numeric))
+```
+
 
 ###Train-Test
 
@@ -154,6 +159,17 @@ dimnames=list(c("Original set ","Train set", "Test set"), c("Benign (0)","Malign
 
 Se mantiene. Ya tenemos los conjuntos de entrenamiento y validación.
 
+##Pair Plot
+
+```{r}
+cols <- character(length = length(train))
+cols[] <- "black"
+cols[data[train,]$Severity == 1] <- "blue"
+cols[data[train,]$Severity == 0] <- "orange"
+pairs(data[train,], pch = 21, bg = cols )
+```
+
+
 ###Variables Dummy
 
 Tenemos varias variabes cuantitativas (ordinales y nominales), por tanto, para usar varios métodos de regresión necesitaremos crear variables dummies.
@@ -178,6 +194,155 @@ refCategory=names(data_dum) %in% c("BI-RADS_0", "Shape_4", "Margin_1", "Density_
 data_dum = data_dum[, !refCategory]
 head(data_dum)
 ```
+
+## Mètodos de Regressión 
+
+Primero, veamos unos mètodos simples, ya que pueden ir mejor que otros más sofisticados.
+
+### K-nearest neighbors
+
+
+Elegir la mejor k con validación cruzada 10-veces.
+(Aquí no usamos las dummies)
+
+```{r}
+library(ISLR)
+library(caret)
+
+set.seed(5813)
+cross_val <- trainControl(method="cv", number=10)
+
+data$Severity <- as.factor(data$Severity)
+knn_fit <- train(Severity ~ ., data = data[train,], method = "knn", metric="Accuracy",  trControl = cross_val, tuneLength = 10)
+knn_fit
+```
+
+Selecciona 17, pero por la poca diferencia nos podriamos quedar con 5 o 7.
+Tomamos 5 para evitar no detectar "zonas" con pocos datos.
+
+knn con k=5 para saber el error en test.
+
+```{r}
+library(class)
+library('gmodels')
+knn_k5_fit=knn(data[train,], data[test,], cl=data[train,]$Severity, k = 5)
+ct_knn=CrossTable(x=data[test,]$Severity, y=knn_k5_fit)
+```
+
+Si nos fijamos en los tumores clasificados correctamente, el error es pequeño para tipo.
+En otras palabras, no se equivoca mucho en uno de los casos.
+
+```{r}
+cat("Accuracy benign:",(ct_knn$t[1])/(ct_knn$t[1] + ct_knn$t[3]))
+cat("Accuracy malign:",(ct_knn$t[4])/(ct_knn$t[2] + ct_knn$t[4]))
+```
+
+
+Error total.
+```{r}
+error_knn5 = (ct_knn$t[2] + ct_knn$t[3])/length(test)
+cat("error:",error_knn5)
+cat("accuracy:",1-error_knn5)
+```
+
+### Logistic regression
+
+Estimaremos el modelo con todas las variables dummies.
+
+```{r}
+logReg <- glm(Severity ~.,family=binomial(link='logit'),data=data_dum[train,])
+logReg$coefficients
+```
+
+Error en test.
+
+Error en test.
+```{r}
+logReg_fit <- predict(logReg,newdata=data_dum[test,-17], type='response')
+
+#>0.5 --> 1; <0.5 --> 0
+logReg_fit  <- ifelse(logReg_fit  >= 0.5,1,0)
+
+error_logReg_0 <- mean(logReg_fit   != data_dum[test,]$Severity)
+cat('Error',error_logReg_0)
+cat('Accuracy',1-error_logReg_0)
+```
+
+Contrastes de significación, $alpha=0.05$.
+```{r}
+summary(logReg)
+```
+
+Ningún coeficiente del grupo BI-RADS ni Density es significativo.
+Matriz de correlaciones.
+
+```{r}
+# Melt the correlation matrix
+
+cormat = cor(data[,-6])
+get_upper_tri <- function(cormat){
+  cormat[lower.tri(cormat)]<- NA
+  return(cormat)
+}
+library(reshape2)
+upper_tri <-get_upper_tri(cormat)
+melted_cormat <- melt(upper_tri, na.rm = TRUE)
+# Heatmap
+library(ggplot2)
+ggplot(data = melted_cormat, aes(Var2, Var1, fill = value))+
+ geom_tile(color = "white")+
+ scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+   midpoint = 0, limit = c(-1,1), space = "Lab", 
+   name="Pearson\nCorrelation") +
+  theme_minimal()+ 
+ theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+    size = 12, hjust = 1))+
+ coord_fixed()
+```
+
+Density no està muy correlacionada con ninguna otra variable.
+Eliminamos BI-RADS y repetimos ($alpha=0.05$).
+
+```{r}
+data_logReg = data_dum[,6:17]
+logReg_notBR <- glm(Severity ~.,family=binomial(link='logit'),data=data_logReg[train,])
+summary(logReg_notBR)
+```
+
+Ahora si, todos los grupos tienen un coeficiente significativo al 5%.
+
+Coeficientes.
+```{r}
+logReg_notBR$coefficients
+```
+
+Error en test.
+```{r}
+logReg_notBR_fit <- predict(logReg_notBR,newdata=data_logReg[test,-12], type='response')
+
+#>0.5 --> 1; <0.5 --> 0
+logReg_notBR_fit  <- ifelse(logReg_notBR_fit  >= 0.5,1,0)
+
+error_logReg <- mean(logReg_notBR_fit  != data_logReg[test,]$Severity)
+cat('Error',error_logReg)
+cat('Accuracy',1-error_logReg)
+```
+
+Veamos el error por classes.
+
+```{r}
+ct_logReg=CrossTable(x=data_logReg[test,]$Severity, y=logReg_notBR_fit)
+```
+
+```{r}
+cat("Accuracy benign:",(ct_logReg$t[1])/(ct_logReg$t[1] + ct_logReg$t[3]))
+cat("Accuracy malign:",(ct_logReg$t[4])/(ct_logReg$t[2] + ct_logReg$t[4]))
+```
+
+Por ahora nos quedamos con knn. 
+No solo buscamos un modelo que reduzca el error de test, sinó uno que reduzca el número de pacientes que se realizan una biopsia innecesária (falsos negativos).
+Por otra parte, recordemos que tratamos datos de cancer y, por tanto, no queremos casos de cancer no seleccionados (falsos positivos).
+
 
 
 <br>
