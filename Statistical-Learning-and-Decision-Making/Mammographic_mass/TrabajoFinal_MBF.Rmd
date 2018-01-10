@@ -5,6 +5,7 @@ author: Maria del Mar Bibiloni Femenias
 output:
   html_document:
     number_sections: false
+    toc: true
     theme: default
     highlight: tango
     df_print: paged
@@ -83,7 +84,7 @@ original_data= read.table("mammographic_masses.data.txt", sep=",", header=FALSE)
 Nombramos las columnas.
 
 ```{r}
-colnames(original_data) <- c("BI-RADS", "Age", "Shape", "Margin", "Density", "Severity")
+colnames(original_data) <- c("BIRADS", "Age", "Shape", "Margin", "Density", "Severity")
 ```
 
 
@@ -107,7 +108,7 @@ Podemos suponer que es 5 o quitar la observación. La quitamos.
 
 ```{r}
 data<-original_data
-data=data[-which(original_data$`BI-RADS`==55),]
+data=data[-which(original_data$BIRADS==55),]
 apply(data[,-2], 2, function(x) table(x))
 ```
 
@@ -159,7 +160,7 @@ dimnames=list(c("Original set ","Train set", "Test set"), c("Benign (0)","Malign
 
 Se mantiene. Ya tenemos los conjuntos de entrenamiento y validación.
 
-##Pair Plot
+###Pair Plot
 
 ```{r}
 cols <- character(length = length(train))
@@ -178,7 +179,7 @@ Tenemos varias variabes cuantitativas (ordinales y nominales), por tanto, para u
 Crear dummies:
 ```{r}
 library("dummies")
-data_dum <-dummy.data.frame(data, names=c("BI-RADS","Shape", "Margin", "Density"), sep="_")
+data_dum <-dummy.data.frame(data, names=c("BIRADS","Shape", "Margin", "Density"), sep="_")
 head(data_dum)
 ```
 
@@ -190,12 +191,12 @@ Quitamos las columnas que seran la categoria referencia.
 * Density: 3, bajo. (Además, el más común)
 
 ```{r}
-refCategory=names(data_dum) %in% c("BI-RADS_0", "Shape_4", "Margin_1", "Density_3")
+refCategory=names(data_dum) %in% c("BIRADS_0", "Shape_4", "Margin_1", "Density_3")
 data_dum = data_dum[, !refCategory]
 head(data_dum)
 ```
 
-## Mètodos de Regressión 
+## Mètodos de clasificación
 
 Primero, veamos unos mètodos simples, ya que pueden ir mejor que otros más sofisticados.
 
@@ -217,10 +218,9 @@ knn_fit <- train(Severity ~ ., data = data[train,], method = "knn", metric="Accu
 knn_fit
 ```
 
-Selecciona 17, pero por la poca diferencia nos podriamos quedar con 5 o 7.
-Tomamos 5 para evitar no detectar "zonas" con pocos datos.
+Selecciona 15, pero por la poca diferencia nos podriamos quedar con 9, ya que con menos vecinos evitamos no detectar "zonas" con pocos datos. Comparemos 9 con 15 en test.
 
-knn con k=5 para saber el error en test.
+* knn con k=5 para saber el error en test.
 
 ```{r}
 library(class)
@@ -233,17 +233,38 @@ Si nos fijamos en los tumores clasificados correctamente, el error es pequeño p
 En otras palabras, no se equivoca mucho en uno de los casos.
 
 ```{r}
-cat("Accuracy benign:",(ct_knn$t[1])/(ct_knn$t[1] + ct_knn$t[3]))
-cat("Accuracy malign:",(ct_knn$t[4])/(ct_knn$t[2] + ct_knn$t[4]))
-```
-
-
-Error total.
-```{r}
 error_knn5 = (ct_knn$t[2] + ct_knn$t[3])/length(test)
-cat("error:",error_knn5)
-cat("accuracy:",1-error_knn5)
+accuracy_knn5=1-error_knn5
+
+accuracy_bening_knn5=(ct_knn$t[1])/(ct_knn$t[1] + ct_knn$t[3])
+accuracy_malign_knn5=(ct_knn$t[4])/(ct_knn$t[2] + ct_knn$t[4])
 ```
+
+```{r}
+list_knn5=c(error_knn5, accuracy_knn5, accuracy_bening_knn5,accuracy_malign_knn5)
+
+matrix(list_knn5, nrow=1, ncol=4,
+dimnames=list(c("Knn (K=5)"),c("Error", "Accuracy", "Accuracy_bening", "Accuracy_malign")) )
+```
+
+* knn con k=15 para saber el error en test.
+
+```{r}
+knn_k15_fit=knn(data[train,], data[test,], cl=data[train,]$Severity, k = 15)
+ct_knn15=CrossTable(x=data[test,]$Severity, y=knn_k15_fit)
+error_knn15 = (ct_knn15$t[2] + ct_knn15$t[3])/length(test)
+accuracy_knn15=1-error_knn15
+
+accuracy_bening_knn15=(ct_knn15$t[1])/(ct_knn15$t[1] + ct_knn15$t[3])
+accuracy_malign_knn15=(ct_knn15$t[4])/(ct_knn15$t[2] + ct_knn15$t[4])
+
+list_knn15=c(error_knn15, accuracy_knn15, accuracy_bening_knn15,accuracy_malign_knn15)
+
+matrix(c(list_knn5,list_knn15), nrow=2, ncol=4, byrow = TRUE,
+dimnames=list(c("Knn (K=5)","Knn (K=15)"),c("Error", "Accuracy", "Accuracy_bening", "Accuracy_malign")) )
+```
+
+Nos quedamos con k=5!
 
 ### Logistic regression
 
@@ -254,7 +275,6 @@ logReg <- glm(Severity ~.,family=binomial(link='logit'),data=data_dum[train,])
 logReg$coefficients
 ```
 
-Error en test.
 
 Error en test.
 ```{r}
@@ -264,9 +284,22 @@ logReg_fit <- predict(logReg,newdata=data_dum[test,-17], type='response')
 logReg_fit  <- ifelse(logReg_fit  >= 0.5,1,0)
 
 error_logReg_0 <- mean(logReg_fit   != data_dum[test,]$Severity)
-cat('Error',error_logReg_0)
-cat('Accuracy',1-error_logReg_0)
+accuracy_logReg_0=1-error_logReg_0
+
 ```
+
+```{r}
+ct_logReg_0=CrossTable(x=data[test,]$Severity, y=logReg_fit)
+
+accuracy_bening_logReg_0=(ct_logReg_0$t[1])/(ct_logReg_0$t[1] + ct_logReg_0$t[3])
+accuracy_malign_logReg_0= (ct_logReg_0$t[4])/(ct_logReg_0$t[2] + ct_logReg_0$t[4])
+
+list_logReg_0=c(error_logReg_0, accuracy_logReg_0, accuracy_bening_logReg_0,accuracy_malign_logReg_0)
+
+matrix(list_logReg_0, nrow=1, ncol=4,
+dimnames=list(c("Tree"),c("Error", "Accuracy", "Accuracy_bening", "Accuracy_malign")) )
+```
+
 
 Contrastes de significación, $alpha=0.05$.
 ```{r}
@@ -324,8 +357,9 @@ logReg_notBR_fit <- predict(logReg_notBR,newdata=data_logReg[test,-12], type='re
 logReg_notBR_fit  <- ifelse(logReg_notBR_fit  >= 0.5,1,0)
 
 error_logReg <- mean(logReg_notBR_fit  != data_logReg[test,]$Severity)
+accuracy_logReg = 1-error_logReg
 cat('Error',error_logReg)
-cat('Accuracy',1-error_logReg)
+cat('Accuracy',accuracy_logReg)
 ```
 
 Veamos el error por classes.
@@ -334,15 +368,98 @@ Veamos el error por classes.
 ct_logReg=CrossTable(x=data_logReg[test,]$Severity, y=logReg_notBR_fit)
 ```
 
+Error quitando coeficientes
+
 ```{r}
-cat("Accuracy benign:",(ct_logReg$t[1])/(ct_logReg$t[1] + ct_logReg$t[3]))
-cat("Accuracy malign:",(ct_logReg$t[4])/(ct_logReg$t[2] + ct_logReg$t[4]))
+accuracy_bening_logReg=(ct_logReg$t[1])/(ct_logReg$t[1] + ct_logReg$t[3])
+accuracy_malign_logReg= (ct_logReg$t[4])/(ct_logReg$t[2] + ct_logReg$t[4])
+
+list_logReg=c(error_logReg, accuracy_logReg, accuracy_bening_logReg,accuracy_malign_logReg)
+
+matrix(list_logReg, nrow=1, ncol=4,
+dimnames=list(c("Tree"),c("Error", "Accuracy", "Accuracy_bening", "Accuracy_malign")) )
 ```
+
+Comparación logReg
+
+```{r}
+matrix(c(list_logReg_0, list_logReg), nrow=2, ncol=4, byrow=TRUE,
+dimnames=list(c("Logistic Reg. (All)", "Log Reg. (Not BR)"), c("Error", "Accuracy", "Accuracy_bening", "Accuracy_malign")) )
+```
+
 
 Por ahora nos quedamos con knn. 
 No solo buscamos un modelo que reduzca el error de test, sinó uno que reduzca el número de pacientes que se realizan una biopsia innecesária (falsos negativos).
 Por otra parte, recordemos que tratamos datos de cancer y, por tanto, no queremos casos de cancer no seleccionados (falsos positivos).
 
+### Árboles de clasificación
+
+Para los árboles de clasificación no es necesario usar las variables dummies.
+
+```{r}
+require(ISLR)
+require(tree)
+
+#names(data) <- c("BIRADS",  "Age",      "Shape",    "Margin",   "Density",  "Severity")
+tree=tree(Severity ~. ,data=data[train,])
+plot(tree)
+text(tree,pretty=0)
+```
+
+
+Con un árbol de tan poca profundidad, casi no parece necesário hacer validación cruzada para elegir cuando cortar. Aún así, puede haber overfiting al hacer el último paso.
+
+Cabe destacar, que un árbol ayuda a la interpretación. Además en este caso es coherente con la intuición: Si BIRADS es 5, hay una alta sospecha de que sea maligno, por tanto, la biopsia es necesária. En otro caso, hay que analizar los demás resultados para ver si lo és o no, y así evitar un alto número de biopsias innecesarias.
+
+Notemos que no usa Margin ni Density; se basa simplemente en la edad de la mujer y forma del tumor.
+
+Validación cruzada para elegir la profundidad.
+```{r}
+set.seed(777)
+tree_cv=cv.tree(tree,FUN=prune.misclass, K=10)
+tree_cv
+plot(tree_cv)
+```
+
+Nos quedamos con 3 de profundidad
+
+
+```{r}
+prune_tree=prune.misclass(tree,best=3)
+plot(prune_tree)
+text(prune_tree,pretty=0)
+```
+
+Error.
+
+```{r}
+tree_fit=predict(prune_tree,data[test,],type="class")
+ct_tree=with(data[test,],table(tree_fit,Severity))
+ct_tree
+```
+
+```{r}
+error_tree=(ct_tree[1,2]+ct_tree[2,1])/length(test)
+accuracy_tree=1-error_tree
+
+accuracy_bening_tree=(ct_tree[1,1])/(ct_tree[1,1] + ct_tree[2,1])
+accuracy_malign_tree=(ct_tree[2,2])/(ct_tree[1,2] + ct_tree[2,2])
+
+list_tree=c(error_tree, accuracy_tree, accuracy_bening_tree,accuracy_malign_tree)
+
+matrix(list_tree, nrow=1, ncol=4,
+dimnames=list(c("Tree"),c("Error", "Accuracy", "Accuracy_bening", "Accuracy_malign")) )
+
+```
+
+###Random Forests
+
+##Comparación
+
+```{r}
+matrix(c(list_knn5, list_logReg_0, list_logReg, list_tree), nrow=4, ncol=4, byrow=TRUE,
+dimnames=list(c("knn (K=5)","Logistic Reg. (All)", "Log Reg. (Not BR)", "Tree (d=3)"), c("Error", "Accuracy", "Accuracy_bening", "Accuracy_malign")) )
+```
 
 
 <br>
