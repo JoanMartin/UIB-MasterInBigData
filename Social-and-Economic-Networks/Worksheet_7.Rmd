@@ -1,7 +1,7 @@
 ---
 title: "Social and economic networks"
 subtitle: "Handout 7"
-author: "Juan Jos? Mart?n y Christian Strasser"
+author: "Juan José Martín y Christian Strasser"
 output:
   html_document:
     number_sections: false

@@ -1,14 +1,76 @@
 ---
-title: "Handout 8"
-output: html_document
+title: "Social and economic networks"
+subtitle: "Handout 8"
+author: "Juan Jos√© Mart√≠n y Christian Strasser"
+output:
+  html_document:
+    number_sections: false
+    highlight: tango
+    toc: yes
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
 ---
 
+
+
+<style type="text/css">
+
+  body {
+    background-color: #f6f7fd; 
+  }
+  
+  a:link {
+    color: #0174DF;
+  }
+  
+  code.r {
+    font-size: 14px;
+  } 
+  
+  div pre {
+    background-color:#E0ECF8;
+  }
+  pre {
+    font-size: 14px 
+  }
+ 
+  p {
+    text-align: justify;
+  }
+ 
+    
+  h1, h2, h3, h4, h5, h6 {
+    color: #737aaa;
+  }
+
+  th {  
+    background-color:#737aaa;
+    color: #FAFAFA;
+    padding:5px;
+  }
+  
+  td {
+    font-size: 11.5pt;
+  } 
+  
+  tr:nth-child(even){
+    background: white;
+  }
+  
+  tr:nth-child(odd){ 
+    background-color: #EFF8FB;
+  }
+</style>
+
+*** 
 
 ```{r global_options, include=FALSE}
 knitr::opts_chunk$set(fig.width=8, fig.height=8, fig.align="center", echo=TRUE, warning=FALSE, message=FALSE,autodep = TRUE,cache=TRUE)
 library(ergm)
 library(statnet)
 library(igraph)
+library(knitr)
 rm(list=ls())
 ```
 
@@ -19,7 +81,6 @@ rm(list=ls())
 
 Define a network with these data frames, and make sure that its nodes have as attributes at least their names, sex, birthyear, race and position.
 
-Crear grafo:
 ```{r}
 df_e = read.csv("datasets/GA_edges.txt", sep = "\t")
 df_v = read.csv("datasets/GA_nodes.txt", sep = "\t")
@@ -30,35 +91,8 @@ g = graph_from_data_frame(df_e, directed = FALSE)
 ```{r}
 plot(g)
 ```
-```{r}
-g2 = delete.vertices(g, c('35','27','28','9','8','43','25','40','41','16','12','2','11'))
-```
 
-```{r}
-plot(g2)
-```
-```{r}
-is_bipartite(g2)
-```
-
-
-```{r}
-for(i in vertex_attr(g2)$name){
-  g2 = set_vertex_attr(g2, name = "sex", index = i, value = as.character(df_v[i,2]))
-  g2 = set_vertex_attr(g2, name = "race", index = i, value = as.character(df_v[i,3]))
-  g2 = set_vertex_attr(g2, name = "birthyear", index = i, value = as.character(df_v[i,4]))
-  g2 = set_vertex_attr(g2, name = "position", index = i, value = as.character(df_v[i,5]))
-  g2 = set_vertex_attr(g2, name = "season", index = i, value = as.character(df_v[i,6]))
-  g2 = set_vertex_attr(g2, name = "sign", index = i, value = as.character(df_v[i,7]))
-  g2 = set_vertex_attr(g2, name = "name", index = i, value = as.character(df_v[i,1]))
-}
-```
-
-```{r}
-vertex_attr(g2)
-```
-
-AÒadir atributos a nodos:
+<br>
 
 ```{r}
 for(i in vertex_attr(g)$name){
@@ -76,51 +110,112 @@ for(i in vertex_attr(g)$name){
 vertex_attr(g)
 ```
 
+<br>
+
+El atributo *Sign* tiene valores a nulo, por lo que los asignamos como *Unknown*:
+
+```{r}
+V(g)$sign[is.na(V(g)$sign)] = "Unknown"
+```
+
+<br>
+
 *a)* Provide a statistical summary of this network (including a suitable statistical description of the nodes' attributes that you use in points (c) and (d) below) and plot it with the nodes labelled with the characters' names and colored with their anatomic sex. 
 
+Datos estad√≠sticos del grafo:
+
+* Order: `r igraph::gorder(g)`. 
+
+* Tama√±o: `r igraph::gsize(g)`
+
+* Densidad: `r round(igraph::edge_density(g), 4)`
+
+* Componentes: El n√∫mero de componentes conexos es `r igraph::components(g)$no` y sus tama√±os son `r igraph::components(g)$csize`
+
+* Di√°metro: `r igraph::diameter(g)`
+
+* Distancia media: `r mean_distance(g)`
+
+* Transitividad: `r round(igraph::transitivity(g), 4)`
+
+<br>
+
+* Atributo *Sex*:
 ```{r}
-summary.data.frame(df_v)
+table(factor(V(g)$sex, labels=unique(V(g)$sex)))
 ```
 
-El aÒo (birthyear) y la temporada (season) NO deberÌan tratarse como n˙meros...
+<br>
 
+* Atributo *Race*:
 ```{r}
-plot(g, vertex.color=c("pink","skyblue")[1+(V(g)$sex=="M")])
+table(factor(V(g)$race, labels=unique(V(g)$race)))
 ```
+
+<br>
+
+* Atributo *Birthyear*:
+```{r}
+table(factor(V(g)$birthyear, labels=unique(V(g)$birthyear)))
+```
+
+<br>
+
+* Atributo *Position*:
+```{r}
+table(factor(V(g)$position, labels=unique(V(g)$position)))
+```
+
+<br>
+
+* Atributo *Season*:
+```{r}
+table(factor(V(g)$season, labels=unique(V(g)$season)))
+```
+
+<br>
+
+* Atributo *Sign*:
+```{r}
+table(factor(V(g)$sign, labels=unique(V(g)$sign)))
+```
+
+<br>
+
+* Representaci√≥n gr√°fica del grafo:
+```{r}
+plot(g, vertex.color = c("pink","skyblue")[1+(V(g)$sex=="M")])
+```
+
+<br>
 
 *b)* Is this network bipartite? Justify your answer and explain its meaning for this specific network.
 
-No se trata de una red bipartida porque existe una relaciÛn homosexual que crea un n˙mero impar de cliclos impidiendo poder hacer una agrupaciÛn de los nodos de la red en 2 conjuntos U y V que cumplen con las condiciones para ser una red bipartida.??
+No se trata de una red bipartida porque existe una relaci√≥n homosexual que crea un n√∫ero impar de cliclos impidiendo poder hacer una agrupaci√≥n de los nodos de la red en 2 conjuntos U y V que cumplen con las condiciones para ser una red bipartida.??
 
 ```{r}
-g2 = delete.vertices(g, c("adele","chief", "catherine", "ellis_grey", "thatch_grey", "susan_grey", "lloyd", "bailey", "ben", "tucker", "pierce", "megan", "mostow"))
-```
-```{r}
-is_bipartite(g2)
-```
-```{r}
-plot(g2, vertex.color=c("pink","skyblue")[1+(V(g2)$sex=="M")], vertex.size=0.25)
-```
-```{r}
-is_bipartite(g2)
+is_bipartite(g)
 ```
 
+<br>
 
 *c)* If you wanted to test one single character for sexually transmitted infections, who would he/she be? Why?
 
-En una red que muestra las relaciones sexuales entre personas, el personaje m·s importante a analizar serÌa aquel nodo con mayor grado, que representa el n˙mero de personas con las que ha tenido relaciones.
+En una red que muestra las relaciones sexuales entre personas, el personaje m√°s importante a analizar ser√≠a aquel nodo con mayor grado, que representa el n√∫mero de personas con las que ha tenido relaciones.
 
 ```{r}
 V(g)$name[degree(g)==max(degree(g))]
 ```
 
+<br>
+
 *d)* Fit an ERGM to this network using as predictors its number of edges and of homosexual relations. Explain the results obtained, and check its goodness of fit.
 
 ```{r}
-g.net=as.network(as.matrix(as_adjacency_matrix(g)),directed=FALSE)
-network::set.vertex.attribute(g.net,"name", V(g)$name)
-network::set.vertex.attribute(g.net,"sex", V(g)$sex)
-network::set.vertex.attribute(g.net,"birthyear", strtoi(V(g)$birthyear,base=0L))
+g.net = as.network(as.matrix(as_adjacency_matrix(g)), directed=FALSE)
+network::set.vertex.attribute(g.net, "name", V(g)$name)
+network::set.vertex.attribute(g.net, "sex", V(g)$sex)
+network::set.vertex.attribute(g.net, "birthyear", strtoi(V(g)$birthyear, base=0L))
 g.net
 ```
 
@@ -134,6 +229,7 @@ fit.gof_g.net <- gof(fit_g.net)
 summary(fit.gof_g.net)
 ```
 
+<br>
 
 *e)* Add as extra predictors the "monogamy" and difference of age between adjacent nodes (it is done by Leavitt in his workshop). Explain the results obtained, and check its goodness of fit.
 
@@ -146,36 +242,42 @@ fit2.gof_g.net <- gof(fit2_g.net)
 summary(fit2.gof_g.net)
 ```
 
+<br>
+
 *f)* Try at least one more model that you consider interesting and that you think could explain better the network (you can add predictors to (e) and remove predictors from it; it is forbidden to use anything related to transitivity, because of (g) below). Justify your choice, explain the results obtained and check whether it fits better the network.
 
 ```{r}
 
 ```
 
+<br>
+
 *g)*  What is a triangle in this network? Test the transitivity and the average clustering of this network with the previous models. Explain your results.
 
-Un tri·ngulo en esta red no dirigida represanta un grupo de tres nodos que forman un clico entre sÌ, es decir, un grupo de tres presonas donde al menos dos de ellas tienen el mismo sexo y han tenido una relaciÛn sexual.
+Un tri√°ngulo en esta red no dirigida representa un grupo de tres nodos que forman un clico entre s√≠, es decir, un grupo de tres presonas donde al menos dos de ellas tienen el mismo sexo y han tenido una relaci√≥n sexual.
 
 Coeficiente de clustering:
 ```{r}
-round(transitivity(g, type="average"),4)
+round(transitivity(g, type="average"), 4)
 ```
 
 <br>
 
 Coeficiente de transitividad:
 ```{r}
-round(transitivity(g),4)
+round(transitivity(g), 4)
 ```
 
-En esta red no dirigida no existe ning˙n ciclo entre tres nodos. Aunque sÌ existen relaciones homosexuales en esta red, estos nodos no forman ning˙n ciclo con otro nodo, lo cual explica que tanto el coeficiente de clustering, como el coeficiente de transitividad dan 0.
+En esta red no dirigida no existe ning√∫n ciclo entre tres nodos. Aunque s√≠ existen relaciones homosexuales en esta red, estos nodos no forman ning√∫n ciclo con otro nodo, lo cual explica que tanto el coeficiente de clustering, como el coeficiente de transitividad dan 0.
+
+<br>
 
 *h)* P. S. Bearman, J. Moody and K. Stovel (in their classic "Chains of affection: The structure of adolescent romantic and sexual networks" (*Am. J. Soc.* 110 (2004), 44-91) on romantic relations in a High School which we have mentioned several times in the course) found a prohibition against coupling with a former partner's former partner's former partner (and justified it on the basis status implications). Check whether this network satisfies this prohibition, and test it on the previous models.
 
 Para analizar si nuestra red sigue o no el estudio de "_Chains of affection_" simplemente hay que mirar cuantos ciclos de 4 nodos existen en la red, que corresponde a un caso donde NO se cumple el estudio de "_Chains of affection_". 
 
 ```{r}
-cycles = kcycle.census(dat=get.adjacency(g2, type=c("both"), attr=NULL, sparse = FALSE), maxlen=4, tabulate.by.vertex=FALSE, mode = "graph")
+cycles = kcycle.census(dat = get.adjacency(g, type = c("both"), attr = NULL, sparse = FALSE), maxlen = 4, tabulate.by.vertex = FALSE, mode = "graph")
 cycles
 ```
 
