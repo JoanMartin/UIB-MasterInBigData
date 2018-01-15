@@ -64,12 +64,12 @@ editor_options:
 <br>
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
 ```
 
-En este documento se prentende mostrar todo el código utilizado para realizar el trabajo final de la asignatura Aprendizaje estadístico y toma de deciciones: _Clasificación de Tumores según Datos de Mamografías_ .
+En este documento se prentende mostrar todo el código utilizado para realizar el trabajo final de la asignatura Aprendizaje estadístico y toma de deciciones: _Clasificación de Tumores según Datos de Mamografías_ . 
 
-_No terminado; sólo aparecen algunas notas._
+**Nota:** No aparece texto explicativo sobre en análisi datos, sinó algunos comentarios para acompanyar el código que se aplica a cada caso. Así, el documento *TrabajoFinal_memoria_MBF.pdf* es el documento principal, con las explicaciones correspondientes.
 
 ##Preparación del dataset.
 
@@ -97,7 +97,7 @@ Dimensiones.
 matrix(dim(original_data),nrow=2, ncol=1, dimnames=list(c("Observations: ","Predictors:"), ""))
 ```
 
-Excepto la variable **Age**, las variables son cualitativas.
+Excepto la variable **Age**, las variables son cualitativas.<br>
 Veamos cuántos valores hay de cada tipo.
 ```{r}
 apply(original_data[,-2], 2, function(x) table(x))
@@ -109,10 +109,10 @@ data<-original_data
 data=data[-which(original_data$BIRADS==55),]
 ```
 
-Además tenemos 5 ceros pero, según la documentación, BI-RADS toma valores entre 1 y 5.
+Además tenemos 5 ceros pero, según la documentación, BI-RADS toma valores entre 1 y 5.<br>
 Aún así, el valor cero si que existe en la classificación de BI-RADS.
 
-Para evitar tener observaciones erroneas, los quitamos.
+Para evitar tener observaciones erroneas, los quitamos.<br>
 (Si tubieramos más información sobre el data set se podría arreglar)
 ```{r}
 data[which(data$BIRADS==0),]
@@ -134,7 +134,7 @@ data[data=="?"]<- NaN
 apply(data, 2, function(x) sum(is.na(x)))
 ```
 
-Salvo la edad, no es conveniente cambiar los NaN por algun otro valor.
+Salvo la edad, no es conveniente cambiar los NaN por algun otro valor.<br>
 Así, nos quedamos sólo con las observaciones completas.
 ```{r}
 data <- data[complete.cases(data),]
@@ -147,7 +147,7 @@ apply(data[,-2], 2, function(x) table(x))
 ```
 
 
-Tal como sigue, R reconoce las variables como factores, pero para poder aplicar la mayoría de mètodos, necesitamos que sean de tipo numérico.
+Tal como sigue, R reconoce las variables como factores, pero para poder aplicar la mayoría de métodos, necesitamos que sean de tipo numérico.
 ```{r}
 lapply(data[1,], data.class)
 ```
@@ -161,7 +161,7 @@ data$Severity <- as.factor(data$Severity)
 
 ### Train-Test
 
-Tomamos 2/3 de los datos aleatoriamente y los guardamos como train.
+Tomamos 2/3 de los datos aleatoriamente y los guardamos como train.<br>
 La idea es no usar el conjunto restante (test) para entrenar ningún modelo y así evitar el overfitting. De esta manera, se usará para simular el error en  _nuevos datos_.
 ```{r}
 set.seed(1123)
@@ -179,13 +179,14 @@ table(data[test,]$Severity)/length(test) ), nrow=3, ncol=2, byrow = TRUE,
 dimnames=list(c("Original set ","Train set", "Test set"), c("Benign (0)","Malign(1)")) )
 ```
 
-Se mantiene. Ya tenemos los conjuntos de entrenamiento y validación.
+Se mantiene. <br> 
+Ya tenemos los conjuntos de entrenamiento y validación.
 
 ###Pair Plot
 
 En esta sección, vamos a realizar un pair plot de las variables, con el objetivo de ver la relación entre las variables, dos a dos, y conocer un poco más el dataset.
 
-En cada plot indicamos por colores si cada observación pertenece a la classe benigno o maligno. Además, sólo realizamos el plot sobre train (test es sólo para simular el error fuera de la muestra).
+En cada plot indicamos por colores si cada observación pertenece a la classe benigno o maligno. Además, sólo realizamos el plot sobre train (test sólo es para simular el error fuera de la muestra).
 
 Para hacer el plot, Tratamos los datos como cotinuos (menos severity). Así, los puntos quedan dibujados sobre el plano.
 ```{r, fig.align='center'}
@@ -225,12 +226,12 @@ data_dum <-dummy.data.frame(data, names=c("BIRADS","Shape", "Margin", "Density")
 head(data_dum)
 ```
 
-Quitamos las columnas que seran la categoria referencia.
+Quitamos las columnas que serán la categoria referencia.
 
 * BI_RADS: 2, benigno (ordinal-es el menor).
 * Shape: 4, irregular (más común).
-* MArgin: 1, circunscrito (más común).
-* Density: 3, baja (menor y Además, el más común)
+* Margin: 1, circunscrito (más común).
+* Density: 3, baja (menor y además, el más común)
 
 ```{r}
 refCategory=names(data_dum) %in% c("BIRADS_2", "Shape_4", "Margin_1", "Density_3")
@@ -245,7 +246,7 @@ Una vez tenemos los datos preparados, vamos a aplicar varios métodos de clasifi
 ### K-nearest neighbors
 
 
-Para aplicar K-nearest neighbors, necesitamos especificar el número de vecinos (K). Así, usamos validación cruzada en train para elegir la mejor k.
+Para aplicar K-nearest neighbors, necesitamos especificar el número de vecinos (K). Así, usamos validación cruzada en train para elegir la mejor k.<br>
 (Aquí no usamos las dummies)
 ```{r}
 library(ISLR)
@@ -262,7 +263,7 @@ Selecciona 31, pero por la poca diferencia nos podriamos quedar con 5, ya que co
 
 * knn con k=31 para saber el error en test.
 
-<ln>
+<ul>
 
 ```{r}
 library(class)
@@ -271,8 +272,7 @@ knn_k31_fit=knn(data[train,], data[test,], cl=data[train,]$Severity, k = 31)
 ct_knn=CrossTable(x=data[test,]$Severity, y=knn_k31_fit)
 ```
 
-Si nos fijamos en los tumores clasificados correctamente, el error es pequeño para tipo.
-En otras palabras, no se equivoca mucho en uno de los casos.
+Si nos fijamos en los tumores clasificados correctamente, el error es pequeño.
 
 ```{r}
 error_knn31 = (ct_knn$t[2] + ct_knn$t[3])/length(test)
@@ -289,11 +289,11 @@ matrix(list_knn31, nrow=1, ncol=4,
 dimnames=list(c("Knn (K=31)"),c("Error", "Accuracy", "Accuracy_benign", "Accuracy_malign")) )
 ```
 
-</ln>
+</ul>
 
 * knn con k=5 para saber el error en test.
 
-<ln>
+<ul>
 ```{r}
 knn_k5_fit=knn(data[train,], data[test,], cl=data[train,]$Severity, k = 5)
 ct_knn5=CrossTable(x=data[test,]$Severity, y=knn_k5_fit)
@@ -311,7 +311,7 @@ dimnames=list(c("Knn (K=31)","Knn (K=5)"),c("Error", "Accuracy", "Accuracy_benig
 
 Nos quedamos con k=5!
 
-<ln>
+</ul>
 
 ### Logistic regression
 
@@ -322,43 +322,26 @@ logReg <- glm(Severity ~.,family=binomial(link='logit'),data=data_dum[train,])
 logReg$coefficients
 ```
 
+Para cada uno de los coeficientes $\beta_i$, realizamos el siguiente contraste de significación
 
-Error en test.
-```{r}
-logReg_fit_0 <- predict(logReg,newdata=data_dum[test,-15], type='response')
+$$
+\left\{ \begin{array}{ll}
+H_0:& \beta_i = 0,\\
+H_1:& \beta_i \not=0,
+\end{array}\right.
+$$
 
-#>0.5 --> 1; <0.5 --> 0
-logReg_fit_0  <- ifelse(logReg_fit_0  >= 0.5,1,0)
+al nivel de significación $\alpha=0.05$.
 
-error_logReg_0 <- mean(logReg_fit_0   != data_dum[test,]$Severity)
-accuracy_logReg_0=1-error_logReg_0
-
-```
-
-```{r}
-ct_logReg_0=CrossTable(x=data[test,]$Severity, y=logReg_fit_0)
-
-accuracy_benign_logReg_0=(ct_logReg_0$t[1])/(ct_logReg_0$t[1] + ct_logReg_0$t[3])
-accuracy_malign_logReg_0= (ct_logReg_0$t[4])/(ct_logReg_0$t[2] + ct_logReg_0$t[4])
-
-list_logReg_0=c(error_logReg_0, accuracy_logReg_0, accuracy_benign_logReg_0,accuracy_malign_logReg_0)
-
-matrix(list_logReg_0, nrow=1, ncol=4,
-dimnames=list(c("Logistic Regression"),c("Error", "Accuracy", "Accuracy_benign", "Accuracy_malign")) )
-```
-
-
-Contrastes de significación, $\alpha=0.05$.
 ```{r}
 summary(logReg)
 ```
 
-Ningún coeficiente del grupo BI-RADS ni Density es significativo.
-Matriz de correlaciones.
+Ningún coeficiente del grupo BI-RADS, Density o Margin es significativo. <br>
+Veamos la matriz de correlaciones.
 
 ```{r, fig.align='center'}
-# Melt the correlation matrix
-
+#Correlation matrix
 cormat = cor(data[,-6])
 get_upper_tri <- function(cormat){
   cormat[lower.tri(cormat)]<- NA
@@ -367,7 +350,7 @@ get_upper_tri <- function(cormat){
 library(reshape2)
 upper_tri <-get_upper_tri(cormat)
 melted_cormat <- melt(upper_tri, na.rm = TRUE)
-# Heatmap
+#Plot
 library(ggplot2)
 ggplot(data = melted_cormat, aes(Var2, Var1, fill = value))+
  geom_tile(color = "white")+
@@ -381,62 +364,74 @@ ggplot(data = melted_cormat, aes(Var2, Var1, fill = value))+
  coord_fixed()+theme(plot.title=element_text(size = 20,face='bold',hjust=0.5))
 ```
 
-Density no està muy correlacionada con ninguna otra variable.
-Eliminamos BI-RADS y repetimos ($\alpha=0.05$).
+Density no está muy correlacionada con ninguna otra variable. <br>
+Eliminamos las variables BI-RADS y repetimos el contraste de significación de los coeficientes ($\alpha=0.05$).
 
 ```{r}
 data_logReg = data_dum[,4:15]
 logReg_notBR <- glm(Severity ~.,family=binomial(link='logit'),data=data_logReg[train,])
-summary(logReg_notBR)
-```
-
-Coeficientes.
-```{r}
 logReg_notBR$coefficients
 ```
 
-Error en test.
-```{r}
-logReg_notBR_fit <- predict(logReg_notBR,newdata=data_logReg[test,-12], type='response')
-
-#>0.5 --> 1; <0.5 --> 0
-logReg_notBR_fit  <- ifelse(logReg_notBR_fit  >= 0.5,1,0)
-
-error_logReg <- mean(logReg_notBR_fit  != data_logReg[test,]$Severity)
-accuracy_logReg = 1-error_logReg
-cat('Error',error_logReg)
-cat('Accuracy',accuracy_logReg)
-```
-
-Veamos el error por classes.
 
 ```{r}
-ct_logReg=CrossTable(x=data_logReg[test,]$Severity, y=logReg_notBR_fit)
+summary(logReg_notBR)
 ```
 
-Error quitando coeficientes
+Todos los coeficientes menos los de la variable Density son significativos.
 
-```{r}
-accuracy_benign_logReg=(ct_logReg$t[1])/(ct_logReg$t[1] + ct_logReg$t[3])
-accuracy_malign_logReg= (ct_logReg$t[4])/(ct_logReg$t[2] + ct_logReg$t[4])
+Hagamos el contraste _Likelihood ratio tests_ para saber que modelo explica mejor las variables.
 
-list_logReg=c(error_logReg, accuracy_logReg, accuracy_benign_logReg,accuracy_malign_logReg)
-
-matrix(list_logReg, nrow=1, ncol=4,
-dimnames=list(c("Tree"),c("Error", "Accuracy", "Accuracy_benign", "Accuracy_malign")) )
-```
-
-Hagamos un contraste para saber que modelo explica mejor las variables.
-* H0: Modelo sin las variables BIRAD-> logReg_notBR
-* H1: Modelo con todas las variables->  logReg
+$$
+\left\{ \begin{array}{ll}
+H_0:& \mbox{El modelo sin variables BI-RADS es verdadero},\\
+H_1:& \mbox{El modelo completo es verdadero}.
+\end{array}\right.
+$$
 
 ```{r}
 anova(logReg_notBR, logReg, test="LRT")
 ```
 
-Rechazamos.
-El modelo con las variables BIRAD es mejor.
+Rechazamos, por tanto, seleccionamos el modelo con las variables BIRAD.<br>
 Además, comparemos los errores.
+
+Càlculo del error en test para el modelo completo.
+```{r}
+logReg_fit_0 <- predict(logReg,newdata=data_dum[test,-15], type='response')
+
+#>=0.5 --> 1; <0.5 --> 0
+logReg_fit_0  <- ifelse(logReg_fit_0  >= 0.5,1,0)
+
+error_logReg_0 <- mean(logReg_fit_0   != data_dum[test,]$Severity)
+accuracy_logReg_0=1-error_logReg_0
+
+ct_logReg_0=CrossTable(x=data[test,]$Severity, y=logReg_fit_0)
+
+accuracy_benign_logReg_0=(ct_logReg_0$t[1])/(ct_logReg_0$t[1] + ct_logReg_0$t[3])
+accuracy_malign_logReg_0= (ct_logReg_0$t[4])/(ct_logReg_0$t[2] + ct_logReg_0$t[4])
+
+list_logReg_0=c(error_logReg_0, accuracy_logReg_0, accuracy_benign_logReg_0,accuracy_malign_logReg_0)
+```
+
+Càlculo del error en test para el modelo sin las variables BR (BIRADS).
+```{r}
+logReg_notBR_fit <- predict(logReg_notBR,newdata=data_logReg[test,-12], type='response')
+
+#>=0.5 --> 1; <0.5 --> 0
+logReg_notBR_fit  <- ifelse(logReg_notBR_fit  >= 0.5,1,0)
+
+error_logReg <- mean(logReg_notBR_fit  != data_logReg[test,]$Severity)
+accuracy_logReg = 1-error_logReg
+ct_logReg=CrossTable(x=data_logReg[test,]$Severity, y=logReg_notBR_fit)
+
+accuracy_benign_logReg=(ct_logReg$t[1])/(ct_logReg$t[1] + ct_logReg$t[3])
+accuracy_malign_logReg= (ct_logReg$t[4])/(ct_logReg$t[2] + ct_logReg$t[4])
+
+list_logReg=c(error_logReg, accuracy_logReg, accuracy_benign_logReg,accuracy_malign_logReg)
+```
+
+Comparación.
 ```{r}
 matrix(c(list_logReg_0, list_logReg), nrow=2, ncol=4, byrow=TRUE,
 dimnames=list(c("Logistic Reg. (All)", "Log Reg. (Not BR)"), c("Error", "Accuracy", "Accuracy_benign", "Accuracy_malign")) )
@@ -444,18 +439,19 @@ dimnames=list(c("Logistic Reg. (All)", "Log Reg. (Not BR)"), c("Error", "Accurac
 
 
 **Nota:** 
-No solo buscamos un modelo que reduzca el error de test, sinó uno que reduzca el número de pacientes que se realizan una biopsia innecesária (falsos negativos).
-Por otra parte, recordemos que tratamos datos de cáncer y, por tanto, no queremos tumores malignos no seleccionados (falsos positivos).
+No solo buscamos un modelo que reduzca el error de test, sinó uno que reduzca el número de pacientes que se realizan una biopsia innecesária (falsos positivos).
+Por otra parte, recordemos que tratamos datos de cáncer y, por tanto, no queremos tumores malignos no seleccionados (falsos negativos).
 
 ### Árboles de clasificación
 
 Para los árboles de clasificación no es necesario usar las variables dummies.
 
+Antes de seleccionar los mejores parámetros, probemos el método.
 ```{r, fig.align='center'}
 require(ISLR)
 require(tree)
 
-#names(data) <- c("BIRADS",  "Age",      "Shape",    "Margin",   "Density",  "Severity")
+
 tree=tree(Severity ~. ,data=data[train,])
 plot(tree, col="#04B486")
 title(main = "Mammographic Mass data\n Classification tree\n \n ")
@@ -463,13 +459,7 @@ text(tree,pretty=0)
 ```
 
 
-Con un árbol de tan poca profundidad, casi no parece necesário hacer validación cruzada para elegir cuando cortar. Aún así, puede haber overfiting al hacer el último paso.
-
-Cabe destacar, que un árbol ayuda a la interpretación. Además en este caso es coherente con la intuición: Si BIRADS es 5, hay una alta sospecha de que sea maligno, por tanto, la biopsia es necesária. En otro caso, hay que analizar los demás resultados para ver si lo és o no, y así evitar un alto número de biopsias innecesarias.
-
-Notemos que no usa Margin ni Density; se basa simplemente en la edad de la mujer y forma del tumor.
-
-Validación cruzada para elegir la profundidad.
+Ahora, validación cruzada para elegir la profundidad.
 ```{r, fig.align='center'}
 set.seed(555)
 tree_cv=cv.tree(tree,FUN=prune.misclass, K=10)
@@ -512,10 +502,13 @@ dimnames=list(c("Tree (d=3)"),c("Error", "Accuracy", "Accuracy_benign", "Accurac
 
 ###Random Forests
 
-```{r}
+```{r, results='hide', message=FALSE}
 require(randomForest)
 require(MASS)
+```
 
+Primero, veamos que obtenemos creando 1000 muestras de Bootstrap y usando los parámetros por defecto: mtry$=\sqrt(p)$, donde $p$ es el númro de predictores.
+```{r}
 set.seed(1515)
 rForest=randomForest(Severity~.,data=data[train,],ntree=1000)
 rForest
@@ -582,9 +575,12 @@ dimnames=list(c("Random Forest (mtry 1)"),c("Error", "Accuracy", "Accuracy_benig
 
 ### Boosting
 
-```{r, fig.align='center'}
+```{r, results='hide', message=FALSE}
 require(gbm)
+```
 
+Antes de buscar los mejores parámetros, hacemos una prueba del método.
+```{r, fig.align='center'}
 #hay problemas con as.factor y gbm
 data_gbm=data
 data_gbm$Severity = as.character(data_gbm$Severity)
@@ -598,7 +594,7 @@ summary(boost)
 Error en Test.
 ```{r}
 boost_pred = predict(object = boost, newdata = data_gbm[test,], n.trees = 1000, type = "response")
-#>0.5 --> 1; <0.5 --> 0
+#>=0.5 --> 1; <0.5 --> 0
 boost_pred   <- ifelse(boost_pred  >= 0.5,1,0)
 
 ct_boost=with(data[test,],table(boost_pred,Severity))
@@ -636,7 +632,7 @@ Seleccionamos estos parámetros y calculamos el error en test.
 set.seed(3573)
 boost = gbm(Severity~. , distribution = "bernoulli", data = data_gbm[train,],
                n.trees = 50, shrinkage = 0.1, interaction.depth = 2, n.minobsinnode = 10)
-boost_pred = predict(object = boost, newdata = data_gbm[test,], n.trees = 150, type = "response")
+boost_pred = predict(object = boost, newdata = data_gbm[test,], n.trees = 50, type = "response")
 boost_pred   <- ifelse(boost_pred  >= 0.5,1,0)
 
 ct_boost=with(data[test,],table(boost_pred,Severity))
@@ -687,10 +683,10 @@ dimnames=list(c("kmeans (scaled)"),c("Error", "Accuracy", "Accuracy_benign", "Ac
 ## Comparación
 
 ```{r}
-matrix(c(list_knn5, list_logReg_0, list_logReg, list_tree, list_rForest,
-         list_rForest1, list_boost, list_kmeans), nrow=8, ncol=4, byrow=TRUE, 
-       dimnames=list(c("knn (K=5)","Logistic Reg. (All)", "Log Reg. (Not BR)", "Tree (d=3)",
-                       "Random Forest (mtry 2)", "Random Forest (mtry 1)",
+matrix(c(list_knn31,list_knn5, list_logReg_0, list_logReg, list_tree, list_rForest,
+         list_rForest1, list_boost, list_kmeans), nrow=9, ncol=4, byrow=TRUE, 
+       dimnames=list(c("knn (K=31)","knn (K=5)","Logistic Reg. (All)", "Log Reg. (Not BR)", 
+                       "Tree (d=3)","Random Forest (mtry 2)", "Random Forest (mtry 1)",
                        "Boosting (nt=50, d=2, shr=0.1, n.mino=10)", "kmeans (scaled)"),
                      c("Error", "Accuracy", "Accuracy_benign", "Accuracy_malign")) )
 ```
@@ -699,7 +695,7 @@ matrix(c(list_knn5, list_logReg_0, list_logReg, list_tree, list_rForest,
 
 En esta sección tomamos los dos mejores modelos, según nuestros datos, y los aplicamos al dataset con log(data$Age) para reducir su peso.
 
-Los mejores modelos són: knn (K=5) y Boosting (nt=50, d=2, shr=0.1, n.mino=10).
+Los mejores modelos són: knn (K=5) y Boosting (nt=50, d=1, shr=0.1, n.mino=10).
 
 ```{r}
 data_logA=data
@@ -708,7 +704,7 @@ data_logA$Age=log(data$Age)
 
 * knn
 
-<ln>
+<ul>
 
 Elegir la mejor k con validación cruzada 10-veces.
 ```{r}
@@ -738,11 +734,11 @@ dimnames=list(c("Knn (K=27)"),c("Error", "Accuracy", "Accuracy_benign", "Accurac
 
 Los resultados son mucho mejores.
 
-</ln>
+</ul>
 
 * Boosting
 
-<ln>
+<ul>
 
 Validación cruzada para seleccionar los parámetros.
 
@@ -781,11 +777,11 @@ accuracy_malign_boost_logA=(ct_boost_logA[2,2])/(ct_boost_logA[1,2] + ct_boost_l
 list_boost_logA=c(error_boost_logA, accuracy_boost_logA,
                   accuracy_benign_boost_logA,accuracy_malign_boost_logA)
 matrix(list_boost_logA, nrow=1, ncol=4,
-dimnames=list(c("Boosting LogAge (nt=50, d=2, shr=0.1, n.mino=10)"),c("Error", "Accuracy", "Accuracy_benign", "Accuracy_malign")) )
+dimnames=list(c("Boosting LogAge (nt=50, d=1, shr=0.1, n.mino=10)"),c("Error", "Accuracy", "Accuracy_benign", "Accuracy_malign")) )
 ```
 
 En este caso, no se observan mejoras.
 
-</ln>
+</ul>
 
 <br>
