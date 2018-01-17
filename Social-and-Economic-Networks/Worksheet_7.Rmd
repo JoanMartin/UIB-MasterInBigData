@@ -78,6 +78,7 @@ library(igraph)
 
 ```{r}
 df = read.csv("datasets/euroroad.txt", sep = " ")
+df_n = read.csv("datasets/euroroad_city_names.txt", sep = "")
 g = graph_from_data_frame(df, directed = TRUE)
 ```
 
@@ -85,80 +86,162 @@ g = graph_from_data_frame(df, directed = TRUE)
 
 *a)* Provide a statistical summary of it. What are its most central cities?
 
+Datos estadísticos del grafo:
+
+* Order: `r igraph::gorder(g)`. 
+
+* Tamaño: `r igraph::gsize(g)`
+
+* Densidad: `r round(igraph::edge_density(g), 4)`
+
+* Componentes: El número de componentes conexos es `r igraph::components(g)$no` y sus tamaños son `r igraph::components(g)$csize`
+
+* Diámetro: `r igraph::diameter(g)`
+
+* Distancia media: `r mean_distance(g)`
+
+* Transitividad: `r round(igraph::transitivity(g), 4)`
+
+<br>
+
+Obtenemos las ciudades más centrales mediante la centralidad Betweeness de la siguiente forma:
+
 ```{r}
-summary_g = as.network(as.matrix(as_adjacency_matrix(g)), directed = TRUE)
-summary_g
+r = round(gorder(g) * 0.01)
+c_names = names(round(igraph::betweenness(g),4)[1:r])
+most_central = c()
+for(i in c_names){
+  most_central = c(most_central, as.character(df_n[i,1]))
+}
+most_central
 ```
 
 <br>
 
-```{r}
-r = round(gorder(g) * 0.005)
-Cent.Bet = names(round(sort(igraph::betweenness(g), decreasing = TRUE), 4)[1:r])
-Cent.Bet
-```
-
-Betweeness, ya que muestra las ciudades por donde se ha de pasar más para llegar a las demás ciudades.
+De esta manera se muestra las ciudades por donde se ha de pasar más para llegar a las demás ciudades.
 
 <br>
 
 *b)* How do you think a road network is formed?
 
 
+<br>
+
 *c)* Is this road network compatible with the E-R model, the configuration model, or the basic Barabasi-Albert's model? Justify your answer, and comment whether you expected it.
 
 Obtener orden, tamaño y densidad de $g$:
 
 ```{r}
-o_g = gorder(g)
-s_g = gsize(g)
+order_g = gorder(g)
+size_g = gsize(g)
 den_g = edge_density(g, loops = FALSE)
 ```
 
-```{r}
-g2 = sample_gnm(o_g, s_g, directed = FALSE, loops = FALSE)
-```
-
-Barabasi. Si hay nodos con aristas en las dos direcciones, no ser? compatible...?
-
-```{r}
-F=function(x,y){
-G=sample_gnp(x,y,directed = FALSE, loops = FALSE)
-c(transitivity(G,type="average"), transitivity(G), components(G)$no,diameter(G))
-}
-X=replicate(1000,F(o_g,den_g))
-Results=rbind(c(den_g,den_g,1,round(log(o_g)/log(den_g*o_g)+3*log(o_g)/(den_g*o_g))),round(apply(X,FUN=mean,MARGIN=1),4),round(apply(X,FUN=sd,MARGIN=1),4))
-dimnames(Results)=list(c("Theoretical","Simulated","St. Dev."),c("Av. Clust.","Trans.","No. Conn. Comp.","Diameter"))
-Results
-```
+<br>
 
 E-R Model:
 
 ```{r}
-G_ER=sample_gnp(gorder(g),den_g,directed=FALSE)
-plot(G_ER,vertex.label=NA,vertex.shape="sphere",vertex.size=10,edge.color="black",vertex.color="green",edge.arrow.size=0.3)
+G_ER = sample_gnp(order_g, den_g, directed=FALSE)
+plot(G_ER, vertex.label=NA, vertex.shape="sphere", vertex.size=10, edge.color="black", vertex.color="green", edge.arrow.size=0.3)
 ```
+
+<br>
+
+```{r}
+N = 10000
+sample = replicate(N, transitivity(sample_gnp(order_g, den_g, directed=TRUE)))
+```
+
+
+```{r}
+sum(which(sample > transitivity(g))) / N # p-value
+```
+
+```{r}
+round(c(quantile(sample, 0.025), quantile(sample, 0.975)), 5) # 95% IC
+```
+
+Dado que $p-value < \alpha$, rechazamos $H_0$ con un nivel de significación al 0.05. Por lo tanto, la red de carreteras no es compatible con el modelo E-R.
+
+<br>
+
 
 Configuration Model:
 
 ```{r}
-G_CM=sample_degseq(out.deg=degree(g,mode="out"), in.deg=degree(g,mode="in"), method="simple")
-G_CMs=simplify(G_CM)
-plot(G_CMs,vertex.label=NA,vertex.shape="sphere",vertex.size=10,edge.color="black",vertex.color="green",edge.arrow.size=0.3)
+G_CM = sample_degseq(out.deg = degree(g, mode="out"), in.deg = degree(g, mode = "in"), method = "simple")
+G_CMs = simplify(G_CM)
+plot(G_CMs, vertex.label=NA, vertex.shape="sphere", vertex.size=10, edge.color="black", vertex.color="green", edge.arrow.size=0.3)
 ```
+
+<br>
+
+```{r}
+N = 10000
+sample = replicate(N, transitivity(sample_degseq(out.deg = degree(g, mode="out"), in.deg = degree(g, mode = "in"), method = "simple")))
+```
+
+
+```{r}
+sum(which(sample > transitivity(g))) / N # p-value
+```
+
+```{r}
+round(c(quantile(sample, 0.025), quantile(sample, 0.975)), 5) # 95% IC
+```
+
+Igual que con el modelo E-R, dado que $p-value < \alpha$, rechazamos $H_0$ con un nivel de significación al 0.05. Por lo tanto, la red de carreteras tampoco es compatible con el modelo de configuración.
+
+<br>
+
 
 Barabasi-Albert Model:
 
 ```{r}
-G_BA=sample_pa(n=gorder(g),m=3,directed=FALSE,out.pref=TRUE)
-plot(G_BA,vertex.shape="sphere",vertex.size=10,vertex.label.cex=0.5,edge.color="black",
-     vertex.color=c(rep("red", 10),rep("blue", 10),rep("green",70),rep("yellow",10)),edge.arrow.size=0.3)
+G_BA_m1 = sample_pa(n = order_g, m = 1, directed = TRUE, out.pref = TRUE)
+G_BA_m2 = sample_pa(n = order_g, m = 2, directed = TRUE, out.pref = TRUE)
+G_BA_m3 = sample_pa(n = order_g, m = 3, directed = TRUE, out.pref = TRUE)
+
+plot(G_BA_m1, vertex.shape="sphere", vertex.size=10, vertex.label.cex=0.5, edge.color="black",
+     vertex.color=c(rep("red", 10), rep("blue", 10), rep("green",70), rep("yellow",10)), edge.arrow.size=0.3)
+plot(G_BA_m2, vertex.shape="sphere", vertex.size=10, vertex.label.cex=0.5, edge.color="black",
+     vertex.color=c(rep("red", 10), rep("blue", 10), rep("green",70), rep("yellow",10)), edge.arrow.size=0.3)
+plot(G_BA_m3, vertex.shape="sphere", vertex.size=10, vertex.label.cex=0.5, edge.color="black",
+     vertex.color=c(rep("red", 10), rep("blue", 10), rep("green",70), rep("yellow",10)), edge.arrow.size=0.3)
 ```
+
+<br>
+
+```{r}
+N = 10000
+sample = replicate(N, transitivity(sample_pa(n = order_g, m = 1, directed = TRUE, out.pref = TRUE)))
+```
+
+
+```{r}
+sum(which(sample > transitivity(g))) / N # p-value
+```
+
+```{r}
+round(c(quantile(sample, 0.025), quantile(sample, 0.975)), 5) # 95% IC
+```
+
+Igual que con el modelo E-R, dado que $p-value < \alpha$, rechazamos $H_0$ con un nivel de significación al 0.05. Por lo tanto, la red de carreteras tampoco es compatible con el modelo de configuración.
+
+<br>
+
 
 *d)* If we add an initial attractiveness $a$ to all nodes, so that the probability of an old node $v$ to be linked by a new node is proportional to $a+\deg(v)$, the absolute value of the exponent in the power law describing its degree distribution turns out to be $3+a/c$ (with $c$ the mean number of links of the new nodes). This exponent can be estimated with **igraph**'s function **fit_power_law**. 
 
 Now, is the E-road network compatible with Barabasi-Albert's model with initial attractiveness? Justify your answer, and comment whether you expected it.
 
+
+
+
+
+
+<br>
 
 **2)** Consider the WikiVote directed network introduced in the Handout 4.
 
