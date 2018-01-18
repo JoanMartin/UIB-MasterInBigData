@@ -69,7 +69,6 @@ editor_options:
 ```{r global_options, include=FALSE}
 knitr::opts_chunk$set(fig.width=8, fig.height=8, fig.align="center", echo=TRUE, warning=FALSE, message=FALSE,autodep = TRUE,cache=TRUE)
 library(knitr)
-# library(statnet) #Includes sna, ergm, network
 library(igraph)
 ```
 
@@ -129,7 +128,7 @@ De esta manera se muestra las ciudades por donde se ha de pasar más para llegar
 
 *c)* Is this road network compatible with the E-R model, the configuration model, or the basic Barabasi-Albert's model? Justify your answer, and comment whether you expected it.
 
-Obtener orden, tamaño y densidad de $g$:
+Obtener orden, tamaño y densidad de $g$, necesario para las simulaciones posteriores, donde generaremos 1000 veces un grafo aleatorio mediante los modelos de E-R, de configuración y de Barabasi-Albert.
 
 ```{r}
 order_g = gorder(g)
@@ -142,101 +141,98 @@ den_g = edge_density(g, loops = FALSE)
 E-R Model:
 
 ```{r}
-G_ER = sample_gnp(order_g, den_g, directed=FALSE)
-plot(G_ER, vertex.label=NA, vertex.shape="sphere", vertex.size=10, edge.color="black", vertex.color="green", edge.arrow.size=0.3)
+ER = function(x,y) {
+  G = sample_gnp(x, y, directed = TRUE, loops = FALSE)
+  c(transitivity(G, type="average"), transitivity(G), components(G)$no, diameter(G))
+}
+
+X1 = replicate(1000, ER(order_g, den_g))
+Results1 = rbind(c(transitivity(g, type="average"), transitivity(g), components(g)$no, diameter(g)),
+               round(apply(X1, FUN = mean, MARGIN = 1), 4),
+               round(apply(X1, FUN = sd, MARGIN = 1), 4),
+               round(apply(X1, FUN = max, MARGIN = 1), 4))
+dimnames(Results1) = list(c("Real", "Simulated", "St. Dev.", "Max."), c("Av. Clust.", "Trans.", "No. Conn. Comp.", "Diameter"))
+Results1
 ```
+
 
 <br>
 
-```{r}
-N = 10000
-sample = replicate(N, transitivity(sample_gnp(order_g, den_g, directed=TRUE)))
-```
-
-
-```{r}
-sum(which(sample > transitivity(g))) / N # p-value
-```
-
-```{r}
-round(c(quantile(sample, 0.025), quantile(sample, 0.975)), 5) # 95% IC
-```
-
-Dado que $p-value < \alpha$, rechazamos $H_0$ con un nivel de significación al 0.05. Por lo tanto, la red de carreteras no es compatible con el modelo E-R.
+Después de generar 1000 veces un grafo aleatorio mediante el modelo E-R, a partir del tamaño y la densidad del grafo de nuestra red, visualizamos los diferentes valores que nos interesan entre el grafo "real" y el grafo aleatorio "simulado". Así podemos ver que con una simulación de 1000 iteraciones, no se acerca mucho al grafo original. Dado que el modelo genera todos los enlaces con la misma probabilidad, la probabilidad de generar el grafo "real" únicamente a partir del tamaño y la densidad no es muy elevado. Por lo tanto, diremos que no cumple con un modelo E-R.
 
 <br>
-
 
 Configuration Model:
 
 ```{r}
-G_CM = sample_degseq(out.deg = degree(g, mode="out"), in.deg = degree(g, mode = "in"), method = "simple")
-G_CMs = simplify(G_CM)
-plot(G_CMs, vertex.label=NA, vertex.shape="sphere", vertex.size=10, edge.color="black", vertex.color="green", edge.arrow.size=0.3)
+CM = function(x,y){
+  G = sample_degseq(out.deg = x, in.deg = y, method = "simple")
+  G = simplify(G)
+  c(transitivity(G, type="average"), transitivity(G), components(G)$no, diameter(G))
+}
+
+X2 = replicate(1000, CM(degree(g, mode = "out"), degree(g, mode = "in")))
+Results2 = rbind(c(transitivity(g, type="average"), transitivity(g), components(g)$no, diameter(g)),
+               round(apply(X2, FUN = mean, MARGIN = 1), 4),
+               round(apply(X2, FUN = sd, MARGIN = 1), 4),
+               round(apply(X2, FUN = max, MARGIN = 1), 4))
+dimnames(Results2) = list(c("Theoretical", "Simulated", "St. Dev.", "Max."), c("Av. Clust.", "Trans.", "No. Conn. Comp.", "Diameter"))
+Results2
 ```
 
 <br>
 
-```{r}
-N = 10000
-sample = replicate(N, transitivity(sample_degseq(out.deg = degree(g, mode="out"), in.deg = degree(g, mode = "in"), method = "simple")))
-```
-
-
-```{r}
-sum(which(sample > transitivity(g))) / N # p-value
-```
-
-```{r}
-round(c(quantile(sample, 0.025), quantile(sample, 0.975)), 5) # 95% IC
-```
-
-Igual que con el modelo E-R, dado que $p-value < \alpha$, rechazamos $H_0$ con un nivel de significación al 0.05. Por lo tanto, la red de carreteras tampoco es compatible con el modelo de configuración.
+Ahora vemos el resultado de la simulación del modelo de configuración que, a partir de la secuencia de grados de entrada y salida de los nodos de nuestro grafo, nos genera grafos aleatorios que se acerca en sus valores al grafo "real". Igual que el modelo anterior, no se acerca del todo a los valores del grafo real, por lo tanto, diremos que no cumple con el modelo de configuración.
 
 <br>
-
 
 Barabasi-Albert Model:
 
 ```{r}
-G_BA_m1 = sample_pa(n = order_g, m = 1, directed = TRUE, out.pref = TRUE)
-G_BA_m2 = sample_pa(n = order_g, m = 2, directed = TRUE, out.pref = TRUE)
-G_BA_m3 = sample_pa(n = order_g, m = 3, directed = TRUE, out.pref = TRUE)
+BAM = function(x, y) {
+  G = sample_pa(n = x, m = y, directed = TRUE, out.pref = TRUE)
+  c(transitivity(G, type = "average"), transitivity(G), components(G)$no, diameter(G))
+}
 
-plot(G_BA_m1, vertex.shape="sphere", vertex.size=10, vertex.label.cex=0.5, edge.color="black",
-     vertex.color=c(rep("red", 10), rep("blue", 10), rep("green",70), rep("yellow",10)), edge.arrow.size=0.3)
-plot(G_BA_m2, vertex.shape="sphere", vertex.size=10, vertex.label.cex=0.5, edge.color="black",
-     vertex.color=c(rep("red", 10), rep("blue", 10), rep("green",70), rep("yellow",10)), edge.arrow.size=0.3)
-plot(G_BA_m3, vertex.shape="sphere", vertex.size=10, vertex.label.cex=0.5, edge.color="black",
-     vertex.color=c(rep("red", 10), rep("blue", 10), rep("green",70), rep("yellow",10)), edge.arrow.size=0.3)
+X3 = replicate(1000, BAM(order_g, 3))
+Results3 = rbind(c(transitivity(g, type = "average"), transitivity(g), components(g)$no, diameter(g)), 
+                 round(apply(X3, FUN = mean, MARGIN = 1), 4),
+                 round(apply(X3, FUN = sd, MARGIN = 1), 4),
+                 round(apply(X3, FUN = max, MARGIN = 1), 4))
+dimnames(Results3) = list(c("Real", "Simulated", "St. Dev.", "Max."), c("Av. Clust.", "Trans.", "No. Conn. Comp.", "Diameter"))
+Results3
 ```
 
 <br>
 
-```{r}
-N = 10000
-sample = replicate(N, transitivity(sample_pa(n = order_g, m = 1, directed = TRUE, out.pref = TRUE)))
-```
-
-
-```{r}
-sum(which(sample > transitivity(g))) / N # p-value
-```
-
-```{r}
-round(c(quantile(sample, 0.025), quantile(sample, 0.975)), 5) # 95% IC
-```
-
-Igual que con el modelo E-R, dado que $p-value < \alpha$, rechazamos $H_0$ con un nivel de significación al 0.05. Por lo tanto, la red de carreteras tampoco es compatible con el modelo de configuración.
+También diremos que nuestra red no cumple con el modelo de Babarasi-Albert porque la probabilidad de generar el grafo real a partir del modelo de Barabasi-Albert es muy bajo.
 
 <br>
-
 
 *d)* If we add an initial attractiveness $a$ to all nodes, so that the probability of an old node $v$ to be linked by a new node is proportional to $a+\deg(v)$, the absolute value of the exponent in the power law describing its degree distribution turns out to be $3+a/c$ (with $c$ the mean number of links of the new nodes). This exponent can be estimated with **igraph**'s function **fit_power_law**. 
 
 Now, is the E-road network compatible with Barabasi-Albert's model with initial attractiveness? Justify your answer, and comment whether you expected it.
 
+```{r}
+alpha = fit_power_law(degree(g), xmin = 3)$alpha
+alpha
+```
 
+
+```{r}
+BAM_attr = function(x, y) {
+  G = sample_pa(n = x, m = y, directed = TRUE, out.pref = TRUE, zero.appeal = alpha)
+  c(transitivity(G, type = "average"), transitivity(G), components(G)$no, diameter(G))
+}
+
+X4 = replicate(1000, BAM_attr(order_g, 3))
+Results4 = rbind(c(transitivity(g, type = "average"), transitivity(g), components(g)$no, diameter(g)), 
+                 round(apply(X4, FUN = mean, MARGIN = 1), 4),
+                 round(apply(X4, FUN = sd, MARGIN = 1), 4),
+                 round(apply(X4, FUN = max, MARGIN = 1), 4))
+dimnames(Results4) = list(c("Real", "Simulated", "St. Dev.", "Max."), c("Av. Clust.", "Trans.", "No. Conn. Comp.", "Diameter"))
+Results4
+```
 
 
 
@@ -245,8 +241,97 @@ Now, is the E-road network compatible with Barabasi-Albert's model with initial 
 
 **2)** Consider the WikiVote directed network introduced in the Handout 4.
 
+```{r}
+df = read.csv("datasets/WikiVote.txt", sep = "\t")
+g = graph_from_data_frame(df, directed = TRUE)
+```
+
+
 *a)* Is it compatible with the directed E-R model, the directed configuration model, or the  directed Barabasi-Albert's model (either basic or with initial attractiveness)? Justify your answer, and comment whether you expected it.
+
+
+```{r}
+order_g = gorder(g)
+size_g = gsize(g)
+den_g = edge_density(g, loops = FALSE)
+```
+
+<br>
+
+Probamos, mediante simulaciones de los 3 modelos, si la red es compatible con alguno de ellos, tal como hemos hecho en el ejercicio 1.
+
+E-R Model:
+
+```{r}
+ER = function(x,y) {
+  G = sample_gnp(x, y, directed = TRUE, loops = FALSE)
+  c(transitivity(G, type="average"), transitivity(G), components(G)$no, diameter(G))
+}
+
+X1 = replicate(10, ER(order_g, den_g))
+Results1 = rbind(c(transitivity(g, type="average"), transitivity(g), components(g)$no, diameter(g)),
+               round(apply(X1, FUN = mean, MARGIN = 1), 4),
+               round(apply(X1, FUN = sd, MARGIN = 1), 4),
+               round(apply(X1, FUN = max, MARGIN = 1), 4))
+dimnames(Results1) = list(c("Real", "Simulated", "St. Dev.", "Max."), c("Av. Clust.", "Trans.", "No. Conn. Comp.", "Diameter"))
+Results1
+```
+
+
+<br>
+
+
+Configuration Model:
+
+```{r}
+CM = function(x,y){
+  G = sample_degseq(out.deg = x, in.deg = y, method = "simple")
+  G = simplify(G)
+  c(transitivity(G,type = "average"), transitivity(G), components(G)$no, diameter(G))
+}
+
+X2 = replicate(20, CM(degree(g, mode = "out"), degree(g, mode = "in")))
+Results2 = rbind(c(transitivity(g, type="average"), transitivity(g), components(g)$no, diameter(g)),
+               round(apply(X2, FUN = mean, MARGIN = 1), 4),
+               round(apply(X2, FUN = sd, MARGIN = 1), 4),
+               round(apply(X2, FUN = max, MARGIN = 1), 4))
+dimnames(Results2) = list(c("Theoretical", "Simulated", "St. Dev.", "Max."), c("Av. Clust.", "Trans.", "No. Conn. Comp.", "Diameter"))
+Results2
+```
+
+
+<br>
+
+
+Barabasi-Albert Model:
+
+```{r}
+BAM = function(x, y) {
+  G = sample_pa(n = x, m = y, directed = TRUE, out.pref = TRUE)
+  c(transitivity(G, type = "average"), transitivity(G), components(G)$no, diameter(G))
+}
+
+X3 = replicate(100, BAM(order_g, 3))
+Results3 = rbind(c(transitivity(g, type = "average"), transitivity(g), components(g)$no, diameter(g)), 
+                 round(apply(X3, FUN = mean, MARGIN = 1), 4),
+                 round(apply(X3, FUN = sd, MARGIN = 1), 4),
+                 round(apply(X3, FUN = max, MARGIN = 1), 4))
+dimnames(Results3) = list(c("Real", "Simulated", "St. Dev.", "Max."), c("Av. Clust.", "Trans.", "No. Conn. Comp.", "Diameter"))
+Results3
+```
+
+<br>
+
 
 *b)* It should be clear that this network does not "grow" and that the number of votes received by each individual is somehow related to some notion of "fitness". **igraph** provides some functions to generate random networks with these features (based on the model explained in https://arxiv.org/pdf/cond-mat/0106565.pdf). Is this WikiVote network compatible with the 
 "Scale-free random graphs with vertex fitness scores" provided by the function **sample_fitness_pl**? Justify and comment your answer.
+
+
+```{r}
+
+```
+
+
+
+
 

@@ -232,7 +232,7 @@ round(transitivity(gwd), 4)
 
 *d)* What fraction of adjacent pairs are mutual (of the form $x\leftrightarrow y$)? What do mutual pairs of nodes mean, in the context of this network, and how do you consider they could affect the notion of centrality in this network?
 
-La fraction de esos nodos adjacentes:
+La fracción de los nodos adjacentes es:
 
 ```{r}
 reciprocity(gwd, ignore.loops = TRUE)
@@ -302,6 +302,12 @@ Most.central
 
 <br>
 
+Con la anterior tabla se puede observar que USA, DEU, FRA, GBR, NLD, ITA y ESP son los países que reciben petróleo de más países (Degree In) y, además, en mayor cantidad (Strength In: tiene en cuenta el número de grados y el peso de las aristas entrantes). Por otro lado, tenemos que IND, LA, IDN, DEU, ITA, GBR, USA y FRA son países que exportan a una mayor cantidad de países (Degree Out), pero no todos son los que mayor cantidad de petróleo exportan. Por ejemplo, en el caso de BRA, se podría concluir que exporta mucho petróleo a una cantidad menor de países, igual que COL o GTM (Strength Out). 
+
+Closeness In y Closeness Out, que se han calculado como $\omega(e) = 1 / \omega(e)$ debido a que los pesos no indican distancia, muestran los países que importan y exportan, respectivamente, menos petróleo o tienen pocas conexiones.
+
+<br>
+
 *g)* What are the Spearman correlations between the centralities computed in the previous point? Do these centralities sort the countries in a similar way? 
 
 ```{r}
@@ -342,7 +348,7 @@ plot(hclust(as.dist(1 - cor(Centralities, method = "spearman")), method = "avera
 STR.out
 ```
 
-Consideramos el 5% de nodos más importantes aquellos que envían petróleo a una mayor cantidad de países, por esta razón utilizamos el out-strength. De esta forma podríamos examinar (independientemente de la cantidad de petróleo que se envíe) por qué a un país le compran tanto petróleo (precios más baratos, fronteras más abiertas, etc.).
+Consideramos el 5% de nodos más importantes aquellos que exportan una mayor cantidad de petróleo, ya que Strength Out tiene en cuenta los grados y el peso de las aristas. De esta forma podríamos examinar, por ejemplo, por qué a un país le compran tanto petróleo (precios más baratos, fronteras más abiertas, etc.).
 
 <br>
 
@@ -354,7 +360,7 @@ V(gwd)$vertex_strength = strength(gwd, mode = 'out')
 STR_g_ind = induced_subgraph(gwd, v = STR_most_central_nodes)
 ```
 
-Elegimos la centralidad out-strength para representar el tamaño de los nodos por el motivo explicado en el apartado anterior. De esta forma podremos analizar gráficamente qué países exportan petróleo a una mayor cantidad de países.
+Elegimos la centralidad out-strength para representar el tamaño de los nodos por el motivo explicado en el apartado anterior. De esta forma podremos analizar gráficamente qué países exportan una mayor cantidad de petróleo.
 
 <br>
 
