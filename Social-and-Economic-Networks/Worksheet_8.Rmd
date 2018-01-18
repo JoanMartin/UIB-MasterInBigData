@@ -63,36 +63,40 @@ editor_options:
   }
 </style>
 
-*** 
+***  
+
+
 
 ```{r global_options, include=FALSE}
 knitr::opts_chunk$set(fig.width=8, fig.height=8, fig.align="center", echo=TRUE, warning=FALSE, message=FALSE,autodep = TRUE,cache=TRUE)
 library(ergm)
 library(statnet)
 library(igraph)
-library(knitr)
 rm(list=ls())
 ```
 
 
-**1)** The files **GA_edges.txt** and **GA_nodes.txt** contain the links and nodes (with several attributes) of the sexual contact network among "Grey's Anatomy" characters (seasons 1-8) collected by A. Leavitt (https://github.com/alexleavitt/SNAinRworkshop). 
+##1)
+**The files _GA_edges.txt_ and _GA_nodes.txt_ contain the links and nodes (with several attributes) of the sexual contact network among "Grey's Anatomy" characters (seasons 1-8) collected by A. Leavitt (https://github.com/alexleavitt/SNAinRworkshop).**
 
-**Caution!** There's scarcely anything new under the sun. In particular, in Leavitt's github for his workshop on Social Network Analysis cited above you can find scripts with an analysis of this network with ERGM, you can get inspiration from them, but nothing else than inspiration. For instance: he provides the instructions for solving our points  (d) and (e), you can use them but the conclusions must be your harvest; he uses here and there functions from the Dephi package, you cannot unless you explain carefully what you are doing with them (they are not necessary, here); he uses some cunning parameters for instance to upload his dataframes (which are not our dataframes, but have similar features) of to add colors to the nodes, if you use them you must explain what they do.
+**(Caution!) There's scarcely anything new under the sun. In particular, in Leavitt's github for his workshop on Social Network Analysis cited above you can find scripts with an analysis of this network with ERGM, you can get inspiration from them, but nothing else than inspiration. For instance: he provides the instructions for solving our points  (d) and (e), you can use them but the conclusions must be your harvest; he uses here and there functions from the Dephi package, you cannot unless you explain carefully what you are doing with them (they are not necessary, here); he uses some cunning parameters for instance to upload his dataframes (which are not our dataframes, but have similar features) of to add colors to the nodes, if you use them you must explain what they do.**
 
-Define a network with these data frames, and make sure that its nodes have as attributes at least their names, sex, birthyear, race and position.
+**Define a network with these data frames, and make sure that its nodes have as attributes at least their names, sex, birthyear, race and position.**
 
+Crear grafo:
 ```{r}
 df_e = read.csv("datasets/GA_edges.txt", sep = "\t")
 df_v = read.csv("datasets/GA_nodes.txt", sep = "\t")
 g = graph_from_data_frame(df_e, directed = FALSE)
 ```
 
+Grafo antes de tener atributos:
 
 ```{r}
 plot(g)
 ```
 
-<br>
+Añadir atributos a nodos:
 
 ```{r}
 for(i in vertex_attr(g)$name){
@@ -100,27 +104,27 @@ for(i in vertex_attr(g)$name){
   g = set_vertex_attr(g, name = "race", index = i, value = as.character(df_v[i,3]))
   g = set_vertex_attr(g, name = "birthyear", index = i, value = as.character(df_v[i,4]))
   g = set_vertex_attr(g, name = "position", index = i, value = as.character(df_v[i,5]))
-  g = set_vertex_attr(g, name = "season", index = i, value = as.character(df_v[i,6]))
+  g = set_vertex_attr(g, name = "season", index = i, value = as.numeric(df_v[i,6]))
   g = set_vertex_attr(g, name = "sign", index = i, value = as.character(df_v[i,7]))
   g = set_vertex_attr(g, name = "name", index = i, value = as.character(df_v[i,1]))
 }
 ```
 
+A continuación vemos todos los atributos añadidos a cada nodo.
+
 ```{r}
 vertex_attr(g)
 ```
 
-<br>
-
-El atributo *Sign* tiene valores a nulo, por lo que los asignamos como *Unknown*:
+Como podemos ver, en el atributo _sign_ tenemos 2 nodos que no tienen valor asignado, por lo que nosotros le asignaremos el valor "Unknown", antes de visualizar las estadísticas de esta red.
 
 ```{r}
 V(g)$sign[is.na(V(g)$sign)] = "Unknown"
 ```
 
-<br>
 
-*a)* Provide a statistical summary of this network (including a suitable statistical description of the nodes' attributes that you use in points (c) and (d) below) and plot it with the nodes labelled with the characters' names and colored with their anatomic sex. 
+###a)
+**Provide a statistical summary of this network (including a suitable statistical description of the nodes' attributes that you use in points (c) and (d) below) and plot it with the nodes labelled with the characters' names and colored with their anatomic sex.**
 
 Datos estadísticos del grafo:
 
@@ -180,26 +184,24 @@ table(factor(V(g)$season, labels=unique(V(g)$season)))
 table(factor(V(g)$sign, labels=unique(V(g)$sign)))
 ```
 
-<br>
 
-* Representación gráfica del grafo:
+Ahora visualizamos la red de forma que coloreamos los diferentes nodos según su atributo de "sexo" (Azul: Hombre | Rosa: Mujer).
+
 ```{r}
-plot(g, vertex.color = c("pink","skyblue")[1+(V(g)$sex=="M")])
+plot(g, vertex.color=c("pink","skyblue")[1+(V(g)$sex=="M")])
 ```
 
-<br>
-
-*b)* Is this network bipartite? Justify your answer and explain its meaning for this specific network.
-
-No se trata de una red bipartida porque existe una relación homosexual que crea un núero impar de cliclos impidiendo poder hacer una agrupación de los nodos de la red en 2 conjuntos U y V que cumplen con las condiciones para ser una red bipartida.??
+###b) 
+**Is this network bipartite? Justify your answer and explain its meaning for this specific network.**
 
 ```{r}
 is_bipartite(g)
 ```
 
-<br>
+No se trata de una red bipartida porque existe al menos un ciclo con un número impar de nodos impidiendo poder hacer una agrupación de los nodos de la red en 2 conjuntos U y V que cumplen con las condiciones para ser una red bipartida. En un ciclo con un número impar de nodos, en esta red, significa que al menos 2 nodos que están relacionados en este ciclo tienen el mismo sexo.
 
-*c)* If you wanted to test one single character for sexually transmitted infections, who would he/she be? Why?
+###c)
+**If you wanted to test one single character for sexually transmitted infections, who would he/she be? Why?**
 
 En una red que muestra las relaciones sexuales entre personas, el personaje más importante a analizar sería aquel nodo con mayor grado, que representa el número de personas con las que ha tenido relaciones.
 
@@ -207,90 +209,119 @@ En una red que muestra las relaciones sexuales entre personas, el personaje más
 V(g)$name[degree(g)==max(degree(g))]
 ```
 
-<br>
+###d)
+**Fit an ERGM to this network using as predictors its number of edges and of homosexual relations. Explain the results obtained, and check its goodness of fit.**
 
-*d)* Fit an ERGM to this network using as predictors its number of edges and of homosexual relations. Explain the results obtained, and check its goodness of fit.
+Primero generamos nuestra red e incluimos los atributos de nombres, sexos, temporadas y año de nacimientos (estos últimos 2 para posteriores ejercicios). Esta clase generada se necesita posteriormente para hacer el modelo de ERGM.
 
 ```{r}
-g.net = as.network(as.matrix(as_adjacency_matrix(g)), directed=FALSE)
-network::set.vertex.attribute(g.net, "name", V(g)$name)
-network::set.vertex.attribute(g.net, "sex", V(g)$sex)
-network::set.vertex.attribute(g.net, "birthyear", strtoi(V(g)$birthyear, base=0L))
+g.net=as.network(as.matrix(as_adjacency_matrix(g)),directed=FALSE)
+network::set.vertex.attribute(g.net,"name", V(g)$name)
+network::set.vertex.attribute(g.net,"sex", V(g)$sex)
+network::set.vertex.attribute(g.net,"season", V(g)$season)
+network::set.vertex.attribute(g.net,"birthyear", strtoi(V(g)$birthyear,base=0L))
 g.net
 ```
 
+Generamos el modelo ERGM según los predictores del número de aristas y el número de aristas entre nodos con el mismo atributo de sexo.
 ```{r}
 fit_g.net = ergm(g.net ~ edges + nodematch("sex"))
 summary(fit_g.net)
 ```
 
+El modelo de ERGM analiza los términos que especifican estadísticas de red que son suficientes para representar la distribución de probabilidad en el espacio de las redes de ese tamaño.
+
+En nuestro caso, como representa la salida anterior, los predictores asociados a la cantidad de aristas de nuestra red y la cantidad de aristas entre nodos del mismo sexo, tienen un papel importante (tienen un p-valor < 0.001) para la obtención de las diferentes probabilidades de existir ciertos tipos de enlaces en nuestra red. En este caso, se puede entender que el número total de aristas en esta red ($E$) es igual a la cantidad de aristas entre nodos del mismo sexo ($E_{homo}$) más la cantidad de aristas entre nodos de sexo distinto ($E_{no\_homo}$), $E = E_{homo} + E_{no\_homo}$. Por lo tanto, si mi intención sería generar de forma aletoria la red de este ejercicio, sabiendo la cantidad de aristas que tiene la red y cuantas de estas aristas tienen que cumplir con ser enlaces entre dos nodos del mismo sexo, estas variables tendrían un valor importante para obtener las diferentes probabilidades de existir ciertos tipos de aristas en nuestra red. 
+
+A continuación mostramos lo adecuado que es nuestro modelo actual.
+
 ```{r}
-fit.gof_g.net <- gof(fit_g.net)
-summary(fit.gof_g.net)
+fit.gof_g.net = gof(fit_g.net)
+par(mfrow=c(2,2))
+plot(fit.gof_g.net)
 ```
 
-<br>
+Con estas gráficas podemos ver que no se ajusta del todo a los valores reales, pero aún así, se trata de un primer modelo bastante adecuado.
 
-*e)* Add as extra predictors the "monogamy" and difference of age between adjacent nodes (it is done by Leavitt in his workshop). Explain the results obtained, and check its goodness of fit.
+###e)
+**Add as extra predictors the "monogamy" and difference of age between adjacent nodes (it is done by Leavitt in his workshop). Explain the results obtained, and check its goodness of fit.**
+
+Ampliamos el modelo anterior con la cantidad de aristas que van enlazadas entre nodos de grado 1 (que representa "monogamía" en esta red) y la cantidad de aristas entre nodos con atributo de año de nacimiento diferente.
 
 ```{r}
 fit2_g.net <- ergm(g.net~edges+nodematch("sex")+degree(1)+absdiff("birthyear"))
 summary(fit2_g.net)
 ```
-```{r}
-fit2.gof_g.net <- gof(fit2_g.net)
-summary(fit2.gof_g.net)
-```
 
-<br>
-
-*f)* Try at least one more model that you consider interesting and that you think could explain better the network (you can add predictors to (e) and remove predictors from it; it is forbidden to use anything related to transitivity, because of (g) below). Justify your choice, explain the results obtained and check whether it fits better the network.
+Como vemos aquí, el predictor de la cantidad de aristas totales en esta red ha perdido importance (su p-valor ha aumentado significativamente) respecto a los otros predictores que sí tienen mayor importancia: la cantidad de enlaces entre nodos del mismo sexo, la cantidad de aristas entre nodos con grado 1 y la cantidad de aristas entre nodos con edades diferentes.
 
 ```{r}
-
+fit2.gof_g.net = gof(fit2_g.net)
+par(mfrow=c(2,2))
+plot(fit2.gof_g.net)
 ```
 
-<br>
+Como vemos, el nuevo modelo se acerca algo más a los valores reales.
 
-*g)*  What is a triangle in this network? Test the transitivity and the average clustering of this network with the previous models. Explain your results.
+###f)
+**Try at least one more model that you consider interesting and that you think could explain better the network (you can add predictors to (e) and remove predictors from it; it is forbidden to use anything related to transitivity, because of (g) below). Justify your choice, explain the results obtained and check whether it fits better the network.**
 
-Un triángulo en esta red no dirigida representa un grupo de tres nodos que forman un clico entre sí, es decir, un grupo de tres presonas donde al menos dos de ellas tienen el mismo sexo y han tenido una relación sexual.
+```{r}
+fit3_g.net = ergm(g.net~edges+nodematch("sex")+degree(1)+absdiff("birthyear")+absdiff("season"))
+summary(fit3_g.net)
+```
+
+Dado el atributo de 'temporada' que corresponde a cuándo ha ocurrido la primera relación sexual de un nodo de esta red, otro modelo interesante sería incluir la cantidad de aristas entre nodos con temporadas diferentes, lo cual quiere decir que aquel nodo que tiene el atributo de temporada menor es el nodo que ya ha tenido otra relación anteriormente.
+
+```{r}
+fit3.gof_g.net = gof(fit3_g.net)
+par(mfrow=c(2,2))
+plot(fit3.gof_g.net)
+```
+
+Aunque parece interesante este nuevo modelo, el ajusto no es muy diferente al modelo realizado anteriormente.
+
+###g)
+**What is a triangle in this network? Test the transitivity and the average clustering of this network with the previous models. Explain your results.**
+
+Un triángulo en esta red no dirigida represanta un grupo de tres nodos que forman un clico entre sí, es decir, un grupo de tres presonas donde al menos dos de ellas tienen el mismo sexo y han tenido una relación sexual.
 
 Coeficiente de clustering:
 ```{r}
-round(transitivity(g, type="average"), 4)
+round(transitivity(g, type="average"),4)
 ```
 
 <br>
 
 Coeficiente de transitividad:
 ```{r}
-round(transitivity(g), 4)
+round(transitivity(g),4)
 ```
 
 En esta red no dirigida no existe ningún ciclo entre tres nodos. Aunque sí existen relaciones homosexuales en esta red, estos nodos no forman ningún ciclo con otro nodo, lo cual explica que tanto el coeficiente de clustering, como el coeficiente de transitividad dan 0.
 
-<br>
-
-*h)* P. S. Bearman, J. Moody and K. Stovel (in their classic "Chains of affection: The structure of adolescent romantic and sexual networks" (*Am. J. Soc.* 110 (2004), 44-91) on romantic relations in a High School which we have mentioned several times in the course) found a prohibition against coupling with a former partner's former partner's former partner (and justified it on the basis status implications). Check whether this network satisfies this prohibition, and test it on the previous models.
+###h)
+**P. S. Bearman, J. Moody and K. Stovel (in their classic "Chains of affection: The structure of adolescent romantic and sexual networks" (_Am. J. Soc._ 110 (2004), 44-91) on romantic relations in a High School which we have mentioned several times in the course) found a prohibition against coupling with a former partner's former partner's former partner (and justified it on the basis status implications). Check whether this network satisfies this prohibition, and test it on the previous models.**
 
 Para analizar si nuestra red sigue o no el estudio de "_Chains of affection_" simplemente hay que mirar cuantos ciclos de 4 nodos existen en la red, que corresponde a un caso donde NO se cumple el estudio de "_Chains of affection_". 
 
 ```{r}
-cycles = kcycle.census(dat = get.adjacency(g, type = c("both"), attr = NULL, sparse = FALSE), maxlen = 4, tabulate.by.vertex = FALSE, mode = "graph")
+cycles = kcycle.census(dat=get.adjacency(g, type=c("both"), attr=NULL, sparse = FALSE), maxlen=4, tabulate.by.vertex=FALSE, mode = "graph")
 cycles
 ```
 
-```{r}
-(4*cycles$cycle.count[3])/(nrow(df_v))
-```
+Como vemos, ocurren 7 casos donde NO se cumple el estudio de "_Chains of affection_". Como la instrucción no puede detectar que sean 7 veces las mismas 4 personas, el rango de personas de esta red que no cumplen con el estudio tiene que estar entre 10 personas (las mismas 3 personas en los 7 ciclos, más 7 veces 1 otra personas) y 28 personas (7 veces 4 personas diferentes). Lo cual nos da diferentes fracciones en esta red:
 
 ```{r}
-(4*cycles$cycle.count[3])/gsize(g)
+((3 + 1*cycles$cycle.count[3])/(gorder(g)))*100
 ```
+
+Para `r (3 + 1*cycles$cycle.count[3])` personas, un tanto porciento de las personas de la red NO cumplen con el estudio de "_Chains of affection_".
 
 ```{r}
-(cycles$cycle.count[3])/gsize(g)
+((4*cycles$cycle.count[3])/(gorder(g)))*100
 ```
 
-modedlo estocastico para predecir un enlace.
+Y para `r (4*cycles$cycle.count[3])` personas, un tanto porciento de las personas de la red NO cumplen con el estudio de "_Chains of affection_".
+
+En ambos casos, se podría decir que el estudio no se cumple con las personas de esta red.
