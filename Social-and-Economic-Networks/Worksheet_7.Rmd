@@ -83,23 +83,29 @@ g = graph_from_data_frame(df, directed = TRUE)
 
 <br>
 
+```{r}
+is.weighted(g)
+```
+
+<br>
+
 *a)* Provide a statistical summary of it. What are its most central cities?
 
 Datos estadísticos del grafo:
 
-* Order: `r igraph::gorder(g)`. 
+* **Order**: `r igraph::gorder(g)`. 
 
-* Tamaño: `r igraph::gsize(g)`
+* **Tamaño**: `r igraph::gsize(g)`
 
-* Densidad: `r round(igraph::edge_density(g), 4)`
+* **Densidad**: `r round(igraph::edge_density(g), 4)`
 
-* Componentes: El número de componentes conexos es `r igraph::components(g)$no` y sus tamaños son `r igraph::components(g)$csize`
+* **Componentes**: El número de componentes conexos es `r igraph::components(g)$no` y sus tamaños son `r igraph::components(g)$csize`
 
-* Diámetro: `r igraph::diameter(g)`
+* **Diámetro**: `r igraph::diameter(g)`
 
-* Distancia media: `r mean_distance(g)`
+* **Distancia media**: `r mean_distance(g)`
 
-* Transitividad: `r round(igraph::transitivity(g), 4)`
+* **Transitividad**: `r round(igraph::transitivity(g), 4)`
 
 <br>
 
@@ -123,12 +129,21 @@ De esta manera se muestra las ciudades por donde se ha de pasar más para llegar
 
 *b)* How do you think a road network is formed?
 
+Podemos pensar en una red de carreteras de dos formas:
+
+* Cada carretera es de un único sentido, por lo que el grafo sería dirigido, ya que la dirección de cada arista marcaría el sentido de la carretera.
+
+* Cada carretera es de doble sentido, por lo que es grafo sería no dirigido.
+
+En este caso, hemos decidido especificar que el grafo sea dirigido, por lo que tenemos en cuenta que cada carretera solo podrá tener un sentido.
+
+De una forma rápida, uno podría pensar que una red de carreteras es una conexión entre lugares donde cada conexión tiene una distancia asociada en kilómetros, metros, etc. No obstante, hemos comprobado que esta red de carreteras no tiene distancia entre los nodos, así que deberemos pensar el camino más corto para llegar de un lugar a otro como el número de aristas que hay que recorrer. Además, es obvio que, como podemos comprobar con el valor tan bajo de densidad, hay pocas carreteras que vayan entre dos mismos lugares.
 
 <br>
 
 *c)* Is this road network compatible with the E-R model, the configuration model, or the basic Barabasi-Albert's model? Justify your answer, and comment whether you expected it.
 
-Obtener orden, tamaño y densidad de $g$, necesario para las simulaciones posteriores, donde generaremos 1000 veces un grafo aleatorio mediante los modelos de E-R, de configuración y de Barabasi-Albert.
+Obtenemos el orden, tamaño y densidad de $g$, necesario para las simulaciones siguientes, donde generaremos 1000 grafos aleatorios mediante los modelos de E-R, de configuración y de Barabasi-Albert.
 
 ```{r}
 order_g = gorder(g)
@@ -138,7 +153,7 @@ den_g = edge_density(g, loops = FALSE)
 
 <br>
 
-E-R Model:
+**E-R Model**
 
 ```{r}
 ER = function(x,y) {
@@ -158,11 +173,11 @@ Results1
 
 <br>
 
-Después de generar 1000 veces un grafo aleatorio mediante el modelo E-R, a partir del tamaño y la densidad del grafo de nuestra red, visualizamos los diferentes valores que nos interesan entre el grafo "real" y el grafo aleatorio "simulado". Así podemos ver que con una simulación de 1000 iteraciones, no se acerca mucho al grafo original. Dado que el modelo genera todos los enlaces con la misma probabilidad, la probabilidad de generar el grafo "real" únicamente a partir del tamaño y la densidad no es muy elevado. Por lo tanto, diremos que no cumple con un modelo E-R.
+Después de generar 1000 grafos aleatorios mediante el modelo E-R, a partir del tamaño y la densidad del grafo de nuestra red, visualizamos los diferentes valores que nos interesan entre el grafo "real" y los grafos aleatorios "simulados". Así podemos ver que con una simulación de 1000 grafos, la media de estos nos indica que no se acercan al grafo original. Dado que el modelo genera todos los enlaces con la misma probabilidad, la probabilidad de generar el grafo "real" únicamente a partir del tamaño y la densidad no es muy elevado. Por lo tanto, diremos que no cumple con un modelo E-R.
 
 <br>
 
-Configuration Model:
+**Configuration Model**
 
 ```{r}
 CM = function(x,y){
@@ -182,11 +197,11 @@ Results2
 
 <br>
 
-Ahora vemos el resultado de la simulación del modelo de configuración que, a partir de la secuencia de grados de entrada y salida de los nodos de nuestro grafo, nos genera grafos aleatorios que se acerca en sus valores al grafo "real". Igual que el modelo anterior, no se acerca del todo a los valores del grafo real, por lo tanto, diremos que no cumple con el modelo de configuración.
+Ahora vemos el resultado de la simulación del modelo de configuración que, a partir de la secuencia de grados de entrada y salida de los nodos de nuestro grafo, nos genera grafos aleatorios que se acerca en sus valores al grafo "real". Igual que el modelo anterior, no se acerca a los valores del grafo real, por lo tanto, diremos que no cumple con el modelo de configuración.
 
 <br>
 
-Barabasi-Albert Model:
+**Barabasi-Albert Model**
 
 ```{r}
 BAM = function(x, y) {
@@ -213,11 +228,17 @@ También diremos que nuestra red no cumple con el modelo de Babarasi-Albert porq
 
 Now, is the E-road network compatible with Barabasi-Albert's model with initial attractiveness? Justify your answer, and comment whether you expected it.
 
+Siendo $a = \alpha$ en la función de *fit_power_law*, resolvemos que:
 ```{r}
 alpha = fit_power_law(degree(g), xmin = 3)$alpha
 alpha
 ```
 
+donde 3 es el valor mínimo que puede devolver la función $3 + a/c$, por lo tanto se lo pasamos al parámetro **xmin**.
+
+<br>
+
+A partir de este $\alpha$, simulamos de nuevo el modelo de Barabasi-Albert, especificándola en el parámetro *zero.appeal*.
 
 ```{r}
 BAM_attr = function(x, y) {
@@ -234,7 +255,9 @@ dimnames(Results4) = list(c("Real", "Simulated", "St. Dev.", "Max."), c("Av. Clu
 Results4
 ```
 
+<br>
 
+En este caso, la media del número de componentes que ha dado la simulación es 1, por lo que se han generado grafos conexos. Por otra parte, los valores de transitividad y clustering son parecidos a los del grafo original. De esta forma podemos concluir que esta red de carreteras es compatible con el modelo de Barabasi-Albert con un *attractiveness* de `r alpha`.
 
 
 <br>
@@ -246,6 +269,7 @@ df = read.csv("datasets/WikiVote.txt", sep = "\t")
 g = graph_from_data_frame(df, directed = TRUE)
 ```
 
+<br>
 
 *a)* Is it compatible with the directed E-R model, the directed configuration model, or the  directed Barabasi-Albert's model (either basic or with initial attractiveness)? Justify your answer, and comment whether you expected it.
 
@@ -258,9 +282,11 @@ den_g = edge_density(g, loops = FALSE)
 
 <br>
 
-Probamos, mediante simulaciones de los 3 modelos, si la red es compatible con alguno de ellos, tal como hemos hecho en el ejercicio 1.
+Probamos, mediante simulaciones de los 3 modelos, si la red es compatible con alguno de ellos, tal como hemos hecho en el ejercicio 1. En este caso no se ha podido hacer con 1000 iteraciones debido al gran coste computacional que requieren estas simulaciones si el grafo es muy grande.
 
-E-R Model:
+<br>
+
+**E-R Model**
 
 ```{r}
 ER = function(x,y) {
@@ -281,7 +307,7 @@ Results1
 <br>
 
 
-Configuration Model:
+**Configuration Model**
 
 ```{r}
 CM = function(x,y){
@@ -303,7 +329,7 @@ Results2
 <br>
 
 
-Barabasi-Albert Model:
+**Barabasi-Albert Model**
 
 ```{r}
 BAM = function(x, y) {
@@ -322,16 +348,46 @@ Results3
 
 <br>
 
+Ninguno de los 3 modelos es compatible con la red *WikiVote*, debido a que las simulaciones han dado valores bastante distintos a los del grafo original.
+
+<br>
+
 
 *b)* It should be clear that this network does not "grow" and that the number of votes received by each individual is somehow related to some notion of "fitness". **igraph** provides some functions to generate random networks with these features (based on the model explained in https://arxiv.org/pdf/cond-mat/0106565.pdf). Is this WikiVote network compatible with the 
 "Scale-free random graphs with vertex fitness scores" provided by the function **sample_fitness_pl**? Justify and comment your answer.
 
 
+Tal y como dice en el artículo, dado que esta es una red dirigida, se han de generar dos exponentes: uno para los grados de entrada y otro para los grados de salida.
 ```{r}
-
+alpha_in = fit_power_law(degree(g, mode = 'in'))$alpha
+alpha_out = fit_power_law(degree(g, mode = 'out'))$alpha
 ```
 
+<br>
 
+```{r}
+SFR = function() {
+  G = sample_fitness_pl(no.of.nodes = order_g, 
+                        no.of.edges = size_g, 
+                        exponent.out = alpha_out, 
+                        exponent.in = alpha_in, 
+                        loops = FALSE)
+  c(transitivity(G, type = "average"), transitivity(G), components(G)$no, diameter(G))
+}
 
+X5 = replicate(100, SFR())
+Results5 = rbind(c(transitivity(g, type = "average"), transitivity(g), components(g)$no, diameter(g)), 
+                 round(apply(X5, FUN = mean, MARGIN = 1), 4),
+                 round(apply(X5, FUN = sd, MARGIN = 1), 4),
+                 round(apply(X5, FUN = max, MARGIN = 1), 4))
+dimnames(Results5) = list(c("Real", "Simulated", "St. Dev.", "Max."), c("Av. Clust.", "Trans.", "No. Conn. Comp.", "Diameter"))
+Results5
+```
+
+<br>
+
+Dado que los coeficientes de los grafos simulados no se parecen a los coeficientes del grafo real, podemos concluir que este modelo tampoco es compatible con la red de *WikiVote*.
+
+<br>
 
 

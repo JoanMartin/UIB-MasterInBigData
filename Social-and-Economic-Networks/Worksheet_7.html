@@ -207,16 +207,19 @@ $(document).ready(function () {
 df_n =<span class="st"> </span><span class="kw">read.csv</span>(<span class="st">&quot;datasets/euroroad_city_names.txt&quot;</span>, <span class="dt">sep =</span> <span class="st">&quot;&quot;</span>)
 g =<span class="st"> </span><span class="kw">graph_from_data_frame</span>(df, <span class="dt">directed =</span> <span class="ot">TRUE</span>)</code></pre></div>
 <p><br></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">is.weighted</span>(g)</code></pre></div>
+<pre><code>## [1] FALSE</code></pre>
+<p><br></p>
 <p><em>a)</em> Provide a statistical summary of it. What are its most central cities?</p>
 <p>Datos estadísticos del grafo:</p>
 <ul>
-<li><p>Order: 1173.</p></li>
-<li><p>Tamaño: 1416</p></li>
-<li><p>Densidad: 0.001</p></li>
-<li><p>Componentes: El número de componentes conexos es 26 y sus tamaños son 38, 1039, 3, 4, 8, 5, 2, 15, 3, 4, 5, 4, 4, 2, 2, 2, 2, 7, 2, 2, 2, 10, 2, 2, 2, 2</p></li>
-<li><p>Diámetro: 41</p></li>
-<li><p>Distancia media: 8.782487</p></li>
-<li><p>Transitividad: 0.0339</p></li>
+<li><p><strong>Order</strong>: 1173.</p></li>
+<li><p><strong>Tamaño</strong>: 1416</p></li>
+<li><p><strong>Densidad</strong>: 0.001</p></li>
+<li><p><strong>Componentes</strong>: El número de componentes conexos es 26 y sus tamaños son 38, 1039, 3, 4, 8, 5, 2, 15, 3, 4, 5, 4, 4, 2, 2, 2, 2, 7, 2, 2, 2, 10, 2, 2, 2, 2</p></li>
+<li><p><strong>Diámetro</strong>: 41</p></li>
+<li><p><strong>Distancia media</strong>: 8.782487</p></li>
+<li><p><strong>Transitividad</strong>: 0.0339</p></li>
 </ul>
 <p><br></p>
 <p>Obtenemos las ciudades más centrales mediante la centralidad Betweeness de la siguiente forma:</p>
@@ -234,14 +237,21 @@ most_central</code></pre></div>
 <p>De esta manera se muestra las ciudades por donde se ha de pasar más para llegar a las demás ciudades.</p>
 <p><br></p>
 <p><em>b)</em> How do you think a road network is formed?</p>
+<p>Podemos pensar en una red de carreteras de dos formas:</p>
+<ul>
+<li><p>Cada carretera es de un único sentido, por lo que el grafo sería dirigido, ya que la dirección de cada arista marcaría el sentido de la carretera.</p></li>
+<li><p>Cada carretera es de doble sentido, por lo que es grafo sería no dirigido.</p></li>
+</ul>
+<p>En este caso, hemos decidido especificar que el grafo sea dirigido, por lo que tenemos en cuenta que cada carretera solo podrá tener un sentido.</p>
+<p>De una forma rápida, uno podría pensar que una red de carreteras es una conexión entre lugares donde cada conexión tiene una distancia asociada en kilómetros, metros, etc. No obstante, hemos comprobado que esta red de carreteras no tiene distancia entre los nodos, así que deberemos pensar el camino más corto para llegar de un lugar a otro como el número de aristas que hay que recorrer. Además, es obvio que, como podemos comprobar con el valor tan bajo de densidad, hay pocas carreteras que vayan entre dos mismos lugares.</p>
 <p><br></p>
 <p><em>c)</em> Is this road network compatible with the E-R model, the configuration model, or the basic Barabasi-Albert’s model? Justify your answer, and comment whether you expected it.</p>
-<p>Obtener orden, tamaño y densidad de <span class="math inline">\(g\)</span>, necesario para las simulaciones posteriores, donde generaremos 1000 veces un grafo aleatorio mediante los modelos de E-R, de configuración y de Barabasi-Albert.</p>
+<p>Obtenemos el orden, tamaño y densidad de <span class="math inline">\(g\)</span>, necesario para las simulaciones siguientes, donde generaremos 1000 grafos aleatorios mediante los modelos de E-R, de configuración y de Barabasi-Albert.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">order_g =<span class="st"> </span><span class="kw">gorder</span>(g)
 size_g =<span class="st"> </span><span class="kw">gsize</span>(g)
 den_g =<span class="st"> </span><span class="kw">edge_density</span>(g, <span class="dt">loops =</span> <span class="ot">FALSE</span>)</code></pre></div>
 <p><br></p>
-<p>E-R Model:</p>
+<p><strong>E-R Model</strong></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ER =<span class="st"> </span><span class="cf">function</span>(x,y) {
   G =<span class="st"> </span><span class="kw">sample_gnp</span>(x, y, <span class="dt">directed =</span> <span class="ot">TRUE</span>, <span class="dt">loops =</span> <span class="ot">FALSE</span>)
   <span class="kw">c</span>(<span class="kw">transitivity</span>(G, <span class="dt">type=</span><span class="st">&quot;average&quot;</span>), <span class="kw">transitivity</span>(G), <span class="kw">components</span>(G)<span class="op">$</span>no, <span class="kw">diameter</span>(G))
@@ -256,13 +266,13 @@ Results1 =<span class="st"> </span><span class="kw">rbind</span>(<span class="kw
 Results1</code></pre></div>
 <pre><code>##           Av. Clust.     Trans. No. Conn. Comp. Diameter
 ## Real      0.01996225 0.03391028         26.0000   41.000
-## Simulated 0.00210000 0.00210000        120.4380   47.991
-## St. Dev.  0.00160000 0.00140000         12.0769    8.824
-## Max.      0.00930000 0.00850000        161.0000   87.000</code></pre>
+## Simulated 0.00200000 0.00200000        120.6520   47.671
+## St. Dev.  0.00160000 0.00140000         12.1721    8.547
+## Max.      0.00870000 0.00790000        161.0000   84.000</code></pre>
 <p><br></p>
-<p>Después de generar 1000 veces un grafo aleatorio mediante el modelo E-R, a partir del tamaño y la densidad del grafo de nuestra red, visualizamos los diferentes valores que nos interesan entre el grafo “real” y el grafo aleatorio “simulado”. Así podemos ver que con una simulación de 1000 iteraciones, no se acerca mucho al grafo original. Dado que el modelo genera todos los enlaces con la misma probabilidad, la probabilidad de generar el grafo “real” únicamente a partir del tamaño y la densidad no es muy elevado. Por lo tanto, diremos que no cumple con un modelo E-R.</p>
+<p>Después de generar 1000 grafos aleatorios mediante el modelo E-R, a partir del tamaño y la densidad del grafo de nuestra red, visualizamos los diferentes valores que nos interesan entre el grafo “real” y los grafos aleatorios “simulados”. Así podemos ver que con una simulación de 1000 grafos, la media de estos nos indica que no se acercan al grafo original. Dado que el modelo genera todos los enlaces con la misma probabilidad, la probabilidad de generar el grafo “real” únicamente a partir del tamaño y la densidad no es muy elevado. Por lo tanto, diremos que no cumple con un modelo E-R.</p>
 <p><br></p>
-<p>Configuration Model:</p>
+<p><strong>Configuration Model</strong></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">CM =<span class="st"> </span><span class="cf">function</span>(x,y){
   G =<span class="st"> </span><span class="kw">sample_degseq</span>(<span class="dt">out.deg =</span> x, <span class="dt">in.deg =</span> y, <span class="dt">method =</span> <span class="st">&quot;simple&quot;</span>)
   G =<span class="st"> </span><span class="kw">simplify</span>(G)
@@ -278,13 +288,13 @@ Results2 =<span class="st"> </span><span class="kw">rbind</span>(<span class="kw
 Results2</code></pre></div>
 <pre><code>##             Av. Clust.     Trans. No. Conn. Comp. Diameter
 ## Theoretical 0.01996225 0.03391028         26.0000  41.0000
-## Simulated   0.00140000 0.00120000         10.6830  61.5180
-## St. Dev.    0.00140000 0.00110000          2.7983  13.1373
-## Max.        0.00850000 0.00640000         20.0000 120.0000</code></pre>
+## Simulated   0.00140000 0.00120000         10.6320  62.0160
+## St. Dev.    0.00150000 0.00120000          2.6858  13.1452
+## Max.        0.01080000 0.00640000         21.0000 114.0000</code></pre>
 <p><br></p>
-<p>Ahora vemos el resultado de la simulación del modelo de configuración que, a partir de la secuencia de grados de entrada y salida de los nodos de nuestro grafo, nos genera grafos aleatorios que se acerca en sus valores al grafo “real”. Igual que el modelo anterior, no se acerca del todo a los valores del grafo real, por lo tanto, diremos que no cumple con el modelo de configuración.</p>
+<p>Ahora vemos el resultado de la simulación del modelo de configuración que, a partir de la secuencia de grados de entrada y salida de los nodos de nuestro grafo, nos genera grafos aleatorios que se acerca en sus valores al grafo “real”. Igual que el modelo anterior, no se acerca a los valores del grafo real, por lo tanto, diremos que no cumple con el modelo de configuración.</p>
 <p><br></p>
-<p>Barabasi-Albert Model:</p>
+<p><strong>Barabasi-Albert Model</strong></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">BAM =<span class="st"> </span><span class="cf">function</span>(x, y) {
   G =<span class="st"> </span><span class="kw">sample_pa</span>(<span class="dt">n =</span> x, <span class="dt">m =</span> y, <span class="dt">directed =</span> <span class="ot">TRUE</span>, <span class="dt">out.pref =</span> <span class="ot">TRUE</span>)
   <span class="kw">c</span>(<span class="kw">transitivity</span>(G, <span class="dt">type =</span> <span class="st">&quot;average&quot;</span>), <span class="kw">transitivity</span>(G), <span class="kw">components</span>(G)<span class="op">$</span>no, <span class="kw">diameter</span>(G))
@@ -298,18 +308,22 @@ Results3 =<span class="st"> </span><span class="kw">rbind</span>(<span class="kw
 <span class="kw">dimnames</span>(Results3) =<span class="st"> </span><span class="kw">list</span>(<span class="kw">c</span>(<span class="st">&quot;Real&quot;</span>, <span class="st">&quot;Simulated&quot;</span>, <span class="st">&quot;St. Dev.&quot;</span>, <span class="st">&quot;Max.&quot;</span>), <span class="kw">c</span>(<span class="st">&quot;Av. Clust.&quot;</span>, <span class="st">&quot;Trans.&quot;</span>, <span class="st">&quot;No. Conn. Comp.&quot;</span>, <span class="st">&quot;Diameter&quot;</span>))
 Results3</code></pre></div>
 <pre><code>##           Av. Clust.     Trans. No. Conn. Comp. Diameter
-## Real      0.01996225 0.03391028              26  41.0000
-## Simulated 0.02020000 0.01570000               1  12.3540
-## St. Dev.  0.00260000 0.00110000               0   1.0908
-## Max.      0.02900000 0.01950000               1  16.0000</code></pre>
+## Real      0.01996225 0.03391028              26   41.000
+## Simulated 0.02020000 0.01570000               1   12.374
+## St. Dev.  0.00270000 0.00110000               0    1.132
+## Max.      0.03040000 0.01930000               1   17.000</code></pre>
 <p><br></p>
 <p>También diremos que nuestra red no cumple con el modelo de Babarasi-Albert porque la probabilidad de generar el grafo real a partir del modelo de Barabasi-Albert es muy bajo.</p>
 <p><br></p>
 <p><em>d)</em> If we add an initial attractiveness <span class="math inline">\(a\)</span> to all nodes, so that the probability of an old node <span class="math inline">\(v\)</span> to be linked by a new node is proportional to <span class="math inline">\(a+\deg(v)\)</span>, the absolute value of the exponent in the power law describing its degree distribution turns out to be <span class="math inline">\(3+a/c\)</span> (with <span class="math inline">\(c\)</span> the mean number of links of the new nodes). This exponent can be estimated with <strong>igraph</strong>’s function <strong>fit_power_law</strong>.</p>
 <p>Now, is the E-road network compatible with Barabasi-Albert’s model with initial attractiveness? Justify your answer, and comment whether you expected it.</p>
+<p>Siendo <span class="math inline">\(a = \alpha\)</span> en la función de <em>fit_power_law</em>, resolvemos que:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">alpha =<span class="st"> </span><span class="kw">fit_power_law</span>(<span class="kw">degree</span>(g), <span class="dt">xmin =</span> <span class="dv">3</span>)<span class="op">$</span>alpha
 alpha</code></pre></div>
 <pre><code>## [1] 3.849612</code></pre>
+<p>donde 3 es el valor mínimo que puede devolver la función <span class="math inline">\(3 + a/c\)</span>, por lo tanto se lo pasamos al parámetro <strong>xmin</strong>.</p>
+<p><br></p>
+<p>A partir de este <span class="math inline">\(\alpha\)</span>, simulamos de nuevo el modelo de Barabasi-Albert, especificándola en el parámetro <em>zero.appeal</em>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">BAM_attr =<span class="st"> </span><span class="cf">function</span>(x, y) {
   G =<span class="st"> </span><span class="kw">sample_pa</span>(<span class="dt">n =</span> x, <span class="dt">m =</span> y, <span class="dt">directed =</span> <span class="ot">TRUE</span>, <span class="dt">out.pref =</span> <span class="ot">TRUE</span>, <span class="dt">zero.appeal =</span> alpha)
   <span class="kw">c</span>(<span class="kw">transitivity</span>(G, <span class="dt">type =</span> <span class="st">&quot;average&quot;</span>), <span class="kw">transitivity</span>(G), <span class="kw">components</span>(G)<span class="op">$</span>no, <span class="kw">diameter</span>(G))
@@ -324,20 +338,24 @@ Results4 =<span class="st"> </span><span class="kw">rbind</span>(<span class="kw
 Results4</code></pre></div>
 <pre><code>##           Av. Clust.     Trans. No. Conn. Comp. Diameter
 ## Real      0.01996225 0.03391028              26  41.0000
-## Simulated 0.01250000 0.01460000               1  12.9980
-## St. Dev.  0.00170000 0.00110000               0   1.1257
-## Max.      0.01910000 0.01830000               1  17.0000</code></pre>
+## Simulated 0.01250000 0.01450000               1  12.9630
+## St. Dev.  0.00170000 0.00120000               0   1.0793
+## Max.      0.01800000 0.01810000               1  19.0000</code></pre>
+<p><br></p>
+<p>En este caso, la media del número de componentes que ha dado la simulación es 1, por lo que se han generado grafos conexos. Por otra parte, los valores de transitividad y clustering son parecidos a los del grafo original. De esta forma podemos concluir que esta red de carreteras es compatible con el modelo de Barabasi-Albert con un <em>attractiveness</em> de 3.8496118.</p>
 <p><br></p>
 <p><strong>2)</strong> Consider the WikiVote directed network introduced in the Handout 4.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">df =<span class="st"> </span><span class="kw">read.csv</span>(<span class="st">&quot;datasets/WikiVote.txt&quot;</span>, <span class="dt">sep =</span> <span class="st">&quot;</span><span class="ch">\t</span><span class="st">&quot;</span>)
 g =<span class="st"> </span><span class="kw">graph_from_data_frame</span>(df, <span class="dt">directed =</span> <span class="ot">TRUE</span>)</code></pre></div>
+<p><br></p>
 <p><em>a)</em> Is it compatible with the directed E-R model, the directed configuration model, or the directed Barabasi-Albert’s model (either basic or with initial attractiveness)? Justify your answer, and comment whether you expected it.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">order_g =<span class="st"> </span><span class="kw">gorder</span>(g)
 size_g =<span class="st"> </span><span class="kw">gsize</span>(g)
 den_g =<span class="st"> </span><span class="kw">edge_density</span>(g, <span class="dt">loops =</span> <span class="ot">FALSE</span>)</code></pre></div>
 <p><br></p>
-<p>Probamos, mediante simulaciones de los 3 modelos, si la red es compatible con alguno de ellos, tal como hemos hecho en el ejercicio 1.</p>
-<p>E-R Model:</p>
+<p>Probamos, mediante simulaciones de los 3 modelos, si la red es compatible con alguno de ellos, tal como hemos hecho en el ejercicio 1. En este caso no se ha podido hacer con 1000 iteraciones debido al gran coste computacional que requieren estas simulaciones si el grafo es muy grande.</p>
+<p><br></p>
+<p><strong>E-R Model</strong></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ER =<span class="st"> </span><span class="cf">function</span>(x,y) {
   G =<span class="st"> </span><span class="kw">sample_gnp</span>(x, y, <span class="dt">directed =</span> <span class="ot">TRUE</span>, <span class="dt">loops =</span> <span class="ot">FALSE</span>)
   <span class="kw">c</span>(<span class="kw">transitivity</span>(G, <span class="dt">type=</span><span class="st">&quot;average&quot;</span>), <span class="kw">transitivity</span>(G), <span class="kw">components</span>(G)<span class="op">$</span>no, <span class="kw">diameter</span>(G))
@@ -352,11 +370,11 @@ Results1 =<span class="st"> </span><span class="kw">rbind</span>(<span class="kw
 Results1</code></pre></div>
 <pre><code>##           Av. Clust.    Trans. No. Conn. Comp. Diameter
 ## Real       0.2088506 0.1254792              24   10.000
-## Simulated  0.0041000 0.0041000               1    5.700
-## St. Dev.   0.0000000 0.0000000               0    0.483
+## Simulated  0.0041000 0.0041000               1    5.500
+## St. Dev.   0.0001000 0.0001000               0    0.527
 ## Max.       0.0042000 0.0042000               1    6.000</code></pre>
 <p><br></p>
-<p>Configuration Model:</p>
+<p><strong>Configuration Model</strong></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">CM =<span class="st"> </span><span class="cf">function</span>(x,y){
   G =<span class="st"> </span><span class="kw">sample_degseq</span>(<span class="dt">out.deg =</span> x, <span class="dt">in.deg =</span> y, <span class="dt">method =</span> <span class="st">&quot;simple&quot;</span>)
   G =<span class="st"> </span><span class="kw">simplify</span>(G)
@@ -372,11 +390,11 @@ Results2 =<span class="st"> </span><span class="kw">rbind</span>(<span class="kw
 Results2</code></pre></div>
 <pre><code>##             Av. Clust.    Trans. No. Conn. Comp. Diameter
 ## Theoretical  0.2088506 0.1254792         24.0000  10.0000
-## Simulated    0.0733000 0.0720000          2.7000   8.5500
-## St. Dev.     0.0015000 0.0005000          1.1286   0.6048
-## Max.         0.0765000 0.0728000          5.0000  10.0000</code></pre>
+## Simulated    0.0739000 0.0719000          2.9000   8.0500
+## St. Dev.     0.0017000 0.0005000          1.4832   0.5104
+## Max.         0.0764000 0.0727000          6.0000   9.0000</code></pre>
 <p><br></p>
-<p>Barabasi-Albert Model:</p>
+<p><strong>Barabasi-Albert Model</strong></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">BAM =<span class="st"> </span><span class="cf">function</span>(x, y) {
   G =<span class="st"> </span><span class="kw">sample_pa</span>(<span class="dt">n =</span> x, <span class="dt">m =</span> y, <span class="dt">directed =</span> <span class="ot">TRUE</span>, <span class="dt">out.pref =</span> <span class="ot">TRUE</span>)
   <span class="kw">c</span>(<span class="kw">transitivity</span>(G, <span class="dt">type =</span> <span class="st">&quot;average&quot;</span>), <span class="kw">transitivity</span>(G), <span class="kw">components</span>(G)<span class="op">$</span>no, <span class="kw">diameter</span>(G))
@@ -390,11 +408,42 @@ Results3 =<span class="st"> </span><span class="kw">rbind</span>(<span class="kw
 <span class="kw">dimnames</span>(Results3) =<span class="st"> </span><span class="kw">list</span>(<span class="kw">c</span>(<span class="st">&quot;Real&quot;</span>, <span class="st">&quot;Simulated&quot;</span>, <span class="st">&quot;St. Dev.&quot;</span>, <span class="st">&quot;Max.&quot;</span>), <span class="kw">c</span>(<span class="st">&quot;Av. Clust.&quot;</span>, <span class="st">&quot;Trans.&quot;</span>, <span class="st">&quot;No. Conn. Comp.&quot;</span>, <span class="st">&quot;Diameter&quot;</span>))
 Results3</code></pre></div>
 <pre><code>##           Av. Clust.    Trans. No. Conn. Comp. Diameter
-## Real       0.2088506 0.1254792              24  10.0000
-## Simulated  0.0045000 0.0037000               1  16.8600
-## St. Dev.   0.0004000 0.0002000               0   1.1978
-## Max.       0.0053000 0.0042000               1  20.0000</code></pre>
+## Real       0.2088506 0.1254792              24    10.00
+## Simulated  0.0045000 0.0037000               1    16.90
+## St. Dev.   0.0005000 0.0002000               0     1.02
+## Max.       0.0058000 0.0044000               1    20.00</code></pre>
+<p><br></p>
+<p>Ninguno de los 3 modelos es compatible con la red <em>WikiVote</em>, debido a que las simulaciones han dado valores bastante distintos a los del grafo original.</p>
+<p><br></p>
 <p><em>b)</em> It should be clear that this network does not “grow” and that the number of votes received by each individual is somehow related to some notion of “fitness”. <strong>igraph</strong> provides some functions to generate random networks with these features (based on the model explained in <a href="https://arxiv.org/pdf/cond-mat/0106565.pdf" class="uri">https://arxiv.org/pdf/cond-mat/0106565.pdf</a>). Is this WikiVote network compatible with the “Scale-free random graphs with vertex fitness scores” provided by the function <strong>sample_fitness_pl</strong>? Justify and comment your answer.</p>
+<p>Tal y como dice en el artículo, dado que esta es una red dirigida, se han de generar dos exponentes: uno para los grados de entrada y otro para los grados de salida.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">alpha_in =<span class="st"> </span><span class="kw">fit_power_law</span>(<span class="kw">degree</span>(g, <span class="dt">mode =</span> <span class="st">'in'</span>))<span class="op">$</span>alpha
+alpha_out =<span class="st"> </span><span class="kw">fit_power_law</span>(<span class="kw">degree</span>(g, <span class="dt">mode =</span> <span class="st">'out'</span>))<span class="op">$</span>alpha</code></pre></div>
+<p><br></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">SFR =<span class="st"> </span><span class="cf">function</span>() {
+  G =<span class="st"> </span><span class="kw">sample_fitness_pl</span>(<span class="dt">no.of.nodes =</span> order_g, 
+                        <span class="dt">no.of.edges =</span> size_g, 
+                        <span class="dt">exponent.out =</span> alpha_out, 
+                        <span class="dt">exponent.in =</span> alpha_in, 
+                        <span class="dt">loops =</span> <span class="ot">FALSE</span>)
+  <span class="kw">c</span>(<span class="kw">transitivity</span>(G, <span class="dt">type =</span> <span class="st">&quot;average&quot;</span>), <span class="kw">transitivity</span>(G), <span class="kw">components</span>(G)<span class="op">$</span>no, <span class="kw">diameter</span>(G))
+}
+
+X5 =<span class="st"> </span><span class="kw">replicate</span>(<span class="dv">100</span>, <span class="kw">SFR</span>())
+Results5 =<span class="st"> </span><span class="kw">rbind</span>(<span class="kw">c</span>(<span class="kw">transitivity</span>(g, <span class="dt">type =</span> <span class="st">&quot;average&quot;</span>), <span class="kw">transitivity</span>(g), <span class="kw">components</span>(g)<span class="op">$</span>no, <span class="kw">diameter</span>(g)), 
+                 <span class="kw">round</span>(<span class="kw">apply</span>(X5, <span class="dt">FUN =</span> mean, <span class="dt">MARGIN =</span> <span class="dv">1</span>), <span class="dv">4</span>),
+                 <span class="kw">round</span>(<span class="kw">apply</span>(X5, <span class="dt">FUN =</span> sd, <span class="dt">MARGIN =</span> <span class="dv">1</span>), <span class="dv">4</span>),
+                 <span class="kw">round</span>(<span class="kw">apply</span>(X5, <span class="dt">FUN =</span> max, <span class="dt">MARGIN =</span> <span class="dv">1</span>), <span class="dv">4</span>))
+<span class="kw">dimnames</span>(Results5) =<span class="st"> </span><span class="kw">list</span>(<span class="kw">c</span>(<span class="st">&quot;Real&quot;</span>, <span class="st">&quot;Simulated&quot;</span>, <span class="st">&quot;St. Dev.&quot;</span>, <span class="st">&quot;Max.&quot;</span>), <span class="kw">c</span>(<span class="st">&quot;Av. Clust.&quot;</span>, <span class="st">&quot;Trans.&quot;</span>, <span class="st">&quot;No. Conn. Comp.&quot;</span>, <span class="st">&quot;Diameter&quot;</span>))
+Results5</code></pre></div>
+<pre><code>##           Av. Clust.    Trans. No. Conn. Comp. Diameter
+## Real       0.2088506 0.1254792              24  10.0000
+## Simulated  0.0059000 0.0058000               1   6.0700
+## St. Dev.   0.0001000 0.0001000               0   0.2564
+## Max.       0.0061000 0.0060000               1   7.0000</code></pre>
+<p><br></p>
+<p>Dado que los coeficientes de los grafos simulados no se parecen a los coeficientes del grafo real, podemos concluir que este modelo tampoco es compatible con la red de <em>WikiVote</em>.</p>
+<p><br></p>
 
 
 

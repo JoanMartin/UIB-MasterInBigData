@@ -82,23 +82,18 @@ rm(list=ls())
 
 **Define a network with these data frames, and make sure that its nodes have as attributes at least their names, sex, birthyear, race and position.**
 
-Crear grafo:
+
 ```{r}
 df_e = read.csv("datasets/GA_edges.txt", sep = "\t")
 df_v = read.csv("datasets/GA_nodes.txt", sep = "\t")
 g = graph_from_data_frame(df_e, directed = FALSE)
-```
 
-<br>
-
-Grafo antes de tener atributos:
-```{r}
 plot(g)
 ```
 
 <br>
 
-Añadir atributos a nodos:
+Añadimos los atributos a los nodos:
 ```{r}
 for(i in vertex_attr(g)$name){
   g = set_vertex_attr(g, name = "sex", index = i, value = as.character(df_v[i,2]))
@@ -113,7 +108,7 @@ for(i in vertex_attr(g)$name){
 
 <br>
 
-A continuación vemos todos los atributos añadidos a cada nodo.
+A continuación, vemos todos los atributos añadidos a cada nodo.
 ```{r}
 vertex_attr(g)
 ```
@@ -192,7 +187,7 @@ table(factor(V(g)$sign, labels=unique(V(g)$sign)))
 Ahora visualizamos la red de forma que coloreamos los diferentes nodos según su atributo de "sexo" (Azul: Hombre | Rosa: Mujer).
 
 ```{r}
-plot(g, vertex.color=c("pink","skyblue")[1+(V(g)$sex=="M")])
+plot(g, vertex.color = c("pink","skyblue")[1+(V(g)$sex=="M")])
 ```
 
 <br> 
@@ -222,11 +217,11 @@ V(g)$name[degree(g)==max(degree(g))]
 Primero generamos nuestra red e incluimos los atributos de nombres, sexos, temporadas y año de nacimientos (estos últimos 2 para posteriores ejercicios). Esta clase generada se necesita posteriormente para hacer el modelo de ERGM.
 
 ```{r}
-g.net=as.network(as.matrix(as_adjacency_matrix(g)),directed=FALSE)
+g.net = as.network(as.matrix(as_adjacency_matrix(g)),directed=FALSE)
 network::set.vertex.attribute(g.net,"name", V(g)$name)
 network::set.vertex.attribute(g.net,"sex", V(g)$sex)
 network::set.vertex.attribute(g.net,"season", V(g)$season)
-network::set.vertex.attribute(g.net,"birthyear", strtoi(V(g)$birthyear,base=0L))
+network::set.vertex.attribute(g.net,"birthyear", strtoi(V(g)$birthyear, base = 0L))
 g.net
 ```
 
@@ -248,7 +243,7 @@ A continuación mostramos lo adecuado que es nuestro modelo actual.
 
 ```{r}
 fit.gof_g.net = gof(fit_g.net)
-par(mfrow=c(2,2))
+par(mfrow = c(2,2))
 plot(fit.gof_g.net)
 ```
 
@@ -263,7 +258,7 @@ Con estas gráficas podemos ver que no se ajusta del todo a los valores reales, 
 Ampliamos el modelo anterior con la cantidad de aristas que van enlazadas entre nodos de grado 1 (que representa "monogamía" en esta red) y la cantidad de aristas entre nodos con atributo de año de nacimiento diferente.
 
 ```{r}
-fit2_g.net <- ergm(g.net~edges+nodematch("sex")+degree(1)+absdiff("birthyear"))
+fit2_g.net = ergm(g.net~edges+nodematch("sex")+degree(1)+absdiff("birthyear"))
 summary(fit2_g.net)
 ```
 
@@ -273,7 +268,7 @@ Como vemos aquí, el predictor de la cantidad de aristas totales en esta red ha 
 
 ```{r}
 fit2.gof_g.net = gof(fit2_g.net)
-par(mfrow=c(2,2))
+par(mfrow = c(2,2))
 plot(fit2.gof_g.net)
 ```
 
@@ -312,14 +307,14 @@ Un triángulo en esta red no dirigida represanta un grupo de tres nodos que form
 
 Coeficiente de clustering:
 ```{r}
-round(transitivity(g, type="average"),4)
+round(transitivity(g, type="average"), 4)
 ```
 
 <br>
 
 Coeficiente de transitividad:
 ```{r}
-round(transitivity(g),4)
+round(transitivity(g), 4)
 ```
 
 <br>
