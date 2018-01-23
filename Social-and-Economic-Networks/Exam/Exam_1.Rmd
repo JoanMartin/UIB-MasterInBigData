@@ -97,11 +97,11 @@ Así pues, con la simple información de la estructura de la red que nos aporta 
 - Atributo de 'amistad' en las aristas, que califica el tipo de amistad entre dos nodos enlazados. No todos los mensajes pueden pasar por todos los enlaces.
 Con esto, podría ocurrir que la intuición de la segunda programadora es la más adecuada, si esa ruta cumple con los requisitos de ser el enlace más corto y por donde el mensaje está 'permitido' pasar.
 
-**2)** (2 points) Let $V$ be a partition of an undirected graph $G$. For every community $X_r \E V$, let $a_r$ be the fraction of edges incident to nodes in $X_r$, and for every $X_r,X_s \E V$, let $e_r,_s$ be the fraction of edges in $G$ that link nodes in $X_r$ with nodes in $X_s$.
+**2)** (2 points) Let $V$ be a partition of an undirected graph $G$. For every community $X_r \E V$, let $a_r$ be the fraction of edges incident to nodes in $X_r$, and for every $X_r,X_s \E V$, let $e_{r, s}$ be the fraction of edges in $G$ that link nodes in $X_r$ with nodes in $X_s$.
 
 *(a)* Write an expression for the modularity $Q(V)$ of the partition $V$ in terms of these quantities $a_r$ and $e_r,_s$.
 
-$$Q(v) = \sum^k_1(e_r,_s - a^2_r)$$
+$$Q(v) = \sum^k_1(e_{r, s} - a^2_r)$$
 ers: aristas que conectan nodos de la comunidad r y s (incluye el caso donde s=r)
 ar: aristas que conectan nodos dentro de la comunidad r
 eii = ers - ar : 
