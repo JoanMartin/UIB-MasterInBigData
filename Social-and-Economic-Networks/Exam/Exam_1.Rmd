@@ -142,7 +142,7 @@ v = sample(x = c(1,3), size = 10^4, replace = TRUE, prob = c(0.5,0.5))
 ```{r}
 simulacion_ej3 = function(p1,p3){
   v = sample(x = c(1,3), size = 10^4, replace = TRUE, prob = c(p1,p3))
-  g = sample_degseq(out.deg = v, method = "simple.no.multiple")
+  g = sample_degseq(out.deg = v, method = "simple")
   return(c(max(components(g)$csize)/gorder(g)*100))
 }
 ```
@@ -159,12 +159,17 @@ mean(Avg_largest)
 
 ```{r}
 Avg_largest_l = c()
-for(p1 in seq(from=0, to=1, by=0.01)){
+for(p1 in seq(from=0, to=1, by=0.05)){
   p3 = 1 - p1
   Avg_largest = replicate(50, simulacion_ej3(p1,p3))
   Avg_largest_l = c(Avg_largest_l, mean(Avg_largest))
 }
 ```
+
+```{r}
+plot(x=seq(from=0, to=1, by=0.01), y=Avg_largest_l,pch=19,col="red",type="b",ylab="Tamaño de componente", xlab="Valor de p1")
+```
+
 
 ```{r}
 matplot(x=seq(from=0, to=1, by=0.01), y=Avg_largest_l,pch=19,col="red",type="b",ylab="Tamaño de componente", xlab="Valor de p1")

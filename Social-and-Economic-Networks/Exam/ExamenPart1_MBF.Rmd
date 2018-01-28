@@ -192,7 +192,7 @@ for( p in seq(0,1,by=0.01)){
 
 A continuació, dibuixam els valors esperats en funció de $p_1$ per cada una de les components.
 
-```{r, fig.align='center'}
+```{r, fig.align='center', fig.height=5}
 plot(seq(0,1,by=0.01),EL1_list, xlab = "p1",ylab = "Expected fraction", ylim = c(0,1),
      pch=21, col="green4", bg="mediumspringgreen")
 par(new=TRUE)
@@ -214,6 +214,7 @@ E(\mbox{deg}^2)&=& \displaystyle 2 \sum_{k} k^2\cdot P_d(k) &=& \displaystyle 2\
 \end{array}
 $$
 
+<br>
 Ara, teim que $n_1=p_110^4$ i $n_3=10^4(1-p_1)$. Per tant,
 
 $$
@@ -223,12 +224,14 @@ E(\mbox{deg}^2)&=& 10^4(p_1^2 + 9(1-p_1)^2) \displaystyle .
 \end{array}
 $$
 
+<br>
 Volem veure fins quin $p_1$ es satisfà $E(\mbox{deg}^2)>2E(\mbox{deg})$, equivalentment $E(\mbox{deg}^2)-2E(\mbox{deg})>0$. En termes de $p_1$ es
 
 $$
 E(\mbox{deg}^2)-2E(\mbox{deg})= 2p_1^2 - 6p_1 + 2p_1^2 > 0.
 $$
 
+<br>
 Així, si estudiam el signe del polinomi $2p_1^2 - 6p_1 + 2p_1^2$ obtenim que entre $p_1=0$ i $ p_1=\frac{3-\sqrt{3}}{2}\approx0.634$ és positiu, per tant, existeix component connexa gegant.
 
 D'aquesta manera, pels pasos $p$ agafats en la simulació, hauriem d'obtenir que hi ha component connexa gegant almenys fins el $0.063$. Així, s'ha dibuixat la línea vertical vermella en $p_1=0.063$ i, com s'observa, la component connexa major té gairebé el $60\%$ dels nodes, mentre que la fracció esperada de la segona està molt pròxima al $0$ (per d'alt). D'aquesta manera, si consideram força gran el $55\%$ dels nodes, com l'ordre de la segona major component es tan petit, tenim que la simulació s'ajusta amb la teoria, ja que fins $p_1=0.063$ hi ha component connexa gegant, i després la fracció de nodes de la primera component disminueix ràpidament el seu valor.
@@ -242,8 +245,7 @@ D'aquesta manera, pels pasos $p$ agafats en la simulació, hauriem d'obtenir que
 
 Abans de respondre els apartats següents, recordem el model ERG emprat per les relacions de _Grey's Anatomy_.
 
-
-Carregam les dades dels personatges de la sèrie i cream la xarxa amb els seus atributs, tal com es va fer al Handout 8.
+Primer, carregam les dades dels personatges de la sèrie i cream la xarxa amb els seus atributs, tal com es va fer al Handout 8.
 ```{r}
 GA_nodes=read.table("GA_nodes.txt", header=TRUE)
 GA_edges=read.table("GA_edges.txt")
@@ -278,31 +280,131 @@ Cream el model amb les variables escollides.
 ```{r}
 mod=ergm(GAnetwork ~ nodematch("sex") + degree(1) + absdiff("birthyear") +
           nodematch("race") + absdiff("season"))
-summary(mod5)
+summary(mod)
 ```
 
-
+<br>
 Per tant, el model resultant és
 $$
 \begin{array}{rcl}
-\log\left( \frac{P(A_{ij}=1|G_{ij}^c)}{P(A_{ij}=0|G_{ij}^c)}\right) &=&  -3.38191  \cdot \Delta(\mbox{nombre de relacions homosexuals})+ 2.23688  \cdot \Delta(\mbox{nombre de nodes de grau 1})\\
-&&  -0.14566  \cdot \Delta(\mbox{suma diferències d'edat entre nodes adj.})\\
-&&  + 0.62680  \cdot \Delta(\mbox{nombre de relacions entre mateixa raça})\\
-&&  -0.30677  \cdot \Delta(\mbox{suma diferències en el nombre de la temporada}).\\
+\log\left( \frac{P(A_{ij}=1|G_{ij}^c)}{P(A_{ij}=0|G_{ij}^c)}\right) &=&  -3.39393  \cdot \Delta(\mbox{nombre de relacions homosexuals})+ 2.23508  \cdot \Delta(\mbox{nombre de nodes de grau 1})\\
+&&  -0.14517  \cdot \Delta(\mbox{suma diferències d'edat entre nodes adjacents})\\
+&&  + 0.62781  \cdot \Delta(\mbox{nombre de relacions entre mateixa raça})\\
+&&  -0.30575  \cdot \Delta(\mbox{suma diferències en el nombre de la temporada}),\\
 \end{array}
 $$
+on recordem que,
 
-
-
++ $\Delta(\mbox{nombre de relacions homosexuals})$ és la diferència en el nombre de relacions homosexuals en el graf abans i després d'afegir l'aresta. Així, resulta prendre el valor 1 si $i$ i $j$ són del mateix sexe, 0 altrament.
++ $\Delta(\mbox{nombre de nodes de grau 1})$ resulta 1 si algun dels nodes $i$ o $j$ tenen grau 1 sense l'aresta $ij$, 2 si ambdós tenen grau 1 i 0 si cap dels dos en tenen.
++ $\Delta(\mbox{suma diferències d'edat entre nodes adj.})$ és simplement la diferència d'edats entre $i$ i $j$.
++ $\Delta(\mbox{nombre de relacions entre mateixa raça})$ resulta prendre el valor 1 si $i$ i $j$ són de la mateixa raça, 0 altrament.
++ $\Delta(\mbox{suma diferències en el nombre de temporades})$ és la diferència entre el nombre de la temporada que apareix $i$ i $j$.
 <ul>
-**(a)** What is the link in the network with the highest probability (or the links, in the case of ties)? Look up somewhere on the Internet whether the corresponding contact appeared early or late in the series.
 
-**(b)** What is the most probable new (that is, absent from the network) sexual contact between a pair of characters in that network? Look up somewhere on the Internet whether this contact has occurred in the series after season 8, and (if the answer is positive) when.
+Ara, ja podem contestar les preguntes.
 
-**(c)** What about an Stochastic Block Model? Fit an “optimal” SBM to this network, and use the result to give an answer to the previous questions.
+<br>
+**(a)** *What is the link in the network with the highest probability (or the links, in the case of ties)? Look up somewhere on the Internet whether the corresponding contact appeared early or late in the series.*
 
-**(d)** What approach do you consider more reasonable to answer questions **(a)** and **(b)** for this specific
-network, the ERGM one or the SBM one? Justify your answer.
+Cercam els links amb una major probabilitat d'existir, és a dir, tals que $P(A_{ij}=1|G_{ij}^c)$ prengui el màxim valor possible. Aquest valor, es pren quan el log de odds d'aquesta probabilitat sigui màxim, per tant, vegem quan es dóna aquest màxim.
+
+Donat que totes les variables del model prenen valors positiuso zero, ens interessa que aquelles que tenen coeficient negatiu en la estimació del log odds siguin zero. Així, 
+
++ $\Delta(\mbox{nombre de relacions homosexuals})=0,$ quan $i$ i $j$ siguin de diferent sexe.
++ $\Delta(\mbox{suma diferències d'edat entre nodes adj.})=0$,  quan $i$ i $j$ siguin de la mateix edat.
++ $\Delta(\mbox{suma diferències en el nombre de temporades})=0$, quan $i$ i $j$ siguin de la mateixa temporada.
+
+<br>
+D'altra banda, les variables que tenen coeficient positiu ens interessa que prenguin el seu màxim valor.
+
++ $\Delta(\mbox{nombre de nodes de grau 1})$. El màxim valor que pren és 2, quan $i$ i $j$ tenen grau 1.
++ $\Delta(\mbox{nombre de relacions entre mateixa raça})$. El màxim valor és 1, quan $i$ i $j$ són de la mateixa raça.
+
+<br>
+Per tant, si existeix l'aresta en el graf, cercam una parella heterosexual de la mateixa raça, que només hagin tingut una relació (abans d'enllaçar-se), tinguin la mateixa edat i siguin de la mateixa temporada.
+
+```{r}
+V(GA)$sex<-as.character(GA_nodes$sex)[order]
+for( male in which(V(GA)$sex=="M")){
+  for( female in which(V(GA)$sex=="F")){
+    
+    if( (female %in% neighbors(GA,male)) & (V(GA)[male]$race==V(GA)[female]$race) &
+        (degree(GA)[male]<= 2) & (degree(GA)[female]<=2)&
+        (V(GA)[male]$birthyear==V(GA)[female]$birthyear)){
+          cat(male,"-",female,":",V(GA)[male]$name,"and",V(GA)[female]$name,"\n")
+    }
+  }
+}
+
+```
+
+No s'ha trobat ninguna aresa amb aquestes condicions, aleshores, anem a calcular la probabilitat de que existeixi l'aresta per cada aresta del graf.
+
+Cream la funció que calcula el logarítme de odds, segons l'estimació lineal obtinguda.
+```{r}
+log_odds <- function(u,v, degree){
+  coef=mod$coef
+  coef['nodematch.sex']*(ifelse(V(GA)[u]$sex==V(GA)[u]$sex, 1, 0)) +
+    coef['degree1']*(ifelse( (degree[u]==2 ) & (degree[u]==2) , 2, 0)) + #2 perque no contam l'aresta uv
+    coef['degree1']*(ifelse( xor(degree[u]==2, degree[u]==2), 1, 0)) +
+    coef['absdiff.birthyear']*abs( V(GA)[u]$birthyear-V(GA)[v]$birthyear ) + 
+    coef['nodematch.race']*(ifelse(V(GA)[u]$race==V(GA)[u]$race, 1, 0)) +
+    coef['absdiff.season']*abs( V(GA)[u]$season-V(GA)[v]$season ) 
+}
+```
+
+Ara, per a cada aresta, calculam la probabilitat de que existeixi emprant la funció anterior. Un cop tenim totes les probabilitats ens quedam amb el màxim i cercam les parelles amb aquesta probabilitat.
+```{r}
+degree=degree(GA)
+edges=get.edgelist(GA)
+log_odds_list=c()
+for( i in 1:nrow(edges)){
+  u=edges[i,1]
+  v=edges[i,2]
+  lo=log_odds(u,v,degree)
+  log_odds_list=c(log_odds_list, exp(lo)/(1+exp(lo)) )
+}
+cat(" max:",max(log_odds_list),"\n", "row in edges:", which(log_odds_list==max(log_odds_list)))
+```
+
+Així, les dues arestes amb una major probabilitat d'existir són
+```{r}
+cat("", edges[1,],"\n",edges[12,])
+```
+
+Segons la informació del personatge Addison que podem trobar [aquí](http://greys.wikia.com/wiki/Addison_Montgomery), Derek i Addison són parella ja abans de la primera temporada. A més, [aquí](https://en.wikipedia.org/wiki/April_Kepner) trobam que Kepner i Avery comencen una relació a la temporada 8 i, de fet, Keprel no té cap relació sexual abans de juntar-se amb kepner.
+
+**(b)** *What is the most probable new (that is, absent from the network) sexual contact between a pair of characters in that network? Look up somewhere on the Internet whether this contact has occurred in the series after season 8, and (if the answer is positive) when.*
+
+Ara,  si no existeix l'aresta en el graf, cercam una parella heterosexual de la mateixa raça, que només hagin tingut una relació (abans d'enllaçar-se), tinguin la mateixa edat i siguin de la mateixa temporada. Vegem si en aquest cas sí trobam la parella.
+
+```{r}
+V(GA)$sex<-as.character(GA_nodes$sex)[order]
+for( male in which(V(GA)$sex=="M")){
+  for( female in which(V(GA)$sex=="F")){
+    
+    if( !(female %in% neighbors(GA,male)) & (V(GA)[male]$race==V(GA)[female]$race) &
+        (degree(GA)[male]==1) & (degree(GA)[female]==1)&
+        (V(GA)[male]$birthyear==V(GA)[female]$birthyear)){
+          cat(male,"-",female,":",V(GA)[male]$name,"and",V(GA)[female]$name,"\n")
+        }
+  }
+}
+
+```
+
+Tenim dues parelles amb una altra probabilitat d'emparellar-se, la probabilitat és concretament
+```{r}
+coef=mod$coef
+cat("Probability:", exp(coef['degree1']*2+coef['nodematch.race'])/(1+exp(coef['degree1']*2+coef['nodematch.race'])))
+```
+
+Sembla que Perkins i Nancy no estableixen cap relació, encara que Perkins no ha tornat a apareixer de de la temporada 7; veure [aquí](http://greysanatomy.wikia.com/wiki/Andrew_Perkins). D'altra banda, Hank i Ava tampoc tenen cap relació romàntica, fet comprensible ja que Hank només surt en un episodi de la temporada 1, tal com diu [aquí](http://greysanatomy.wikia.com/wiki/Hank).
+
+**(c)** *What about an Stochastic Block Model? Fit an “optimal” SBM to this network, and use the result to give an answer to the previous questions.*
+
+**(d)** _What approach do you consider more reasonable to answer questions **(a)** and **(b)** for this specific network, the ERGM one or the SBM one? Justify your answer._
 </ul>
 
 <br>
