@@ -73,18 +73,125 @@ library(igraph)
 ###Exercice 1
 **1)** (**2 points**) *Do Exercise 7 in Chapter 3 (pages 95–97) in Easley-Kleinberg’s "Networks, Crowds, and Markets" (you have a copy of the book in the course’s Virtual Classroom).*
 
-**Pendent Pasar a net.**
+Considerem el graf de la figura següent .
+
+<br>
+<div style="width:550px; height=350px">
+![](Ex1.png)
+</div>
+
+L'objectiu és que Vikram convenci a Zoe amb la idea dels programadors de fer un regal. Així, plantegen dues estratègies.
+
++ **Programador Jove:** Vikram - Úrsula - zoe.
++ **Programador major:** Vikram - Yoram - Wendy - Zoe.
+
+El programador Jove es basa en què és el camí més curt per arribar a Zoe, i el major en la intuïció. La clau, però, no està en la longitud del camí, sinó amb la influència que pot arribar exercir Úrsula o Wendy sobre Zoe, i Vikram - Úrsula - zoe és una cua dèbil.
+
+En el nostre graf, no tenim informació sobre els nivells d'influència, però vegem un exemple que il·lustri aquest fet. Suposem que $q=0.5$ és la proporció de veïns que necessita un node per adoptar una nova idea, en el nostre cas, la idea del regal.
+
++ *Vikram - Úrsula - zoe*. 
+
+<ul>
+**Pas 0.** Vikram i Úrsula estan convençuts. <br>
+**Pas 1**. Priscila i Tomasz també adopten la idea, ja Priscila té grau 2 i està connectada amb Úrsula, i Tomaz té grau 4 i està connectat amb Vikram i Úrsula. <br>
+**Pas 2**. Xin té grau 4 i està connectat amb Vikram i Tomasz, aleshores està d'acord amb la idea. 
+
+Ningú més adopta la idea, ja que no arriba  a tenir el $50\%$ de veïns amb ella.
+</ul>
+
++ *Vikram - Yoram - Wendy - Zoe*. 
+
+<ul>
+**Pas 0.** Vikram, Yoram i Wendy estan convençuts. <br>
+**Pas 1**. Quentin i Sarita adopten la idea. Ambdós tenen grau 3 i estan connectats amb Yoram i Wendy. <br>
+**Pas 2**. Raul està d'acord amb la idea, perquè té grau 3 i està connectat amb Sarita i Wendy.
+**Pas 3.**  Zoe té grau 3 i està connectada amb Wendy i Raul, aleshores acceptarà la idea dels programadors.
+
+Així, en tres passos s'arriba a influenciar a Zoe perquè accepti la idea del regal.
+</ul>
 
 <br>
 
+Segons l'exemple, sí seria convenient fer cas al programador gran, ja que si Zoe no es convenç a la primera, el camí per Wendy li arribaria fent acceptar la idea.
+
+
+
 ###Exercice 2
+
 **2)** (**2 points**) *Let V be a partition of an undirected graph $G$. For every community $X_r\in \mathcal{V}$, let $a_r$ be the fraction of edges incident to nodes in $X_r$, and for every $Xr,Xs \in \mathcal{V}$, let $e_{r,s}$ be the fraction of edges in $G$ that link nodes in $X_r$ with nodes in $X_s$.*
+
+<br>
+Segons l'article _Finding community structure in very large networks_ que podem trobar [aquí](http://ece-research.unm.edu/ifis/papers/community-moore.pdf), tenim que 
+
+$$
+\begin{array}{rcl}
+a_r &=& \displaystyle \frac{1}{2m} \sum_{v_i \in X_r} \mbox{deg}(v_i),\\
+e_{rs} &=& \displaystyle  \frac{1}{2m} \sum_{V_i\in \mathcal{X}_r,V_j\in \mathcal{X}_s} a_{ij},
+\end{array}
+$$
+on $a_{ij}$ és l'ement $(i,j)$ de la matriu d'adjacència.
+
+<br>
 
 <ul>
 **(a)** *Write an expression for the modularity $Q(\mathcal{V})$ of the partition $\mathcal{V}$ in terms of these quantities ar and $e_{r,s}$.*
 
-**Pendent Pasar a net.**
+Segons l'article esmentat, la modularitat es pot expresar com 
 
+$$
+Q(\mathcal{V})=\sum_{\mathcal{X}_r \in \mathcal{V}} \left( e_{rr} - a_r^2 \right).
+$$
+
+Vegem-ho.
+
+<br>
+
+Tenim que,
+
+$$
+Q(\mathcal{V})= \frac{1}{2m} \sum_{\mathcal{X}_r \in \mathcal{V}} \sum_{\{V_i,V_j\} \subseteq\mathcal{X}_r} \left( a_{ij} - \frac{\mbox{deg}(v_i)\mbox{deg}(v_j)}{2m}  \right).
+$$
+
+Que podem reescriure com,
+
+$$
+Q(\mathcal{V})= \sum_{\mathcal{X}_r\in \mathcal{V}} \left(   \frac{1}{2m} \sum_{\{V_i,V_j\} \subseteq\mathcal{X}_r} a_{ij}  -  \sum_{\{V_i,V_j\} \subseteq\mathcal{X}_r} \frac{\mbox{deg}(v_i)\mbox{deg}(v_j)}{(2m)^2}  \right).
+$$
+
+A més, tenim que
+
+$$
+ e_{rr}=\frac{1}{2m} \sum_{\{V_i,V_j\} \subseteq\mathcal{X}_r} a_{ij}.
+$$
+
+Per tant, 
+
+$$
+\begin{array}{rcl}
+Q(\mathcal{V}) &=& \displaystyle \sum_{\mathcal{X}_r\in \mathcal{V}} \left(  e_{rr}  -  \sum_{\{V_i,V_j\} \subseteq\mathcal{X}_r} \frac{\mbox{deg}(v_i)\mbox{deg}(v_j)}{(2m)^2}  \right)\\
+\\
+&=& \displaystyle \sum_{\mathcal{X}_r\in \mathcal{V}} \left(  e_{rr}  -  \frac{ \sum_{\{V_i,V_j\} \subseteq\mathcal{X}_r} \mbox{deg}(v_i)\mbox{deg}(v_j)}{(2m)^2}  \right).
+\end{array}
+$$
+
+D'altra banda, 
+
+$$
+\sum_{\{V_i,V_j\} \subseteq\mathcal{X}_r} \mbox{deg}(v_i)\mbox{deg}(v_j) = \sum_{V_i \in\mathcal{X}_r} \mbox{deg}^2(v_i) + \sum_{\{V_i,V_j\} \subseteq\mathcal{X}_r :\ i\not=j} 2 \mbox{deg}(v_i)\mbox{deg}(v_j) = \left( \sum_{V_i \in\mathcal{X}_r} \mbox{deg}(v_i) \right)^2,
+$$
+
+on la primera igualtat es dóna perquè contam doble, és a dir, sumam els graus  $\mbox{deg}(v_i)\mbox{deg}(v_i)$, $\mbox{deg}(v_j)\mbox{deg}(v_j),$ $\mbox{deg}(v_i)\mbox{deg}(v_j)$ i $\mbox{deg}(v_j)\mbox{deg}(v_i)$.
+
+
+Finalment, obtenim el que volíem demostrar tal com segueix.
+
+$$
+\begin{array}{rcl}
+Q(\mathcal{V}) &=& \displaystyle \sum_{\mathcal{X}_r\in \mathcal{V}} \left(  e_{rr}  -  \left( \frac{ \sum_{V_i \in\mathcal{X}_r} \mbox{deg}(v_i)}{2m} \right)^2  \right)\\
+\\
+&=&\displaystyle \sum_{\mathcal{X}_r \in \mathcal{V}} \left( e_{rr} - a_r^2 \right).
+\end{array}
+$$
 
 **(b)** *In the AMEN (AIDS in Multi-Ethnic Neighborhoods) study (1992), the following frequencies of ethnicities in a large sample of heterosexual couples in San Francisco were recorded.*
 
@@ -103,37 +210,32 @@ library(igraph)
 <br>
 *Consider the undirected network of relationships for the sample studied and the partition defined by the nodes’ ethnicity (black, hispanic, white, and other). Compute the modularity of this partition. Assuming that the sample was representative of their community, what can you conclude about ethnic homophily in this community?*
 
-Donada la informació de la taula, emprarem la fórmula en **a)** per calcular la modularitat. Si ens fixa'm, a la diagonal de la taula tenim la fracció d'arestes en el graf que junten nodes de la mateixa ètnia, per tant, $e_{r,r}$. Ara considerem, per exemple, la primera fila; el primer valor es $e_{B,B}$, el segon ens indica la fracció de dones hispàniques que són la parella d'un home negre i els següents el mateix per la corresponent ètnia. D'aquesta manera, si sumam tots els valors de la fila, llevat el valor en la diagonal, tindem la fracció de dones no negres que tenen un home negre. En altres paraules, la fracció d'arestes incidents a nodes de la ètnia negre, $a_B$.
+Donada la informació de la taula, emprarem la fórmula en **a)** per calcular la modularitat. Si ens fixa'm, a la diagonal de la taula tenim la fracció d'arestes en el graf que ajunten nodes de la mateixa ètnia, per tant, $e_{r,r}$. Ara considerem, per exemple, la primera fila; el primer valor és $e_{B,B}$, el segon ens indica la fracció de dones hispàniques que són la parella d'un home negre i els següents el mateix per la corresponent ètnia. A més, recordem que $a_{B}=\frac{1}{2m}\sum_{v_i\in \mathcal{X}_B} \mbox{deg}(v_i)$, per tant, per fer $a_{B}$ contam les arestes dins la comunitat $\mathcal{X}_B$ dos cops i les que arriben d'una altra comunitat a aquesta un sol cop; després dividim entre $2m$. És a dir, volem la proporció d'arestes dins $a_{B}$ dos cops, més la proporció de les que arriben d'una altra comunitat un cop; tot entre $2$. Això, és sumar la fila $1$ més la columna $2$ i dividir el resultat entre $2$; en aquest exemple. 
 
+<br>
 Per tant, podem calcular la modularitat tal com segueix.
 
-Introduïm la matriu amb les dades.
+<br>
+Primer, calculam tots els $e_{r,r}$ i $a_r$.
 ```{r}
-M=matrix(c(0.258, 0.016, 0.035, 0.013,
-       0.012, 0.157, 0.058, 0.019,
-       0.013, 0.023, 0.306, 0.035,
-       0.005, 0.007, 0.024, 0.016), byrow=TRUE, nrow=4,ncol=4)
-print(M)
-```
-
-Calculam tots els $e_{r,r}$ i $a_r^2$.
-```{r}
-#Vector (eBB, eHH, eWW, eOO)
-err=diag(M)
+#Vector (eBB, eHH, eWW, eOO), la diagonal.
+err=c(0.258, 0.157,0.306, 0.016)
 print(err)
-#Vector (aB^2, aH^2, aW^2, aO^2)^T
-ar=( (M-diag(diag(M)))%*%c(1,1,1,1) )^2
+#Vector ar=(aB, aH, aW, aO)
+sum_rows=c(0.323,0.247,0.377,0.053)
+sum_cols=c(0.289,0.204,0.423,0.084)
+ar=(sum_rows+sum_cols)/2
 print(ar)
 ```
 
 Sumam, i obtenim la modularitat.
 
 ```{r}
-modularity=sum(err)+sum(ar)
+modularity=sum(err-ar^2)
 modularity
 ```
 
-La modularitat obtinguda és gran (>0.7), per tant, hi ha indicis d'una estructura dividida per ètnies; suposant que la mostra és representativa per cada comunitat. En alres paraules, hi ha certa tendència a que els matrimonis es fasin entre persones de la mateixa ètnia.
+La modularitat obtinguda és _gran_ (>0.3), per tant, hi ha indicis d'una estructura dividida per ètnies; suposant que la mostra és representativa per cada comunitat. En altres paraules, hi ha certa tendència a què els matrimonis es facin entre persones de la mateixa ètnia.
 
 </ul>
 <br>
@@ -287,10 +389,10 @@ summary(mod)
 Per tant, el model resultant és
 $$
 \begin{array}{rcl}
-\log\left( \frac{P(A_{ij}=1|G_{ij}^c)}{P(A_{ij}=0|G_{ij}^c)}\right) &=&  -3.39393  \cdot \Delta(\mbox{nombre de relacions homosexuals})+ 2.23508  \cdot \Delta(\mbox{nombre de nodes de grau 1})\\
-&&  -0.14517  \cdot \Delta(\mbox{suma diferències d'edat entre nodes adjacents})\\
-&&  + 0.62781  \cdot \Delta(\mbox{nombre de relacions entre mateixa raça})\\
-&&  -0.30575  \cdot \Delta(\mbox{suma diferències en el nombre de la temporada}),\\
+\log\left( \frac{P(A_{ij}=1|G_{ij}^c)}{P(A_{ij}=0|G_{ij}^c)}\right) &=&  -3.38330   \cdot \Delta(\mbox{nombre de relacions homosexuals})+ 2.23563  \cdot \Delta(\mbox{nombre de nodes de grau 1})\\
+&&  -0.14660  \cdot \Delta(\mbox{suma diferències d'edat entre nodes adjacents})\\
+&&  +0.62716  \cdot \Delta(\mbox{nombre de relacions entre mateixa raça})\\
+&&  -0.30320  \cdot \Delta(\mbox{suma diferències en el nombre de la temporada}),\\
 \end{array}
 $$
 on recordem que,
@@ -402,19 +504,9 @@ cat("Probability:", exp(coef['degree1']*2+coef['nodematch.race'])/(1+exp(coef['d
 
 Sembla que Perkins i Nancy no estableixen cap relació, encara que Perkins no ha tornat a apareixer de de la temporada 7; veure [aquí](http://greysanatomy.wikia.com/wiki/Andrew_Perkins). D'altra banda, Hank i Ava tampoc tenen cap relació romàntica, fet comprensible ja que Hank només surt en un episodi de la temporada 1, tal com diu [aquí](http://greysanatomy.wikia.com/wiki/Hank).
 
-**(c)** *What about an Stochastic Block Model? Fit an “optimal” SBM to this network, and use the result to give an answer to the previous questions.*
 
-**(d)** _What approach do you consider more reasonable to answer questions **(a)** and **(b)** for this specific network, the ERGM one or the SBM one? Justify your answer._
 </ul>
+
 
 <br>
 
-###Exercice 5
-**5)** (4 points) I want you to design networks where the most central nodes with respect to some set S ofcentrality measures are different.
-
-<ul>
-**(a)** Build, by hand, a small network that has this property with respect to S = fdegree; betweennessg. That is, where no node with highest degree is a node with highest betweenness. Plot the network, indicating the nodes of highest degree and of highest betweenness. Explain the strategy you followed to build your network with the desired property.
-
-**(b)** Build, by hand, a small network that has this property with respect to S = fcloseness; betweennessg. Plot the network, indicating the nodes of highest closeness and of highest betweenness. Explain the strategy you followed to build your network with the desired property.
-
-**(c)** Now, write a program that searches the space of all connected networks of a given size n and either finds a network with this property for S = fdegree; betweenness; closeness; eigenvectorg or reports that there is no such network for this n. Run your program starting with n = 4 and provide a smallest network (with least order, and among those with this order, with least size) with this property. Plot the network, indicating which are the nodes with the highest centrality values. What are the features of the network that make the most central nodes according to the different centrality measures to be different? If necessary, to hint the answer to this question, find some more networks with this property.
