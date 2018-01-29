@@ -1,0 +1,32 @@
+unnamed-chunk-1	c	matrix	print
+unnamed-chunk-2	diag	m
+unnamed-chunk-3	c	for	m	sum
+unnamed-chunk-4	^	ar	err	sum
+unnamed-chunk-5	^	$	c	components	gorder	max	mean	replicate	return	sample	sample_degseq
+unnamed-chunk-6	c	for	fraction_of_network	matplot	mean	replicate	seq
+unnamed-chunk-7	graph_from_data_frame	plot	read.csv
+unnamed-chunk-8	$	as.character	as.numeric	df_v	for	set_vertex_attr	vertex_attr
+unnamed-chunk-9	::	$	as_adjacency_matrix	as.matrix	as.network	g	library	strtoi	V
+unnamed-chunk-10	~	ergm	library	summary
+unnamed-chunk-11	!=	&	==	$	fit_g.net	g	ifelse	V
+unnamed-chunk-12	c	exp	for	g	get.edgelist	nrow	prob_log
+unnamed-chunk-13	==	c	cat	edges	for	length	list_prob	max	which
+unnamed-chunk-14	[<-	<	$	exp	for	g	if	length	matrix	prob_log	rep	vertex_attr
+unnamed-chunk-15	==	c	cat	for	length	matrix_prob	max	vertexs	which
+unnamed-chunk-16	graph_from_literal	plot
+unnamed-chunk-17	::	g	sort
+unnamed-chunk-18	graph_from_literal	plot
+unnamed-chunk-19	::	g	sort
+unnamed-chunk-20	::	g	sort
+unnamed-chunk-21	::	g	sort
+unnamed-chunk-22	graph_from_literal	plot
+unnamed-chunk-23	::	g	sort
+unnamed-chunk-24	::	g1	sort
+unnamed-chunk-25	c	matrix
+unnamed-chunk-26	for	graph_from_adjacency_matrix	library	M2	set_vertex_attr
+unnamed-chunk-27	g2	plot
+unnamed-chunk-28	::	g2	sort
+unnamed-chunk-29	::	g2	sort
+unnamed-chunk-30	delete_edges
+unnamed-chunk-31	::	g2	sort
+unnamed-chunk-32	::	g2	sort

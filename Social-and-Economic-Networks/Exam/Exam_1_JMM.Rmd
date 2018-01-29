@@ -1,0 +1,506 @@
+---
+title: "Social and economic networks"
+subtitle: "Exam. Part 1"
+author: "Juan José Martín"
+output:
+  html_document:
+    number_sections: false
+    highlight: tango
+    toc: yes
+    df_print: paged
+editor_options: 
+  chunk_output_type: inline
+---
+
+
+
+<style type="text/css">
+
+  body {
+    background-color: #f6f7fd; 
+  }
+  
+  a:link {
+    color: #0174DF;
+  }
+  
+  code.r {
+    font-size: 14px;
+  } 
+  
+  div pre {
+    background-color:#E0ECF8;
+  }
+  pre {
+    font-size: 14px 
+  }
+ 
+  p {
+    text-align: justify;
+  }
+ 
+    
+  h1, h2, h3, h4, h5, h6 {
+    color: #737aaa;
+  }
+
+  th {  
+    background-color:#737aaa;
+    color: #FAFAFA;
+    padding:5px;
+  }
+  
+  td {
+    font-size: 11.5pt;
+  } 
+  
+  tr:nth-child(even){
+    background: white;
+  }
+  
+  tr:nth-child(odd){ 
+    background-color: #EFF8FB;
+  }
+</style>
+
+***  
+
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=8, fig.height=8, fig.align="center", echo=TRUE, warning=FALSE, message=FALSE, autodep=TRUE, cache=TRUE)
+library(centiserve)
+library(igraph)
+```
+
+
+**1) (2 points) Do Exercise 7 in Chapter 3 (pages 95–97) in Easley-Kleinberg’s Networks, Crowds, and Markets.**
+
+***You're helping two program oficers at a large philanthropic foundation decide how best to approach a potential donor to raise the idea of making a very large gift. The donor will be at a two-day meeting where the foundation knows someone who may be able to set the process in motion.***
+
+***Using some background research, they've created a social network of the people who will be at the meeting, shown in Figure 1. The nodes are the people, and there is an edge joining each pair of people who know each other personally. The donor they hope to approach is named Zoe (see the figure), and Vikram, a long-time friend of the foundation, will also be at the meeting and is their starting point for approaching Zoe. The problem is that Vikram doesn't know Zoe personally, and the program oficers at the foundation don't think it would be efective for him to approach her directly. Instead, they want him to get the help of other people at the meeting in relaying the request. The two program oficers you're talking to disagree, however, on what the best strategy is.***
+
+![Figure 1: The social network of attendees at a meeting.](red_ejercicio1.png)
+
+***The younger program oficer, who's more conversant with social-networking technology, favors having Vikram ask Ursula to talk to Zoe about the gift, since the path through Ursula (with only two steps) is the unique shortest path in the social network from Vikram to Zoe, and therefore it involves the fewest steps to relay the request. The older program oficer sees the reasoning behind this, but is puzzled, since her intuition before seeing the picture of the social network (just based on her personal knowledge of the people at the meeting) was that the best strategy would actually be to have Vikram have a conversation with Yoram, suggesting in this conversation that Yoram ask Wendy to raise the idea of the gift with Zoe.***
+
+***They come to you with this question, since you know about networks. Is there any basis in the structure of the social network itself to support the older program oficer's intuition that going through Yoram and Wendy might be the better strategy, or does the social network structure conclusively support the argument that the best strategy is to use the short path through Ursula? Give an explanation for your answer.***
+
+Lo primero que podemos observar del grafo, es que las aristas no tienen pesos. Esto implica que no sabemos la influencia que puede tener cada par de nodos, es decir, no sabemos cuánto se conocen entre ellas ni el grado de amistad que tienen ni cualquier otra información con la que podamos saber qué camino coger. Así es que, de esta forma, nos tenemos que basar en otra clase de métricas.
+
+Por una parte, podríamos usar el camino fácil, que sería que úrsula presentara Zoe a Vikram. No obstante, si Ursula no es capaz de convencer a Zoe, no nos quedarían más bazas. Por otra parte, hacer que Yoram pregunte a Wendy para que esta le pregunte a Zoe, es hacer lo mismo pero con más pasos y, por lo tanto, se podrían cometer más errores.
+
+Mi estrategia sería basarnos en centralidades, y este caso serían las de *degree* y *closeness*, es decir, centrarnos en la persona que tenga más amistades y, además, que esté a menor distancia de todas las personas. Vemos que Yoram es la persona que está mejor conectada con todos. Gracias a esto, podríamos intentar que Yoram se juntara con Sarita y Quentin para hablar con Wendy. De esta forma, habría más posibilidades de que Wendy aceptara hablar con Zoe. Por otra parte, Sarita y Wendy también podrían hablar con Raúl, que también es amigo de Zoe. Así tendríamos a 3 personas intentando hablar con Zoe. Con esto aumentaríamos nuestras posibilidades de éxito. 
+
+<br>
+
+**2) (2 points) Let $V$ be a partition of an undirected graph $G$. For every community $X_r \in V$, let $a_r$ be the fraction of edges incident to nodes in $X_r$, and for every $X_r,X_s \in V$, let $e_{r,s}$ be the fraction of edges in $G$ that link nodes in $X_r$ with nodes in $X_s$.**
+
+(a) **Write an expression for the modularity $Q(V)$ of the partition $V$ in terms of these quantities $a_r$ and $e_{r,s}$.**
+
+<ul>
+Para realizar este apartado, se ha usado el árticulo [Finding community structure in very large networks](http://ece-research.unm.edu/ifis/papers/community-moore.pdf).
+
+La fracción de aristas incidentes a los nodos en $X_r$, siendo $X_r$ cada comunidad en $V$, se define como
+
+$$  e_{r, s} = \frac{1}{2m} \sum_{vw}(A_{vw} \; \delta(C_v, r) \; \delta(C_w, S)) $$
+
+<br>
+
+La fracción de aristas en $G$ que unen nodos en $X_r$ con nodos en $X_s$ se define como
+
+$$ a_r = \frac{1}{2m} \sum_v{d(v) \; \delta(C_v, r)} $$
+
+<br>
+
+La modularidad de una comunidad $V$ de $V(G)$ es
+
+\begin{array}{rcl}
+
+Q(v) &=& \displaystyle \frac{1}{2m} \sum_{X_r \in V} \sum_{\{ V_i, V_j \} \subseteq X_r }(a_{i, j} - \frac{d(V_i) d(V_j)}{2m}) = \\
+
+&=& \displaystyle \sum_{X_r \in V} [ \sum_{\{ V_i, V_j \} \subseteq X_r }\frac{1}{2m} a_{i, j} - \sum_{\{ V_i, V_j \} \subseteq X_r } \frac{1}{2m} \frac{d(V_i) d(V_j)}{2m} ] 
+
+\end{array}
+
+<br>
+
+Ahora tenemos dos partes diferenciadas en la fórmula anterior. La primera de ellas se resuelve como
+
+$$ \sum_{\{ V_i, V_j \} \subseteq X_r } \frac{1}{2m} a_{i, j} = \frac{Num. \ Aristas \ en \ X_r}{2m} = e_{r, r} $$
+
+<br>
+
+donde, transformando $e_{r, s}$ por $e_{r, r}$, tenemos que
+
+$$  e_{r, r} = \frac{1}{2m} \sum_{v}(A_{v} \; \delta(C_v, r)) = \frac{\sum_{v} A_{v} \; \delta(C_v, r)}{2m} = \frac{Num. \ Aristas \ en \ X_r}{2m}  $$
+
+<br>
+
+Esta transformación de $e_{r, s}$ por $e_{r, r}$ se ha hecho para tener en cuenta únicamente la fracción de aristas incidentes dentro de la misma comunidad $X_r$, y sin tener en cuenta el resto de comunidades. De esta forma hemos podido igualar con la función anterior.
+
+<br>
+
+Para la segunda parte tenemos que
+
+$$ \sum_{\{ V_i, V_j \} \subseteq X_r } \frac{1}{2m} \frac{d(V_i) d(V_j)}{2m} $$
+
+<br>
+
+donde
+
+\begin{array}{rcl}
+
+\displaystyle \sum_{\{ V_i, V_j \} \subseteq X_r } d(V_i) d(V_j) &=& \displaystyle \sum(d(1)^2 \ + \ d(1)d(2) \ + \ ... \ + \ d(2)d(1)) = \\
+
+&=& \displaystyle \sum(d(1)^2 \ + \ ... \ + \ 2d(1)d(2)) = \\
+
+&=& \displaystyle \sum_{V_i \in X_r} d(V_i)^2 + \sum_{\substack{\{V_i, V_j\} \in X_r \\ V_i \neq V_j}}2 \ d(V_i)d(V_j) = \\
+
+&=& \displaystyle (\sum_{V_i \in X_r} d(V_i))^2 
+
+\end{array}
+
+<br>
+
+por lo que
+
+\begin{array}{rcl}
+
+\displaystyle \sum_{\{ V_i, V_j \} \subseteq X_r } \frac{1}{2m} \frac{d(V_i) d(V_j)}{2m} &=& \displaystyle \frac{1}{4m^2} (\sum_{V_i \subseteq X_r} d(V_i))^2 = \\
+
+&=& \displaystyle (\frac{\sum_{V_i \subseteq X_r} d(V_i)}{2m})^2 = a_r^2 
+
+\end{array}
+
+<br>
+
+Finalmente, la expresión para la modularidad $Q(V)$ de la comunidad $V$ en términos de $a_r$ y $e_{r, s}$ es
+
+$$Q(v) = \sum_{X_r \in V}(e_{r,r} - a^2_r)$$
+
+</ul>
+
+<br>
+
+(b) **In the AMEN (_AIDS_ in Multi-Ethnic Neighborhoods) study (1992), the following frequencies of ethnicities in a large sample of heterosexual couples in San Francisco were recorded.**
+
+<br>
+<center>
+|                 |           | |              | |           |           | |           |
+|-----------------|-----------|-|--------------|-|-----------|-----------|-|-----------|
+|                 |           | |              | |**Women**  |           | |           |
+|    **Men**      |&nbsp;**Black**  |&nbsp;| &nbsp; **Hispanic** |&nbsp;| &nbsp;**White** | **Other** |&nbsp;| &nbsp;**Total** |
+| **Black**       |&nbsp; 0.258     | | &nbsp; 0.016        | | 0.035     | &nbsp;0.013     | | &nbsp;0.323     |
+| **Hispanic**    |&nbsp; 0.012     | | &nbsp; 0.157        | | 0.058     | &nbsp;0.019     | | &nbsp;0.247     |
+| **White**       |&nbsp; 0.013     | | &nbsp; 0.023        | | 0.306     | &nbsp;0.035     | | &nbsp;0.377     |
+| **Other**       |&nbsp; 0.005     | | &nbsp; 0.007        | | 0.024     | &nbsp;0.016     | | &nbsp;0.053     |
+| **Total**       |&nbsp; 0.289     | | &nbsp; 0.204        | | 0.423     | &nbsp;0.084     | |                 |
+</center>
+<br>
+
+<ul>
+**Consider the undirected network of relationships for the sample studied and the partition defined by the nodes’ ethnicity (black, hispanic, white, and other). Compute the modularity of this partition. Assuming that the sample was representative of their community, what can you conclude about ethnic homophily in this community?**
+
+Consideramos que existen 4 comunidades, que son las cada una de las etnias. No obstante, la frecuencia de cada etnia viene dada por la suma de las frecuencias de las uniones entre hombre y mujeres. Es decir, por ejemplo, la frecuencia de que se relacionen blancos con hispánicos es 0.016 más 0.012, ya que cada comunidad es independiente del sexo.
+
+<br>
+
+Pasamos la tabla anterior a una matriz.
+
+```{r echo=TRUE}
+m = matrix(c(0.258, 0.016, 0.035, 0.013,
+             0.012, 0.157, 0.058, 0.019,
+             0.013, 0.023, 0.306, 0.035,
+             0.005, 0.007, 0.024, 0.016), byrow=TRUE, nrow=4)
+print(m)
+```
+
+<br>
+
+A continuación, cogemos los valores de la diagonal de la matriz, que son los enlaces dentro de una misma comunidad, es decir, $e_{r, r}$.
+
+```{r}
+err = diag(m)
+err
+```
+
+<br>
+
+Además, obtenemos todos los valores de $a_r$. Esto se ha hecho teniendo en cuenta los totales horizontales y verticales de las frecuencias para cada comunidad, y dividiéndolo entre dos. Se ha hecho de esta forma para tener en cuenta las relaciones que existen entre etnias y las relaciones que hay dentro de cada etnia. Se ha dividido entre dos por la definición dada anteriormente a $a_r$.
+
+```{r}
+ar = c()
+for (x in 1:4) {
+  ar = c(ar, ((sum(m[x, ]) + sum(m[, x])) / 2))
+}
+ar
+```
+
+<br>
+
+Y, finalmente, obtenemos la modularidad con la fórmula del apartado anterior.
+
+```{r}
+Q = sum(err - ar^2)
+Q
+```
+
+<br>
+
+Dado que el valor de $Q$ es mayor a 0.3, se puede concluir que está suficientemente dividido por comunidades y, por lo tanto, hay más unionen entre personas de la misma comunidad.
+
+</ul>
+
+<br>
+
+**3) (2 points) Consider the configuration model where a fraction $p_1$ of nodes have degree 1 and the remaining fraction of nodes $p_3 = 1 - p_1$ have degree 3. Let us consider, to fix ideas, networks of order $n = 10^4$.**
+
+(a) **Take first $p_1 = 0.5$, $p_3 = 0.5$. Estimate through a simulation the expected fraction of a network of order $n = 10^4$ covered by its largest component.**
+
+<ul>
+
+Mediante la siguiente, simularemos la creación 100 grafos y calcularemos la fracción de su componente más grande.
+
+```{r}
+fraction_of_network = function(p1){
+  v = sample(x = c(1, 3), size = 10^4, replace = TRUE, prob = c(p1, 1 - p1))
+  g = sample_degseq(out.deg = v, method = "simple.no.multiple")
+  
+  return(c(max(components(g)$csize) / gorder(g)))
+}
+
+frac_net = replicate(100, fraction_of_network(0.5))
+mean(frac_net)
+```
+
+<br>
+
+Con este resultado, podemos concluir que gran parte de los nodos de cada grafo corresponden a su componente más grande.
+
+</ul>
+<br>
+
+(b) **Now, plot a graph of the expected fraction (estimated through simulations) of a network of order $n = 10^4$ covered by its largest component for values of $p_1$ from 0 to 1 in 0.01 steps. According to your graph, what is the probability $p_1$ at which the giant component disappears? Is your estimate consistent with the theory?**
+
+<ul>
+```{r}
+frac_net_large = c()
+
+sequence = seq(from=0, to=1, by=0.01)
+
+for(p1 in sequence){
+  frac_net = replicate(10, fraction_of_network(p1))
+  frac_net_large = c(frac_net_large, mean(frac_net))
+}
+
+matplot(x=sequence, y=frac_net_large, pch=19, col="blue", type="b", ylab="Component size", xlab="p1 value")
+```
+
+Con este gráfica, se puede concluir que con la probabilidad $p_1 = 0.8$, ya no existe un componente gigante en los grafos generados, aunque a partir del 0.7 ya solo hay un 10% de los nodos que corresponden a dicho componente.
+
+</ul>
+<br>
+
+**4) (4 points) Stochastic models can be used to predict links in a network. Now, in a homework you were asked to produce an ERGM of Grey’s Anatomy sexual contact network. Using your model (or a friend’s, if you did not deliver this homework):**
+
+```{r}
+df_e = read.csv("datasets/GA_edges.txt", sep = "\t")
+df_v = read.csv("datasets/GA_nodes.txt", sep = "\t")
+g = graph_from_data_frame(df_e, directed = FALSE)
+
+plot(g)
+```
+
+<br>
+
+Añadimos los atributos a los nodos:
+
+```{r}
+for(i in vertex_attr(g)$name){
+  g = set_vertex_attr(g, name = "sex", index = i, value = as.character(df_v[i,2]))
+  g = set_vertex_attr(g, name = "race", index = i, value = as.character(df_v[i,3]))
+  g = set_vertex_attr(g, name = "birthyear", index = i, value = as.character(df_v[i,4]))
+  g = set_vertex_attr(g, name = "position", index = i, value = as.character(df_v[i,5]))
+  g = set_vertex_attr(g, name = "season", index = i, value = as.numeric(df_v[i,6]))
+  g = set_vertex_attr(g, name = "sign", index = i, value = as.character(df_v[i,7]))
+  g = set_vertex_attr(g, name = "name", index = i, value = as.character(df_v[i,1]))
+}
+```
+
+<br>
+
+Creamos la clase _net_ para poder hacer el modelo ERGM.
+
+```{r}
+library(network)
+g.net = as.network(as.matrix(as_adjacency_matrix(g)), directed=FALSE)
+network::set.vertex.attribute(g.net,"name", V(g)$name)
+network::set.vertex.attribute(g.net,"sex", V(g)$sex)
+network::set.vertex.attribute(g.net,"season", V(g)$season)
+network::set.vertex.attribute(g.net,"birthyear", strtoi(V(g)$birthyear, base=0L))
+```
+
+<br>
+
+Creamos el modelo ERGM.
+
+```{r}
+library(ergm)
+fit_g.net = ergm(g.net~edges+nodematch("sex")+degree(1)+absdiff("birthyear")+absdiff("season"))
+summary(fit_g.net)
+```
+
+<br>
+
+Así obtenemos el siguiente modelo:
+
+$$
+\log\left( \frac{P(A_{ij}=1|G_{ij}^c)}{P(A_{ij}=0|G_{ij}^c)}\right) =  0.03841-3.23014\cdot\beta_1+1.98172\cdot\beta_2-0.12360\cdot\beta_3-0.25874\cdot\beta_4
+$$
+
+Donde:
+
+- $\beta_1$: tiene el valor 1 si _i_ y _j_ tienen el mismo sexo y hay un enlace entre ellos. 0 en caso contrario.
+- $\beta_2$: tiene el valor 1 si _i_ y _j_ tienen grado 1 y hay un enlace entre ellos. 0 en caso contrario.
+- $\beta_3$: tiene el valor 1 si _i_ y _j_ tienen diferente fecha de nacimiento y hay un enlace entre ellos. 0 en caso contrario.
+- $\beta_4$: tiene el valor 1 si _i_ y _j_ tienen diferente temporada y hay un enlace entre ellos. 0 en caso contrario.
+
+<br>
+
+(a) **What is the link in the network with the highest probability (or the links, in the case of ties)? Look up somewhere on the Internet whether the corresponding contact appeared early or late in the series.**
+
+<ul>
+
+En enlace con la mayor probabilidad es aquel enlace entre _i_ y _j_ que da el mayor valor de la fórmula del logaritmo anterior. De esta forma, podemos crear una función que nos devuelva dicha probabilidad.
+
+```{r}
+coef = fit_g.net$coef
+
+prob_log = function(i, j, degree){
+  coef["edges"] +
+  coef["nodematch.sex"]*(ifelse(V(g)[i]$sex==V(g)[j]$sex, 1, 0)) +
+  coef["degree1"]*(ifelse((degree[i]==1) & (degree[j]==1), 1, 0)) +
+  coef['absdiff.birthyear']*ifelse((V(g)[i]$birthyear!=V(g)[j]$birthyear), 1, 0) +
+  coef['absdiff.season']*ifelse((V(g)[i]$season!=V(g)[j]$season), 1, 0) 
+}
+```
+
+<br>
+
+De esta forma, podemos generar una lista de probabilidades con todas las aristas del grafo.
+```{r}
+degree = degree(g)
+edges = get.edgelist(g)
+list_prob = c()
+
+for(n in 1:nrow(edges)){
+  i = edges[n,1]
+  j = edges[n,2]
+  prob = prob_log(i, j, degree)
+  list_prob = c(list_prob, exp(prob)/(1+exp(prob)))
+}
+```
+
+<br>
+
+De esta forma, podemos obtener las uniones con mayor probabilidad de la siguiente forma.
+```{r}
+e1 = edges[which(list_prob == max(list_prob)), 1]
+e2 = edges[which(list_prob == max(list_prob)), 2]
+pr = "\n"
+for (n in 1:length(e1)) {
+  pr = c(pr, e1[n] , "---" , e2[n] , "\n")
+}
+cat("Prob. Max:", max(list_prob),"\n", "Edges:", pr)
+```
+
+<br>
+
+Podemos observar que la máxima probabilidad es `r max(list_prob)` y que hay varias uniones con este valor.
+
+</ul>
+<br>
+
+(b) **What is the most probable new (that is, absent from the network) sexual contact between a pair of characters in that network? Look up somewhere on the Internet whether this contact has occurred in the series after season 8, and (if the answer is positive) when.**
+
+<ul>
+
+Para una probabilidad nueva, simplemente usamos el mismo caso de antes, pero utilizando todas las combinaciones de nodos posibles (excluyendo dos veces el mismo nodo). Obtendremos tanto los enlaces que ya existen, como los que pueden existir.
+
+```{r}
+degree = degree(g)
+vertexs = vertex_attr(g)$name
+matrix_prob = matrix(rep(0, len=44*44), nrow = 44)
+
+for(n in 1:length(vertexs)){
+  i = vertexs[n]
+  if(n < length(vertexs)){
+    for(m in (n+1):length(vertexs)){
+      j = vertexs[m]
+      prob = prob_log(i,j,degree)
+      matrix_prob[n,m] = (exp(prob)/(1+exp(prob)))
+    }
+  }
+}
+```
+
+
+<br>
+
+De esta forma, podemos sacar las nuevas relaciones más probables.
+```{r}
+v1 = which(matrix_prob == max(matrix_prob), arr.ind = TRUE)[,1]
+v2 = which(matrix_prob == max(matrix_prob), arr.ind = TRUE)[,2]
+pr = "\n"
+for (n in 1:length(v1)) {
+  pr = c(pr, vertexs[v1[n]] , "---" , vertexs[v2[n]] , "\n")
+}
+cat("Prob. Max:",matrix_prob[v1[1],v2[2]],"\n", "Edges:",pr)
+```
+
+<br>
+
+Vemos que Lucy, Adele, Amelia, Hahn y Susan Grey son las que más posibilidades tienen de tener una relación con varias personas, ya que se repite su probabilidad varias veces.
+
+</ul>
+<br>
+
+**5) (4 points) I want you to design networks where the most central nodes with respect to some set $S$ of centrality measures are different.**
+
+(a) **Build, by hand, a small network that has this property with respect to $S = \{degree, betweenness\}$. That is, where no node with highest degree is a node with highest betweenness. Plot the network, indicating the nodes of highest degree and of highest betweenness. Explain the strategy you followed to build your network with the desired property.**
+
+<ul>
+
+```{r}
+g = graph_from_literal(1---2, 2---3, 3---1, 3---4, 4---5, 5---6, 6---7, 7---5)
+plot(g)
+```
+
+```{r}
+sort(igraph::betweenness(g), decreasing = TRUE)
+sort(igraph::degree(g), decreasing = TRUE)
+```
+
+<br>
+
+Así tenemos que el nodo '4' es el nodo con mayor centralidad de _betweenness_, y el '3' el de mayor centralidad de _degree_. 
+
+</ul>
+<br>
+
+(b) **Build, by hand, a small network that has this property with respect to $S = \{closeness, betweenness\}$. Plot the network, indicating the nodes of highest closeness and of highest betweenness. Explain the strategy you followed to build your network with the desired property.**
+
+<ul>
+
+```{r}
+g = graph_from_literal(1---2, 1---3, 1---4, 6---7, 6---8, 6---9, 1---10, 10---11, 6---11)
+plot(g)
+```
+
+```{r}
+sort(igraph::betweenness(g), decreasing = TRUE)
+sort(igraph::closeness(g), decreasing = TRUE)
+```
+
+</ul>
+<br>

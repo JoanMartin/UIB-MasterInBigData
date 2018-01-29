@@ -77,9 +77,9 @@ library(igraph)
 
 En el artículo se propone una nueva definición del concepto de triángulos y de un nuevo coeficiente de clustering generalizado ponderado.
 
-Los autores lo consideran relevante porque con este nuevo coeficiente de clustering generalizado ponderado, se puede conocer la estructura de una red ponderada cuando faltan uniones entre nodos (triángulos indirectos).
+Los autores lo consideran relevante porque con este nuevo coeficiente de clustering generalizado ponderado, se puede conocer la estructura de una red ponderada cuando faltan uniones entre nodos (triángulos indirectos). Es decir, la idea que han tenido es definir dos nuevos tipos de triángulos *T2* y *T3*, siendo *T1* el tipo que ya conocíamos. Estos dos nuevos tipos de triángulos los llaman *indirectos* porque solo están compuestos por dos aristas. Esta idea surge del hecho de que si dos aristas están fuertemente conectadas, no es necesario tener una tercera arista para formar un triángulo.
 
-
+Pienso que es un artículo relevante para estudiar ciertas redes, aunque muy limitado a redes donde se quiera tener en cuenta que las fuerzas de unidos entre nodos sea suficientemente grande como para considerar que puede haber un triángulo. Por ejemplo, una red social donde $v_1$ y $v_2$ son muy amigos de $v_3$, entonces hay una alta probabilidad de que $v_1$ y $v_2$ sean amigos.
 
 <br>
 
@@ -87,11 +87,13 @@ Los autores lo consideran relevante porque con este nuevo coeficiente de cluster
   
 Se empieza mencionando varios artículos sobre medidas y centralidades para redes complejas. Posteriormente, se nombran artículos donde se explica el concepto de *local cluster coefficient* y un nuevo modelo combinatorio para detectar clusters que tengan en cuenta los datos individuales de una unidad de población y los datos que describen las conexiones entre dichas unidades. Finalmente, se mencionan diferentes análisis del coeficiente de clustering sobre redes ponderadas.
 
+Juntando toda esta bibliografía que han mencionado en su artículo, vemos claramente cómo han hecho un estudio previo sobre teoría de grafos, centralidades y clustering para poder llevar a cabo su teoría y sus nuevas definiciones basadas en dichos artículos.
+
 <br>
 
 **3) What are the main definitions in this paper?**
 
-La principal definición que proporciona el artículo en la del coeficiente de clustering generalizado ponderado. No obstante, para ello, definen dos nuevos tipos de triángulos alrededor de un nodo *i*:
+La principal definición que proporciona el artículo es la del coeficiente de clustering generalizado ponderado. No obstante, para ello, definen dos nuevos tipos de triángulos alrededor de un nodo *i*:
 
 * El primero está compuesto por dos nodos no unidos que son adyacentes a *i*.
 
@@ -99,36 +101,17 @@ La principal definición que proporciona el artículo en la del coeficiente de c
 
 <br>
 
-**4) On your behalf, what are the strongest contribution and the greatest drawback of this paper (if any)?**
-
-
-
-<br>
-
 **5) Do you consider the numerical experiments provided in Section 5 suitable? (I’m not referring to the networks analyzed, but to the computations performed on them.) What conclusions do you extract from these experiments? Do they agree with the authors’ conclusions? What other experiments (on the same networks) would you perform?**
 
+Desde mi punto de vista, hacen dos experimentos que son relevantes. En el primero evalúan los grafos de aeropuertos de los Estados Unidos y C.elegans con $\alpha = \beta = 0$ para que siempre se satisfaga la función genérica $F_i$ y se cojan todos los pseudo-triángulos *T2* y *T3*. De esta forma pueden comprobar cómo es la estructura de la red solo mediante su estructura. En el segundo, cogen diferentes valores de $\alpha$ y $\beta$ para mostrar unas gráficas del valor que se obtiene de $C_g$ sobre cada una de las funciones $F_i$ definidas por ellos. Entre ambos experimentos, veo una pequeña incongruencia. En el primero, para el grafo de aeropuertos, el coeficiente de clustering definido por ellos para el nodo 488 es $C_{488}^{(g)} = 0.0632$, mientras que en el experimento dos, cuando $\alpha = \beta = 0$, el valor de clustering para todo el grafo es siempre 1 independientemente de la función que usen. No he encontrado una explicación de por qué ocurre esto.
 
+A pesar de no haber encontrado explicación al comparar las soluciones finales de los experimentos, veo que en sus conclusiones mencionan alguna cosa de las que yo ya he comentado. Por una parte, comentan que el uso de *T2* y *T3* les sirve para comprobar que hay relaciones entre nodos cuando las uniones son fuertes, como hemos mencionado en el ejercicio 1. Por otra parte, hablan de que poner $\alpha = \beta = 0$ les sirve para ver clases de redes equivalentes basándose únicamente en su estructura y no teniendo en cuenta los pesos de las aristas. 
 
 <br>
 
 **6) In their experiments, the authors mostly consider cases when $\alpha = 0$ or $\beta = 0$. How would you choose $\alpha$ and $\beta$ so that only really meaningful pseudo-triangles were considered?**
 
-Los autores definen *T2* y *T3* como pseudo-triángulos porque, aunque no estén contenidos en *G*, pueden ser vistos como triángulos bajo las condiciones de los pesos de las dos aristas. Además, asumen $\alpha = \beta = 0$ para que el número de *T2* y *T3* alrededor de cada nodo no dependa de la elección de *F*.
-
-<br>
-
-**7) The authors define their generalized clustering coefficient only for undirected networks. How would you generalize it in a sound way to directed networks? Provide a definition that makes sense on some class of weighted directed networks of your choice with some specific meaning of its links (for instance, non-symmetric friendship networks, trade networks, citation networks with weights the number of times an author has cited another author, ...)**
-
-
-<br>
-
-**8) At the end of the day, the final value of the generalized clustering coefficient does not depend on the specific weights of the edges in the triangles and "generalized triangles": each such a triangle only counts 0 or 1 in the definition. Can you think of some sound way to use the weights to "weight" the triangles and "generalized triangles"" in the definition? How could your definition change the experimental results explained in the paper?**
-
-
-<br>
-
-**9) How is the generalized clustering coefficient related to the Strong Triadic Closure Property? Can you find a way to test whether a network satisfies the STCP using this coefficient (together with other indices, of course)?**
-
+Los autores definen *T2* y *T3* como pseudo-triángulos porque, aunque no estén contenidos en *G*, pueden ser vistos como triángulos bajo las condiciones de los pesos de las dos aristas. Además, asumen $\alpha = 0$ o $\beta = 0$ para que el número de *T2* y *T3* alrededor de cada nodo no dependa de la elección de *F*. No obstante, esto implica que podría haber pseudo-triángulos poco relevantes, ya que no tendría en cuenta el peso de las aristas. Así es que, para que realmente sea significativo la elección de los pseudo-triángulos, elegiría la media de los pesos de todas las aristas como $\alpha$ y como $\beta$. De esta forma, solo tendríamos en cuenta los triángulos (*T1*) y los pseudo-triángulos cuyos pesos fueran mayores a la media de los pesos de todas las aristas del grafo, es decir, cumpliendo con las definiciones de *T2* y *T3*, elegiríamos únicamente los nodos fuertemente conectados.
 
 <br>
 
@@ -165,20 +148,5 @@ plot(g)
 ```{r}
 transitivity(g, type="average") # Clustering coefficient
 ```
-
-<br>
-
-**11) In equation (3), page 7, the authors recall Barrat et al’s clustering coefficient for weighted networks. I also introduced this index in my lectures, but equation (3) and my definition do not define the same number. What is the difference? Which one corresponds to Barrat et al’s original definition? How did you check it? If the correct version is the one given in this paper, I probably had a good reason to change it. What was this reason? And, if the correct version is the one I gave in the lectures, did the authors of this paper have a good reason to change it (for instance, to compare it with their proposed coefficient)?**
-
-
-<br>
-
-**12) In equations (4)–(5), page 8, the authors recall Zhang—Horvath’s weighted clustering coefficient for gene co-expression networks. Does it fit with the general philosophy of Kalma–Highman’s indices or Opshal–Panzarasa’s indices as explained in my lectures?**
-
-
-<br>
-
-**13) (Extra bonus) The authors mention that they used R to implement their coefficient and perform their experiments, but they do not provide their implementation. Implement in R their generalized clustering coefficient as well as your proposals in points (7) and (8), and repeat their experiments with your functions, or perform new experiments (for instance, using other networks, using your bounds in point (6), checking point (9), ...).**
-
 
 <br>
