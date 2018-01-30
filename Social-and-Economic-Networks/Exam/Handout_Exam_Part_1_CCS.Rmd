@@ -67,24 +67,24 @@ editor_options:
 
 
 ```{r global_options, include=FALSE}
-knitr::opts_chunk$set(fig.width=8, fig.height=8, fig.align="center", echo=TRUE, warning=FALSE, message=FALSE)
+knitr::opts_chunk$set(fig.width=8, fig.height=8, fig.align="center", echo=TRUE, warning=FALSE, message=FALSE,autodep = TRUE,cache = TRUE)
 library(centiserve)
 library(igraph)
 rm(list=ls())
 ```
 
 
-**1)** (2 points) Do Exercise 7 in Chapter 3 (pages 95–97) in Easley-Kleinberg’s Networks, Crowds, and Markets (you have a copy of the book in the course’s Virtual Classroom).
+**1) (2 points) Do Exercise 7 in Chapter 3 (pages 95–97) in Easley-Kleinberg’s Networks, Crowds, and Markets (you have a copy of the book in the course’s Virtual Classroom).**
 
-You're helping two program oficers at a large philanthropic foundation decide how best to approach a potential donor to raise the idea of making a very large gift. The donor will be at a two-day meeting where the foundation knows someone who may be able to set the process in motion.
+**You're helping two program oficers at a large philanthropic foundation decide how best to approach a potential donor to raise the idea of making a very large gift. The donor will be at a two-day meeting where the foundation knows someone who may be able to set the process in motion.**
 
-Using some background research, they've created a social network of the people who will be at the meeting, shown in Figure 3.26. The nodes are the people, and there is an edge joining each pair of people who know each other personally. The donor they hope to approach is named Zoe (see the figure), and Vikram, a long-time friend of the foundation, will also be at the meeting and is their starting point for approaching Zoe. The problem is that Vikram doesn't know Zoe personally, and the program oficers at the foundation don't think it would be efective for him to approach her directly. Instead, they want him to get the help of other people at the meeting in relaying the request. The two program oficers you're talking to disagree, however, on what the best strategy is.
+**Using some background research, they've created a social network of the people who will be at the meeting, shown in Figure 3.26. The nodes are the people, and there is an edge joining each pair of people who know each other personally. The donor they hope to approach is named Zoe (see the figure), and Vikram, a long-time friend of the foundation, will also be at the meeting and is their starting point for approaching Zoe. The problem is that Vikram doesn't know Zoe personally, and the program oficers at the foundation don't think it would be efective for him to approach her directly. Instead, they want him to get the help of other people at the meeting in relaying the request. The two program oficers you're talking to disagree, however, on what the best strategy is.**
 
-\includegraphics[width=250pt]{red_ejercicio1.png}
+![Figura 1:Red ejercicio 1](red_ejercicio1.png)
 
-The younger program oficer, who's more conversant with social-networking technology, favors having Vikram ask Ursula to talk to Zoe about the gift, since the path through Ursula | with only two steps | is the unique shortest path in the social network from Vikram to Zoe, and therefore it involves the fewest steps to relay the request. The older program oficer sees the reasoning behind this, but is puzzled, since her intuition before seeing the picture of the social network (just based on her personal knowledge of the people at the meeting) was that the best strategy would actually be to have Vikram have a conversation with Yoram, suggesting in this conversation that Yoram ask Wendy to raise the idea of the gift with Zoe.
+**The younger program oficer, who's more conversant with social-networking technology, favors having Vikram ask Ursula to talk to Zoe about the gift, since the path through Ursula | with only two steps | is the unique shortest path in the social network from Vikram to Zoe, and therefore it involves the fewest steps to relay the request. The older program oficer sees the reasoning behind this, but is puzzled, since her intuition before seeing the picture of the social network (just based on her personal knowledge of the people at the meeting) was that the best strategy would actually be to have Vikram have a conversation with Yoram, suggesting in this conversation that Yoram ask Wendy to raise the idea of the gift with Zoe.**
 
-They come to you with this question, since you know about networks. Is there any basis in the structure of the social network itself to support the older program oficer's intuition that going through Yoram and Wendy might be the better strategy, or does the social network structure conclusively support the argument that the best strategy is to use the short path through Ursula? Give an explanation for your answer.
+**They come to you with this question, since you know about networks. Is there any basis in the structure of the social network itself to support the older program oficer's intuition that going through Yoram and Wendy might be the better strategy, or does the social network structure conclusively support the argument that the best strategy is to use the short path through Ursula? Give an explanation for your answer.**
 
 <br>
 
@@ -98,16 +98,21 @@ Así pues, con la simple información de la estructura de la red que nos aporta 
 - Atributo de 'amistad' en las aristas, que califica el tipo de amistad entre dos nodos enlazados. No todos los mensajes pueden pasar por todos los enlaces.
 Con esto, podría ocurrir que la intuición de la segunda programadora es la más adecuada, si esa ruta cumple con los requisitos de ser el enlace más corto y por donde el mensaje está 'permitido' pasar.
 
-**2)** (2 points) Let $V$ be a partition of an undirected graph $G$. For every community $X_r \E V$, let $a_r$ be the fraction of edges incident to nodes in $X_r$, and for every $X_r,X_s \E V$, let $e_r,_s$ be the fraction of edges in $G$ that link nodes in $X_r$ with nodes in $X_s$.
+**2) (2 points) Let $V$ be a partition of an undirected graph $G$. For every community $X_r \in V$, let $a_r$ be the fraction of edges incident to nodes in $X_r$, and for every $X_r,X_s \in V$, let $e_{r,s}$ be the fraction of edges in $G$ that link nodes in $X_r$ with nodes in $X_s$.**
 
-*(a)* Write an expression for the modularity $Q(V)$ of the partition $V$ in terms of these quantities $a_r$ and $e_r,_s$.
+**(a) Write an expression for the modularity $Q(V)$ of the partition $V$ in terms of these quantities $a_r$ and $e_{r,s}$.**
 
-$$Q(v) = \sum^k_1(e_r,_s - a^2_r)$$
-ers: aristas que conectan nodos de la comunidad r y s (incluye el caso donde s=r)
-ar: aristas que conectan nodos dentro de la comunidad r
-eii = ers - ar : 
+Siendo $A$ la matriz de adyacencia de una red y $A_{vw}$ el enlace entre los nodos $v$ y $w$, teniendo $A_{vw}=0$ cuando no hay enlace entre $v$ y $w$ y $A_{vw}=1$ cuando hay 1 enlace. Además, diremos $k_v$ y $k_w$ a los grados de los nodos $v$ y $w$. Por lo tanto
+$$A_{vw}-\dfrac{k_vk_w}{2m}$$
+será la diferencia entre el número de enlaces reales entre $v$ y $w$ y el número esperado. Con esto, obtenemos la formula de modularidad a partir de la suma de cada par de nodos.
 
-*(b)* In the AMEN (_AIDS_ in Multi-Ethnic Neighborhoods) study (1992), the following frequencies of ethnicities in a large sample of heterosexual couples in San Francisco were recorded
+$$Q=\dfrac{1}{2m}\sum_{vw}[A_{vw}-\dfrac{k_vk_w}{2m}]\delta(c_v,c_w)$$
+
+Donde $e_{r,s}=\sum_{vw}\dfrac{A_{vw}}{2m}$ es la fracción de enlaces que hay entre una comunidad _r_ y una comunidad _s_. Y $a_r=\dfrac{k_r}{2m}=\sum_se_{r,s}$ son los enlaces que terminan en la comunidad _r_. Por lo tanto podemos obtener lo siguiente a partir de la fórmula de modularidad anterior.
+
+$$Q(v) = \sum^c_1(e_{r,r} - a^2_r)$$
+
+**(b) In the AMEN (_AIDS_ in Multi-Ethnic Neighborhoods) study (1992), the following frequencies of ethnicities in a large sample of heterosexual couples in San Francisco were recorded**
 
 <br>
 <center>
@@ -123,60 +128,59 @@ eii = ers - ar :
 </center>
 <br>
 
-Consider the undirected network of relationships for the sample studied and the partition defined by the nodes’ ethnicity (black, hispanic, white, and other). Compute the modularity of this partition. Assuming that the sample was representative of their community, what can you conclude about ethnic homophily in this community?
+**Consider the undirected network of relationships for the sample studied and the partition defined by the nodes’ ethnicity (black, hispanic, white, and other). Compute the modularity of this partition. Assuming that the sample was representative of their community, what can you conclude about ethnic homophily in this community?**
 
-Pasamos la tabla anterior a una matriz.
-
-```{r echo=TRUE}
-M_G=matrix(c(0.258, 0.016, 0.035, 0.013,
-       0.012, 0.157, 0.058, 0.019,
-       0.013, 0.023, 0.306, 0.035,
-       0.005, 0.007, 0.024, 0.016), byrow=TRUE, nrow=4)
-print(M_G)
-```
-
-Obtenemos todos los valores $e_{r,r}$, que corresponden con los enlaces dentro de una misma comunidad, es decir, la diagonal de la matriz anterior.
+De la tabla anterior cogemos la columna de todos las relaciones de los hombres totales:
 
 ```{r}
-err=diag(M_G)
-err
+R_M = c(0.323, 0.247, 0.377, 0.053)
 ```
 
-Además obtenemos todos los valores $a_r$, que corresponden con los enlaces que entrar en una comunidad _r_, excluyendo los propios enlaces dentro de la misma comunidad, es decir, a cada valor $e_{r,r}$ que corresponde a la diagonal de la matriz, le restamos los otros 3 campos de la misma fila de la matriz.
+Y la fila de todas las relaciones de las mujeres:
+
+```{r}
+R_W = c(0.289, 0.204, 0.423, 0.083)
+```
+
+Así, $e_{r,r}$ es la cantidad de relaciones dentro de una misma comunidad, es decir, la diagonal de la tabla anterior.
+
+```{r}
+err = c(0.258, 0.157, 0.306, 0.016)
+```
+
+Y $a_r$ será la suma de hombres y mujeres de la comunidad _r_ partido 2.
 
 ```{r}
 ar = c()
 for (x in 1:4) {
-  ar = c(ar, (err[x] - M_G[x,((x)%%4)+1]- M_G[x,((x+1)%%4)+1]- M_G[x,((x+2)%%4)+1]))
+  ar = c(ar, (R_M[x]+R_W[x])/2)
 }
-ar
 ```
 
-Y finalmente obtenemos la modularidad con la fórmula del apartado anterior:
+Finalmente, usamos la fórmula obtenida anteriormente para sacar la modularidad.
 
 ```{r}
 Q = sum(err - ar^2)
 Q
 ```
 
-Así, con un valor mayor que 0.6 podemos decir que tendemos a generar diferentes comunidades.
+Como es mayor que 0.3, podemos decir que se es una estructura de comunidad importante.
 
-**3)** (2 points) Consider the configuration model where a fraction $p_1$ of nodes have degree 1 and the remaining fraction of nodes $p_3 = 1 - p_1$ have degree 3. Let us consider, to fix ideas, networks of order $n = 10^4$.
+**3) (2 points) Consider the configuration model where a fraction $p_1$ of nodes have degree 1 and the remaining fraction of nodes $p_3 = 1 - p_1$ have degree 3. Let us consider, to fix ideas, networks of order $n = 10^4$.**
 
-*(a)* Take first $p_1 = 0.5$, $p_3 = 0.5$. Estimate through a simulation the expected fraction of a network of order $n = 10^4$ covered by its largest component.
+**(a) Take first $p_1 = 0.5$, $p_3 = 0.5$. Estimate through a simulation the expected fraction of a network of order $n = 10^4$ covered by its largest component.**
 
-```{r}
-library(igraph)
-v = sample(x = c(1,3), size = 10^4, replace = TRUE, prob = c(0.5,0.5))
-```
+La instrucción para crear una lista de  '1' y '3' con una probabilidad _p1_ y _p3_:
 
 ```{r}
 simulacion_ej3 = function(p1,p3){
   v = sample(x = c(1,3), size = 10^4, replace = TRUE, prob = c(p1,p3))
   g = sample_degseq(out.deg = v, method = "simple.no.multiple")
-  return(c(max(components(g)$csize)/gorder(g)*100))
+  return(c(max(components(g)$csize)/gorder(g)))
 }
 ```
+
+Para el caso de $p_1=0.5$ y $p_3=0.5$:
 
 ```{r}
 Avg_largest = replicate(100, simulacion_ej3(0.5,0.5))
@@ -186,7 +190,7 @@ Avg_largest = replicate(100, simulacion_ej3(0.5,0.5))
 mean(Avg_largest)
 ```
 
-*(b)* Now, plot a graph of the expected fraction (estimated through simulations) of a network of order $n = 10^4$ covered by its largest component for values of $p_1$ from 0 to 1 in 0.01 steps. According to your graph, what is the probability $p_1$ at which the giant component disappears? Is your estimate consistent with the theory?
+**(b) Now, plot a graph of the expected fraction (estimated through simulations) of a network of order $n = 10^4$ covered by its largest component for values of $p_1$ from 0 to 1 in 0.01 steps. According to your graph, what is the probability $p_1$ at which the giant component disappears? Is your estimate consistent with the theory?**
 
 ```{r}
 Avg_largest_l = c()
@@ -198,12 +202,12 @@ for(p1 in seq(from=0, to=1, by=0.01)){
 ```
 
 ```{r}
-matplot(x=seq(from=0, to=1, by=0.01), y=Avg_largest_l,pch=19,col="red",type="b",ylab="Tamaño de componente", xlab="Valor de p1")
+matplot(x=seq(from=0, to=1, by=0.01), y=Avg_largest_l,pch=19,col="red",type="b",ylab="Fracción de la componente más grande", xlab="Valor de p1")
 ```
 
 Cuantos mas nodos de grado 1 tenga, más disperso es el grafo.
 
-**4)** (4 points) Stochastic models can be used to predict links in a network. Now, in a homework you were asked to produce an ERGM of Grey’s Anatomy sexual contact network. Using your model (or a friend’s, if you did not deliver this homework):
+**4) (4 points) Stochastic models can be used to predict links in a network. Now, in a homework you were asked to produce an ERGM of Grey’s Anatomy sexual contact network. Using your model (or a friend’s, if you did not deliver this homework):**
 
 Crear grafo de la entrega anterior:
 
@@ -262,7 +266,7 @@ Donde:
 - $\beta_3$: tiene el valor 1 si _i_ y _j_ tienen diferente fecha de nacimiento y hay un enlace entre ellos. 0 en caso contrario.
 - $\beta_4$: tiene el valor 1 si _i_ y _j_ tienen diferente temporada y hay un enlace entre ellos. 0 en caso contrario.
 
-*(a)* What is the link in the network with the highest probability (or the links, in the case of ties)? Look up somewhere on the Internet whether the corresponding contact appeared early or late in the series. 
+**(a) What is the link in the network with the highest probability (or the links, in the case of ties)? Look up somewhere on the Internet whether the corresponding contact appeared early or late in the series. **
 
 En enlace con la mayor probabilidad es aquel enlace entre _i_ y _j_ que da el mayor valor de la fórmula de logaritmo anterior.
 
@@ -300,8 +304,7 @@ cat("Prob. Max:",max(list_prob),"\n", "Edges:",pr)
 ```
 
 
-
-*(b)* What is the most probable new (that is, absent from the network) sexual contact between a pair of characters in that network? Look up somewhere on the Internet whether this contact has occurred in the series after season 8, and (if the answer is positive) when.
+**(b) What is the most probable new (that is, absent from the network) sexual contact between a pair of characters in that network? Look up somewhere on the Internet whether this contact has occurred in the series after season 8, and (if the answer is positive) when.**
 
 Para una probabilidad nueva, simplemente usamos el mismo caso de antes, pero utilizando todas las combinaciones de nodos posibles (excluyendo dos veces el mismo nodo). Obtendremos tanto los enlaces que ya existen, como los que pueden existir.
 
@@ -326,17 +329,16 @@ v1 = which(matrix_prob == max(matrix_prob), arr.ind = TRUE)[,1]
 v2 = which(matrix_prob == max(matrix_prob), arr.ind = TRUE)[,2]
 pr = "\n"
 for (n in 1:length(v1)) { # Para realizar una visualización más elegante
-  pr = c(pr, vertexs[v1[n]] , "---" , vertexs[v1[n]] , "\n")
+  pr = c(pr, vertexs[v1[n]] , "---" , vertexs[v2[n]] , "\n")
 }
 cat("Prob. Max:",matrix_prob[v1[1],v2[2]],"\n", "Edges:",pr)
 ```
 
-*(d)* What approach do you consider more reasonable to answer questions (a) and (b) for this specific network, the ERGM one or the SBM one? Justify your answer.
+**(d) What approach do you consider more reasonable to answer questions (a) and (b) for this specific network, the ERGM one or the SBM one? Justify your answer.**
 
-**5)** (4 points) I want you to design networks where the most central nodes with respect to some set $S$ of centrality measures are different.
+**5) (4 points) I want you to design networks where the most central nodes with respect to some set $S$ of centrality measures are different.**
 
-*(a)* Build, by hand, a small network that has this property with respect to $S = \{degree, betweenness\}$. That is, where no node with highest degree is a node with highest betweenness. Plot the network, indicating the nodes of highest degree and of highest betweenness. Explain the strategy you followed to build your
-network with the desired property. 
+**(a) Build, by hand, a small network that has this property with respect to $S = \{degree, betweenness\}$. That is, where no node with highest degree is a node with highest betweenness. Plot the network, indicating the nodes of highest degree and of highest betweenness. Explain the strategy you followed to build your network with the desired property.**
 
 Para obtener un grafo donde el nodo con mayor centralidad de _degree_ no es el mismo nodo con centralidad de _betweenness_, podemos crear un grafo con un nodo puente, que será el nodo con mayor centralidad de _betweenness_, pero no tiene porque ser el nodo con mayor grado.
 
@@ -367,13 +369,15 @@ plot(g1)
 sort(igraph::degree(g1),decreasing = TRUE)
 ```
 
+Así obtenemos que los nodos '4' y '6' son los más centrales según su grado.
+
 ```{r}
 sort(igraph::betweenness(g1),decreasing = TRUE)
 ```
 
-Así tenemos que el nodo '5' es el nodo con mayor centralidad de _betweenness_, pero no el de mayor centralidad de _degree_. 
+Mientras que el nodo '5' es el nodo con mayor centralidad de _betweenness_ y no es el de mayor centralidad de grado. 
 
-*(b)* Build, by hand, a small network that has this property with respect to $S = \{closeness, betweenness\}$. Plot the network, indicating the nodes of highest closeness and of highest betweenness. Explain the strategy you followed to build your network with the desired property.
+**(b) Build, by hand, a small network that has this property with respect to $S = \{closeness, betweenness\}$. Plot the network, indicating the nodes of highest closeness and of highest betweenness. Explain the strategy you followed to build your network with the desired property.**
 
 Para obtener una red donde el nodo con mayor centralidad de _closenesss_ no sea el mismmo nodo con mayor centralidad de _betweenness_, intentaremos crear un grafo ciclo con 6 nodos y añadir 1 nodod en el centro que está conectado con todos los nodos del ciclos. Este será nuestro nodo con mayor _closeness_ con una distancia de 1 hacia los demás nodos. Luego añadiremos 2 nodos más, donde 1 de ellos será un nodo puente, que será el de mayor centralidad de _betweeness_, que tendrá como mucho una distancia máxima de 2 hacia los demás nodos y no estará conectado con el nodo de mayor centralidad de _closeness_.
 
@@ -411,7 +415,7 @@ sort(igraph::betweenness(g2),decreasing = TRUE)
 sort(igraph::closeness(g2),decreasing = TRUE)
 ```
 
-Así vemos que efectivamente el nodo '2' es el que tiene mayor centralidad de _betweenness_, pero los nodos '3' y '9' tienen la misma centralidad de _closeness_ cuando no era planeado.
+Así vemos que efectivamente el nodo '2' es el que tiene mayor centralidad de _betweenness_, pero los nodos '3' y '9' tienen la misma centralidad de _closeness_ que el nodo '6', cuando no era planeado.
 
 ```{r}
 g2 = delete_edges(g2, "3|9")
@@ -427,7 +431,7 @@ sort(igraph::closeness(g2),decreasing = TRUE)
 
 Pero una vez quitado el enlace entre '3' y '9', el nodo '6' se convierte en el nodo con mayor centralidad de _closeness_, como habiamos planeado.
 
-*(c)* Now, write a program that searches the space of all connected networks of a given size $n$ and either finds a network with this property for $S = \{degree, betweenness, closeness, eigenvector\}$ or reports that there is no such network for this $n$. Run your program starting with $n = 4$ and provide a smallest network (with least order, and among those with this order, with least size) with this property. Plot the network, indicating which are the nodes with the highest centrality values. What are the features of the network that make the most central nodes according to the different centrality measures to be different? If necessary, to hint the answer to this question, find some more networks with this property.
+**(c) Now, write a program that searches the space of all connected networks of a given size $n$ and either finds a network with this property for $S = \{degree, betweenness, closeness, eigenvector\}$ or reports that there is no such network for this $n$. Run your program starting with $n = 4$ and provide a smallest network (with least order, and among those with this order, with least size) with this property. Plot the network, indicating which are the nodes with the highest centrality values. What are the features of the network that make the most central nodes according to the different centrality measures to be different? If necessary, to hint the answer to this question, find some more networks with this property.**
 
 
 

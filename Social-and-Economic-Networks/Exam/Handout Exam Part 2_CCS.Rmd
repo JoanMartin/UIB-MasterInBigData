@@ -1,0 +1,158 @@
+---
+title: "Social and economic networks"
+subtitle: "Handout Exam Part 2"
+author: "Christian Strasser"
+output:
+  html_document:
+    number_sections: false
+    highlight: tango
+    toc: yes
+    df_print: paged
+editor_options: 
+  chunk_output_type: inline
+---
+
+
+
+<style type="text/css">
+
+  body {
+    background-color: #f6f7fd; 
+  }
+  
+  a:link {
+    color: #0174DF;
+  }
+  
+  code.r {
+    font-size: 14px;
+  } 
+  
+  div pre {
+    background-color:#E0ECF8;
+  }
+  pre {
+    font-size: 14px 
+  }
+ 
+  p {
+    text-align: justify;
+  }
+ 
+    
+  h1, h2, h3, h4, h5, h6 {
+    color: #737aaa;
+  }
+
+  th {  
+    background-color:#737aaa;
+    color: #FAFAFA;
+    padding:5px;
+  }
+  
+  td {
+    font-size: 11.5pt;
+  } 
+  
+  tr:nth-child(even){
+    background: white;
+  }
+  
+  tr:nth-child(odd){ 
+    background-color: #EFF8FB;
+  }
+</style>
+
+***  
+
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=8, fig.height=8, fig.align="center", echo=TRUE, warning=FALSE, message=FALSE)
+library(centiserve)
+library(igraph)
+```
+**1) In a single sentence, what is the main question addressed in this paper? Why do the authors consider this question relevant and worth answering? After reading the paper, do you consider their answer relevant? Why?**
+
+Propone un coeficiente de clustering generalizado y triángulos generalizados para tratar y analizar supuestos enlaces 'indirectos' en una red.
+
+La principal cuestión que realiza el autor de este papel es saber si existen 'triángulos indirectos' en estructuras de redes con pesos. El autor le da importancia a esta cuestion, para ilustrar que puede ser necesario una nueva manera de tratar todos los aspectos que solo ocurren en estos tipos de redes.
+
+Después de leer el artículo, parece ser interesante la cuestión que se propone el autor para estos 'triángulos indirectos', a partir del cual podriamos realizar nuevos análisis considerando estos enlaces indirectos en nuestras redes.
+
+**2) How does this paper relate to previous work about the question addressed in it?**
+
+Este artículo está relacionado con trabajos anteriores en el sentido que amplia sus definiciones sobre las anteriores, tratando de dar este nuevo aspecto de los triángulos indirectos en redes no dirigidos con pesos para dar explicación a nuevos aspectos sobre las estructuras de estas redes.
+
+**3) What are the main definitions in this paper?**
+
+En un grafo no dirigido con pesos:
+
+Se introduce un nuevo concepto de triángulos suponiendo que un peso agregado suficientemente fuerte de dos aristas que comparten un nodo induce un enlace entre los nodos no comunes.
+
+Además, Una nueva definición de coeficiente de clustering. Esta medida es capaz de dar pistas útiles sobre la estructura de la comunidad de la red, cuando los pesos juegan un papel relevante en la inducción de enlaces indirectos entre el nodo.
+
+**4) On your behalf, what are the strongest contribution and the greatest drawback of this paper (if any)?**
+
+Por un lado, los puntos más fuertes de este artículo son las nuevas definiciones y nuevas maneras de poder tratar las situaciones que describe sobre estos triángulos indirectos en las redes, que puede ayudar a ver que no todos los triángulos son del mismo tipo, tanto los directos, como los indirectos. Por otro lado, este propio tratamiento se basa en la definición de una nueva propia función que hay que realizar de la manera deseada sobre los pesos de la red, para obtener una conclusión u otra. Puede haber situaciones donde aplicar estas nuevas definiciones puede dañar la conclusión deseada, ya que trata casos que no existen de manera objetiva.
+
+**5) Do you consider the numerical experiments provided in Section 5 suitable? (I’m not referring to the networks analyzed, but to the computations performed on them.) What conclusions do you extract from these experiments? Do they agree with the authors’ conclusions? What other experiments (on the same networks) would you perform?**
+
+En el caso de los aeropuertos, elegir un $\alpha$ y $\beta$ bajo para considerar todos los pseudo-triángulos lo considero adecuado para este caso ya que analizar de esta manera todos estos pseudo-vuelos entre aeropuertos es correcto. El hecho de concluir "podrían existir" estos vuelos indirectos puede ayudar en el análisis de esta red. En cambio, la red neuronal no debería trabajar con $\alpha$ y $\beta$ tan bajos, porque considero que el caso de analizar una red neuronal tiene que ser una caso que se tiene que acercar lo más posible a la realidad y considerar tantos enlaces indirectos no lo considero adecuado.   
+
+**6) In their experiments, the authors mostly consider cases when $\alpha = 0$ or $\beta = 0$. How would you choose $\alpha$ and $\beta$ so that only really meaningful pseudo-triangles were considered?**
+
+Analizaría los pesos de los triángulos de la red y cogería el menor peso de estos enlaces para definir un $\alpha$ y un $\beta$, de manera que trataré como triángulo indirecto aquella situación donde sus pesos son igual o superiores a los triángulos oficiales de la red, para obtener los más importantes ya que de esta manera tendría que los pesos de un triángulo real y un pseudo-triángulo son similares.
+
+**7) The authors define their generalized clustering coefficient only for undirected networks. How would you generalize it in a sound way to directed networks? Provide a definition that makes sense on some class of weighted directed networks of your choice with some specific meaning of its links (for instance, non-symmetric friendship networks, trade networks, citation networks with weights the number of times an author has cited another author, . . . )**
+
+Para el caso de redes dirigidas sería la fórmula coeficiente de clustering en redes dirigidas,
+
+$$C^{cyl}_i=\dfrac{(A)^3_{ii}}{d^{in}_id^{out}_i-d^{io}_i}$$
+pero cambiando la matriz de adyacencia por la matriz del árticulo que incluye los pseudo-triángulos.
+
+$$C^{cyl}_i=\dfrac{|T^{(i)}|}{d^{in}_id^{out}_i-d^{io}_i}$$
+
+Un caso, por ejemplo, podría ser una red donde los nodos representan casas, las aristas que las unen representan una calle que se puede utilizar para ir de una casa a la otra (donde una arista dirigida representa que la calle va en un solo sentido) y los pesos indican la distancia entre una casa y otra. En este caso, un enlace indirecto representaría una carretera que debería existir entre dos casas.
+
+**8) At the end of the day, the final value of the generalized clustering coefficient does not depend on the specific weights of the edges in the triangles and “generalized triangles”: each such a triangle only counts 0 or 1 in the definition. Can you think of some sound way to use the weights to “weight” the triangles and “generalized triangles” in the definition? How could your definition change the experimental results explained in the paper?**
+
+Se podrían analizar los pesos de las aristas en triángulos reales de la red y según como se definen los valores $\alpha$ y $\beta$ el valor del coeficiente de clustering de un pseudo-triángulo dependerá de esta diferencia entre valores reales y los valores de $\alpha$ y $\beta$. Es decir, si por ejemplo los valores de $\alpha$ y $\beta$ están basados en los pesos mínimos de un triángulo real, entonces cuando obtenemos un pseudo-triángulo, este tendrá pesos muy similares a un tríangulo real en la red y el coeficiente de clustering de un pseudo-triángulo de este tipo será máximo. En cambio, si los valores de $\alpha$ y $\beta$ son variados, de manera que un pseudo-triángulo tiene mucha diferencia a un triángulo real de la red, su coeficiente de clustering podría valer un tanto % sobre su diferencia con un triángulo real de la red. Para así dar más valor a los pseudo-triángulos que son más parecidos en sus pesos a los triángulos reales de la red.
+
+**9) How is the generalized clustering coefficient related to the Strong Triadic Closure Property? Can you find a way to test whether a network satisfies the STCP using this coefficient (together with other indices, of course)?**
+
+
+**Now, some technical questions:**
+
+**10) In page 4 the authors say “Our generalized clustering coefficient has a further very relevant property: it assumes unitary value in several situations and not only when the graph is a clique.” Is it true that if an unweighted graph has clustering coefficient 1, then it is a clique? And if we assume moreover that the graph is connected? Justify your answer.**
+
+Es posible tener un grafo no ponderado con coeficiente de clustering 1, sin ser un _clique_, simplemente teniendo componentes no conexas.
+
+```{r}
+library(igraph)
+g1 = graph_from_literal(1---2, 2---3, 3---4, 4---5, 5---1, 1---3, 1---4, 2---3, 2---4, 2---5, 3---4, 3---5, 6---7, 7---8, 8---6, 9---10, 10---11, 11--9)
+transitivity(g1, type="average")
+```
+
+```{r}
+plot(g1)
+```
+
+En cambio, si se trata de un grafo conexo, entonces sí que es un _clique_, ya que un _clique_ en un grafo no dirigido G es un conjunto de vértices _V_ tal que para todo par de vértices de _V_, existe una arista que las conecta. En otras palabras, un clique es un subgrafo en que cada vértice está conectado a cada otro vértice del subgrafo, es decir, todos los vértices del subgrafo son adyacentes. Esto equivale a decir que el subgrafo inducido por V es un grafo completo. El tamaño de un clique es el número de vértices que contiene. Por lo tanto, no es posible tener un grafo conexo con coeficiente de clustering 1 y que no sea un _clique_.
+
+```{r}
+g2 = graph_from_literal(1---2, 2---3, 3---4, 4---5, 5---1, 1---3, 1---4, 2---3, 2---4, 2---5, 3---4, 3---5)
+transitivity(g2, type="average")
+```
+
+```{r}
+plot(g2)
+```
+
+**11) In equation (3), page 7, the authors recall Barrat et al’s clustering coefficient for weighted networks. I also introduced this index in my lectures, but equation (3) and my definition do not define the same number. What is the difference? Which one corresponds to Barrat et al’s original definition? How did you check it? If the correct version is the one given in this paper, I probably had a good reason to change it. What was this reason? And, if the correct version is the one I gave in the lectures, did the authors of this paper have a good reason to change it (for instance, to compare it with their proposed coefficient)?**
+
+
+**12) In equations (4)–(5), page 8, the authors recall Zhang—Horvath’s weighted clustering coefficient for gene co-expression networks. Does it fit with the general philosophy of Kalma–Highman’s indices or Opshal–Panzarasa’s indices as explained in my lectures?**
+
+
+**13) (Extra bonus) The authors mention that they used R to implement their coefficient and perform their experiments, but they do not provide their implementation. Implement in R their generalized clustering coefficient as well as your proposals in points (7) and (8), and repeat their experiments with your functions, or perform new experiments (for instance, using other networks, using your bounds in point (6), checking point (9), . . . ).**
+
