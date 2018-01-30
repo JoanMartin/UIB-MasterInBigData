@@ -1,0 +1,152 @@
+---
+title: "Social and economic networks"
+subtitle: "Exam. Part 2"
+author: "Juan José Martín"
+output:
+  html_document:
+    number_sections: false
+    highlight: tango
+    toc: yes
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+---
+
+
+
+<style type="text/css">
+
+  body {
+    background-color: #f6f7fd; 
+  }
+  
+  a:link {
+    color: #0174DF;
+  }
+  
+  code.r {
+    font-size: 14px;
+  } 
+  
+  div pre {
+    background-color:#E0ECF8;
+  }
+  pre {
+    font-size: 14px 
+  }
+ 
+  p {
+    text-align: justify;
+  }
+ 
+    
+  h1, h2, h3, h4, h5, h6 {
+    color: #737aaa;
+  }
+
+  th {  
+    background-color:#737aaa;
+    color: #FAFAFA;
+    padding:5px;
+  }
+  
+  td {
+    font-size: 11.5pt;
+  } 
+  
+  tr:nth-child(even){
+    background: white;
+  }
+  
+  tr:nth-child(odd){ 
+    background-color: #EFF8FB;
+  }
+</style>
+
+***  
+
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=8, fig.height=8, fig.align="center", echo=TRUE, warning=FALSE, message=FALSE)
+library(centiserve)
+library(igraph)
+```
+
+
+**1) In a single sentence, what is the main question addressed in this paper? Why do the authors consider this question relevant and worth answering? After reading the paper, do you consider their answer relevant? Why?**
+
+En el artículo se propone una nueva definición del concepto de triángulos y de un nuevo coeficiente de clustering generalizado ponderado.
+
+Los autores lo consideran relevante porque con este nuevo coeficiente de clustering generalizado ponderado, se puede conocer la estructura de una red ponderada cuando faltan uniones entre nodos (triángulos indirectos). Es decir, la idea que han tenido es definir dos nuevos tipos de triángulos *T2* y *T3*, siendo *T1* el tipo que ya conocíamos. Estos dos nuevos tipos de triángulos los llaman *indirectos* porque solo están compuestos por dos aristas. Esta idea surge del hecho de que si dos aristas están fuertemente conectadas, no es necesario tener una tercera arista para formar un triángulo.
+
+Pienso que es un artículo relevante para estudiar ciertas redes, aunque muy limitado a redes donde se quiera tener en cuenta que las fuerzas de unidos entre nodos sea suficientemente grande como para considerar que puede haber un triángulo. Por ejemplo, una red social donde $v_1$ y $v_2$ son muy amigos de $v_3$, entonces hay una alta probabilidad de que $v_1$ y $v_2$ sean amigos.
+
+<br>
+
+**2) How does this paper relate to previous work about the question addressed in it?**
+  
+Se empieza mencionando varios artículos sobre medidas y centralidades para redes complejas. Posteriormente, se nombran artículos donde se explica el concepto de *local cluster coefficient* y un nuevo modelo combinatorio para detectar clusters que tengan en cuenta los datos individuales de una unidad de población y los datos que describen las conexiones entre dichas unidades. Finalmente, se mencionan diferentes análisis del coeficiente de clustering sobre redes ponderadas.
+
+Juntando toda esta bibliografía que han mencionado en su artículo, vemos claramente cómo han hecho un estudio previo sobre teoría de grafos, centralidades y clustering para poder llevar a cabo su teoría y sus nuevas definiciones basadas en dichos artículos.
+
+<br>
+
+**3) What are the main definitions in this paper?**
+
+La principal definición que proporciona el artículo es la del coeficiente de clustering generalizado ponderado. No obstante, para ello, definen dos nuevos tipos de triángulos alrededor de un nodo *i*:
+
+* El primero está compuesto por dos nodos no unidos que son adyacentes a *i*.
+
+* El segundo está compuesto por una trayectoria de distancia dos desde *i* tal que *i* no está unido con el nodo extremo de la trayectoria.
+
+<br>
+
+**5) Do you consider the numerical experiments provided in Section 5 suitable? (I’m not referring to the networks analyzed, but to the computations performed on them.) What conclusions do you extract from these experiments? Do they agree with the authors’ conclusions? What other experiments (on the same networks) would you perform?**
+
+Desde mi punto de vista, hacen dos experimentos que son relevantes. En el primero evalúan los grafos de aeropuertos de los Estados Unidos y C.elegans con $\alpha = \beta = 0$ para que siempre se satisfaga la función genérica $F_i$ y se cojan todos los pseudo-triángulos *T2* y *T3*. De esta forma pueden comprobar cómo es la estructura de la red solo mediante su estructura. En el segundo, cogen diferentes valores de $\alpha$ y $\beta$ para mostrar unas gráficas del valor que se obtiene de $C_g$ sobre cada una de las funciones $F_i$ definidas por ellos. Entre ambos experimentos, veo una pequeña incongruencia. En el primero, para el grafo de aeropuertos, el coeficiente de clustering definido por ellos para el nodo 488 es $C_{488}^{(g)} = 0.0632$, mientras que en el experimento dos, cuando $\alpha = \beta = 0$, el valor de clustering para todo el grafo es siempre 1 independientemente de la función que usen. No he encontrado una explicación de por qué ocurre esto.
+
+A pesar de no haber encontrado explicación al comparar las soluciones finales de los experimentos, veo que en sus conclusiones mencionan alguna cosa de las que yo ya he comentado. Por una parte, comentan que el uso de *T2* y *T3* les sirve para comprobar que hay relaciones entre nodos cuando las uniones son fuertes, como hemos mencionado en el ejercicio 1. Por otra parte, hablan de que poner $\alpha = \beta = 0$ les sirve para ver clases de redes equivalentes basándose únicamente en su estructura y no teniendo en cuenta los pesos de las aristas. 
+
+<br>
+
+**6) In their experiments, the authors mostly consider cases when $\alpha = 0$ or $\beta = 0$. How would you choose $\alpha$ and $\beta$ so that only really meaningful pseudo-triangles were considered?**
+
+Los autores definen *T2* y *T3* como pseudo-triángulos porque, aunque no estén contenidos en *G*, pueden ser vistos como triángulos bajo las condiciones de los pesos de las dos aristas. Además, asumen $\alpha = 0$ o $\beta = 0$ para que el número de *T2* y *T3* alrededor de cada nodo no dependa de la elección de *F*. No obstante, esto implica que podría haber pseudo-triángulos poco relevantes, ya que no tendría en cuenta el peso de las aristas. Así es que, para que realmente sea significativo la elección de los pseudo-triángulos, elegiría la media de los pesos de todas las aristas como $\alpha$ y como $\beta$. De esta forma, solo tendríamos en cuenta los triángulos (*T1*) y los pseudo-triángulos cuyos pesos fueran mayores a la media de los pesos de todas las aristas del grafo, es decir, cumpliendo con las definiciones de *T2* y *T3*, elegiríamos únicamente los nodos fuertemente conectados.
+
+<br>
+
+**Now, some technical questions:**
+
+<br>
+
+**10) In page 4 the authors say “Our generalized clustering coefficient has a further very relevant property: it assumes unitary value in several situations and not only when the graph is a clique.” Is it true that if an unweighted graph has clustering coefficient 1, then it is a clique? And if we assume moreover that the graph is connected? Justify your answer.**
+
+Un clique es un grafo no dirigido *G* tal que para todo par de vértices *V*, existe una arista que las conecta. No obstante, para que un grafo tenga su coeficiente de clustering igual a 1, todo subgrafo del grafo *G* ha de tener coeficiente de clustering igual a 1, por lo que podría existir un grafo con varios subgrafos que dieran un coeficiente de clustering igual a 1, pero este no sería un clique. Por ejemplo, para el siguiente grafo
+
+```{r}
+g = graph_from_literal(1---2, 1---3, 1---4, 1---5, 2---3, 2---4, 2---5, 3---4, 3---5, 4---5, 6---7, 7---8, 8---6)
+plot(g)
+```
+
+<br>
+
+su coeficiente de clustering es igual a 1, pero no es un clique. Por lo tanto, no es cierto que cuando un grafo no ponderado *G* tiene el coeficiente de clustering igual a 1, entonces *G* es un clique.
+
+```{r}
+transitivity(g, type="average") # Clustering coefficient
+```
+
+<br>
+
+No obstante, ante un grafo *G* conexo y con coeficiente de transitividad igual a 1, sí que sería un clique, ya que  todo par de vértices estaría unido con una arista, sino no cumpliría con el coeficiente de clustering igual a 1.
+
+```{r}
+g = graph_from_literal(1---2, 1---3, 1---4, 1---5, 2---3, 2---4, 2---5, 3---4, 3---5, 4---5)
+plot(g)
+```
+
+```{r}
+transitivity(g, type="average") # Clustering coefficient
+```
+
+<br>
