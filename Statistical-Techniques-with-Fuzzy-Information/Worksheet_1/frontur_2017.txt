@@ -1,0 +1,8 @@
+"comunitat" "turistes"
+Andalucía 11530070
+Balears 13790968
+Canarias 14213686
+Cataluña 19046720
+CValenciana 8918327
+CMadrid 6694686
+OtrasCA 7591906

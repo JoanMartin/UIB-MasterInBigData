@@ -1,0 +1,209 @@
+---
+title: "Práctica 1. Técniques Estadístiques amb Informació Imprecisa"
+author: "Víctor Marín Juarros y Juan José Martín Miralles"
+output:
+  html_document:
+    number_sections: false
+    highlight: tango
+    toc: no
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+---
+
+
+
+<style type="text/css">
+
+  body {
+    background-color: #f6f7fd; 
+  }
+  
+  a:link {
+    color: #0174DF;
+  }
+  
+  code.r {
+    font-size: 14px;
+  } 
+  
+  div pre {
+    background-color:#E0ECF8;
+  }
+  pre {
+    font-size: 14px 
+  }
+ 
+  p {
+    text-align: justify;
+  }
+ 
+    
+  h1, h2, h3, h4, h5, h6 {
+    color: #737aaa;
+  }
+
+  th {  
+    background-color:#737aaa;
+    color: #FAFAFA;
+    padding:5px;
+  }
+  
+  td {
+    font-size: 11.5pt;
+  } 
+  
+  tr:nth-child(even){
+    background: white;
+  }
+  
+  tr:nth-child(odd){ 
+    background-color: #EFF8FB;
+  }
+</style>
+
+***  
+
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=10, fig.height=10, fig.align="center", echo=TRUE, warning=FALSE, message=FALSE)
+```
+
+
+El fitxer ``frontur_2017.txt'', que podeu trobar a l'Aula digital, conté informació sobre les dades per comunitats autónomes de l'Estadística de Moviments Turístics a Fronteres (FRONTUR) de desembre de 2017 (dades provisionals a 1 de febrer de 2018) a Espanya. Les columnes corresponents a les variables estan separades per espais i conté una primera fila amb els noms de les variables. Les variables són les següents
+
+* comunitat: Nom de la comunitat autónoma d'Espanya.
+* turistes: Nombre acumulat de turistes internacionals en valor absolut en 2017.
+
+*Font:* INE-FRONTUR (http://www.ine.es)
+
+Exercici 1
+-------------------------------------
+Descarregau el fitxer i definiu un dataframe. Combrovau amb *str* y *head* que s'ha descarregat correctament i comprovau els noms de les variables.
+
+Solució
+-------------------------------------
+
+```{r}
+df = read.csv("frontur_2017.txt", sep = " ")
+head(df)
+str(df)
+```
+
+<br>
+
+Exercici 2
+-------------------------------------
+
+Afegiu una nova columna amb la població de cada comunitat autónoma de forma *crisp* (de tota la vida). Podeu trobar les dades aquí: http://www.ine.es/jaxiT3/Tabla.htm?t=9681&L=0. 
+
+Solució
+-------------------------------------
+
+```{r}
+poblacion = c(8403350, 1160591, 2164344, 7453957, 4932302, 6506437, 15928064)
+df$poblacion = poblacion
+df
+```
+
+<br>
+
+Exercici 3
+-------------------------------------
+
+Carregant el paquet *FuzzyNumbers*, fuzzificau les dades de visitats seguint algun criteri, després de llegir el document de metodologia per extreure aquestes dades, que podeu trobar a l'aula digital (per exemple, un percentatge concret del total o un percentatge en funció de la poblacio). Feis la gràfica de cada un de les dades.
+
+Solució
+-------------------------------------
+
+Para la Fuzzyficación de nuestros datos tendremos en cuenta dos variables: el número de turistas que acceden al país por tren, y los que acceden por carretera, descartando aquellos que llegar por avión y mar. El motivo de esta elección se basa en la metodología para el cálculo de los turístas que se menciona en la nota de prensa, que mientras que para mar y aire se obtienen datos exactos de las autoridades aéreas y marítimas, las correspondientes a carretera están estimadas en función del país de procedencia, con lo cual el número de pasajeros en cada vehículo puede estar sesgado, y por tren ya que es un medio de transporte que puede no ser del todo minucioso en lo que a control se refiere. 
+
+Dicho esto, añadimos a la cantidad de turistas esta imprecisión, tomando un 10% sobre el total en el caso de turistas que han llegado por carretera, y un 1% sobre el total de turistas que han llegado en tren. El número total de turistas que llegan por cada vía de acceso se encuentra en la tabla **Llegada de turistas internacionales según vías de acceso**. A Baleares y Canarias no se le ha aplicado ningún dato de imprecisión sobre estos accesos debido a que no llegan por carretera ni por tren a las islas.
+
+```{r}
+imprecision_carretera = c(1287759.8, 0, 0, 1287759.8, 1287759.8, 1287759.8, 1287759.8)
+imprecision_tren = c(37357.1, 0, 0, 37357.1, 37357.1, 37357.1, 37357.1)
+df$imprecision_carretera = imprecision_carretera
+df$imprecision_tren = imprecision_tren
+
+df$porcentaje_tur = df$turistes / sum(df$turistes)
+df$porcentaje_pob = df$poblacion / sum(df$poblacion)
+
+df
+```
+
+<br>
+
+El core está compuesto por el número de turistas menos y más (hacia la izquiera y hacia la derecha) la imprecisión mostrada en la gráfica anterior. El soporte será el número de turistas menos o más la imprecisión y menos o más el número de turistas por el porcentaje sobre el total de turista que representa para esa comunidad.
+
+```{r}
+library(FuzzyNumbers)
+
+aux1 = df$turistes - (df$imprecision_carretera + df$imprecision_tren) - (df$turistes * df$porcentaje_tur)
+aux2 = df$turistes - (df$imprecision_carretera + df$imprecision_tren)
+aux3 = df$turistes + (df$imprecision_carretera + df$imprecision_tren)
+aux4 = df$turistes + (df$imprecision_carretera + df$imprecision_tren) + (df$turistes * df$porcentaje_tur)
+
+fuzzyNumbers = c()
+par(mfrow = c(3, 3))
+for(i in 1:nrow(df)) {
+  fuzzy = PiecewiseLinearFuzzyNumber(aux1[i], aux2[i], aux3[i], aux4[i])
+  fuzzyNumbers = c(fuzzyNumbers, fuzzy)
+  plot(fuzzy, main = df$comunitat[i])
+}
+```
+
+<br>
+
+Exercici 4
+-------------------------------------
+
+Calculau, mitjançant la suma *fuzzy*, la suma de tots els turistes internacionals visitants d'Espanya al 2017. Comparau-la amb la dada *crisp*.
+
+Solució
+-------------------------------------
+
+La suma **fuzzy** se realiza de la siguiente forma:
+
+```{r}
+fuzzy_numTurism = 0
+for(i in 1:length(fuzzyNumbers)) {
+  fuzzy_numTurism = fuzzyNumbers[[i]] + fuzzy_numTurism
+}
+core(fuzzy_numTurism)
+```
+
+<br>
+
+Y la forma **crisp** de la siguiente forma:
+
+```{r}
+sum(df$turistes)
+```
+
+<br>
+
+Exercici 5
+-------------------------------------
+
+Calculau el percentatge de visitants respecte a la població de cada comunitat de forma *crisp* i de manera *fuzzy*. Comparau els resultats (podeu suposar la població de cada comunitat de manera *crisp*). Analitzau els resultats.
+
+Solució
+-------------------------------------
+
+Mientras que los números clásicos son muy tajantes a la par que imprecisos, nuestros datos fuzzyficados nos proporcionan una información adicional, referente a posibles errores en la imprecisión, que deja ver que el valor real puede distanciarse del valor central, aunque cada vez de forma más improbable.
+
+```{r}
+turist_pobl_crisp = c()
+turist_pobl_fuzzy = c()
+
+for(i in 1:nrow(df)){
+  turist_pobl_crisp = c(turist_pobl_crisp, df$turistes[[i]] / df$poblacion[i])
+  turist_pobl_fuzzy = c(turist_pobl_fuzzy, fuzzyNumbers[[i]] / df$poblacion[i])
+}
+
+turist_pobl_crisp
+turist_pobl_fuzzy
+```
+
+<br>
