@@ -1,0 +1,431 @@
+---
+title: "Simulation Tools and Sampling with Big Data"
+subtitle: "Acceptance-rejection method"
+author: "Juan José Martín"
+output:
+  html_document:
+    number_sections: false
+    highlight: tango
+    toc: yes
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+---
+
+
+
+<style type="text/css">
+
+  body {
+    background-color: #f6f7fd; 
+  }
+  
+  a:link {
+    color: #0174DF;
+  }
+  
+  code.r {
+    font-size: 14px;
+  } 
+  
+  div pre {
+    background-color:#E0ECF8;
+  }
+  pre {
+    font-size: 14px 
+  }
+ 
+  p {
+    text-align: justify;
+  }
+ 
+    
+  h1, h2, h3, h4, h5, h6 {
+    color: #737aaa;
+  }
+
+  th {  
+    background-color:#737aaa;
+    color: #FAFAFA;
+    padding:5px;
+  }
+  
+  td {
+    font-size: 11.5pt;
+  } 
+  
+  tr:nth-child(even){
+    background: white;
+  }
+  
+  tr:nth-child(odd){ 
+    background-color: #EFF8FB;
+  }
+</style>
+
+***  
+
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=9, fig.height=7, fig.align="center", echo=TRUE, 
+                      warning=FALSE, message=FALSE, autodep = TRUE, cache=TRUE)
+library(ggplot2)
+```
+
+```{r include=FALSE}
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+  
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+  
+  numPlots = length(plots)
+  
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                     ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+  
+  if (numPlots==1) {
+    print(plots[[1]])
+    
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+    
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+      
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+
+my_plot = function(Y_accepted, f, Y_rejected){
+  Y_accepted = as.data.frame(r[1])
+  colnames(Y_accepted) <- c("x")
+  Y_rejected = as.data.frame(r[2])
+  colnames(Y_rejected) <- c("x")
+  
+  q1 = ggplot() + geom_density(aes(x=x, color='blue'), data=Y_accepted) + 
+    geom_density(aes(x=x, color='red'), data=Y_rejected) +
+    ggtitle('Simulated') +
+    theme(legend.position = 'right') +
+    scale_color_manual(labels = c('Accepted', 'Rejected'), values = c('blue', 'red')) +
+    theme(legend.title=element_blank(),
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank(),
+          plot.title = element_text(hjust = 0.5))
+  
+  x_original = seq(min(Y_accepted), max(Y_accepted), by=0.01)
+  y_original = f(x_original)
+  q2 = ggplot() + 
+    geom_line(aes(x_original, y_original), color='blue') + 
+    ggtitle('Original') +
+    theme(axis.title.x=element_blank(),
+          axis.title.y=element_blank(),
+          plot.title = element_text(hjust = 0.5))
+  
+  multiplot(q1, q2, cols=2)
+}
+```
+
+<br>
+
+## Método de Aceptación-Rechazo Simple
+
+```{r}
+simple_accept_reject_method = function(f, max_point, xdomain=c(0, 1), N=100000){
+  if (N < 1){
+    stop("N parameter must be greater than 1.")
+  }
+      
+  Y_accepted = c()
+  Y_rejected = c()
+  
+  for (i in 0:N){
+    x = runif(1, xdomain[1], xdomain[2])
+    fx = f(x)
+    u = runif(1, 0, max_point)
+  
+    if (u <= fx){
+        Y_accepted = c(Y_accepted, x)
+    } else {
+        Y_rejected = c(Y_rejected, x)
+    }
+  }
+  
+  r = list(Y_accepted, Y_rejected)
+  return (r)
+}
+```
+
+<br>
+
+## Método de Aceptación-Rechazo General
+
+```{r}
+is_envelope_function = function(f, g, M, xdomain=c(0, 1), ...){
+  if (xdomain[1] >= xdomain[2]){
+    stop("First value of the xdomain must be lower than the second value.")
+  }
+      
+  x = seq(xdomain[1], xdomain[2], by=0.01)
+  y_base = f(x)
+  y_envelope = g(x, ...)
+  
+  return (sum((y_envelope * M - y_base) < 0) == 0)
+}
+```
+
+<br>
+
+```{r}
+plot_envelope_function = function(f, g, M, xdomain=c(0, 1), ...){
+  if (xdomain[1] >= xdomain[2]){
+    stop("First value of the xdomain must be lower than the second value.")
+  }
+    
+  x = seq(xdomain[1], xdomain[2], by=0.01)
+  y_base = f(x)
+  y_envelope = g(x, ...) * M
+  
+  q1 = ggplot() + geom_line(aes(x=x, y=y_base, color='blue')) + 
+    geom_line(aes(x=x, y=y_envelope, color='red')) +
+    theme(legend.position = 'right') +
+    scale_color_manual(labels = c('Base function - f(x)', 'Envelope Function - g(x)'), values = c('blue', 'red')) +
+    theme(legend.title=element_blank(),
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank(),
+          plot.title = element_text(hjust = 0.5))
+  q1
+}
+```
+
+<br>
+
+```{r}
+general_accept_reject_method = function(f, g, M, distrib_func, xdomain=NULL, N=100000, ...){
+  if (N < 1){
+    stop("N parameter must be greater than 1.")
+  }
+      
+  Y_accepted = c()
+  Y_rejected = c()
+  
+  y = distrib_func(n=N, ...)
+  
+  if (!is.null(xdomain)){
+    if (xdomain[1] >= xdomain[2]){
+        stop("First value of the xdomain must be lower than the second value.")
+    }
+    y = y[(y > xdomain[1]) & (y < xdomain[2])]
+  }
+  
+  for (i in y){
+    fy = f(i)
+    gy = g(i, ...)
+    u = runif(1, 0, 1)
+    
+    if (u <= fy / (M * gy)){
+        Y_accepted = c(Y_accepted, i)
+    } else {
+        Y_rejected = c(Y_rejected, i)
+    }
+  }
+          
+  r = list(Y_accepted, Y_rejected)
+  return (r)
+}
+```
+
+<br>
+
+
+## Ejercicios
+
+**1. Simula mediante el método simple de aceptación−rechazo una variable aleatoria X con función de densidad $nf(x) = 20x(1 - x)^3n$ donde $x \in [0, 1]$.**
+
+$$ max \left\{20x(1 - x)^3\right\} = \frac{135}{64} \quad \text{en} \quad x = \frac{1}{4} $$
+
+
+```{r}
+f = function (x) 20 * x * (1 - x)**3
+max_point = 135/64
+N = 10**5
+
+r = simple_accept_reject_method(f, max_point, N=N)
+Y_accepted = r[[1]]
+Y_rejected = r[[2]]
+    
+my_plot(Y_accepted, f, Y_rejected)
+```
+
+<br>
+
+**2. Simula una variable aleatoria $X \sim \beta(3, 5)$ donde la función de densidad viene dada por:**
+
+$$ f_x = \left\{ \begin{array}{ll}{105x^2 (1-x)^4} & {\text{si }}{x \in (0,1)} \\ {0} & {\text{en otro caso}} \end{array} \right. $$
+
+$$ max \left\{105x^2 (1-x)^4\right\} = \frac{560}{243} \quad \text{en} \quad x = \frac{1}{3} $$
+
+```{r}
+f = function (x) 105 * (x**2) * ((1-x)**4)
+max_point = 560/243
+N = 10**5
+
+r = simple_accept_reject_method(f, max_point, N=N)
+Y_accepted = r[[1]]
+Y_rejected = r[[2]]
+    
+my_plot(Y_accepted, f, Y_rejected)
+```
+
+<br>
+
+**3. Aplica el método de aceptación−rechazo general para simular una variable aleatoria $X \sim N(0, 1)$ a partir de una $Y \sim Cauchy(0, 1)$.**
+
+$$ f_X(x) = \frac{1}{\sqrt{2\pi}} e^{\left(\frac{-x^2}{2}\right)} $$
+
+$$ g_Y(x) = \frac{1}{\pi (1 + x^2)} $$
+
+para todo $x \in \mathbb{R}$. Veamos que existe $M \in (1, \infty)$ tal que $f_X(x) \leq M g_Y(x)$ para todo $x \in \mathbb{R}$. En efecto, la función
+
+$$ h(x) = \frac{\frac{1}{\sqrt{2\pi}} e^{\left(\frac{-x^2}{2}\right)}}{\frac{1}{\pi (1 + x^2)}} $$
+
+admite los puntos críticos $x_1 = 0, x_2 = 1, x_3 = -1$ y alcanza el máximo en $x_2$ y $x_3$ con $h(1) = h(-1) = \sqrt{\frac{2\pi}{e}}$. Por lo tanto, $M = \sqrt{\frac{2\pi}{e}}$.
+
+```{r}
+f = function (x) (1 / sqrt(2 * pi)) * (exp(1)**((-x**2) / 2))
+g = function (x) 1 / (pi * (1 + (x**2)))
+M = sqrt((2 * pi) / exp(1))
+N = 10**5
+
+r = general_accept_reject_method(f, g, M,
+                                 rcauchy,
+                                 xdomain=c(-3, 3),
+                                 N=N)
+Y_accepted = r[[1]]
+Y_rejected = r[[2]]
+    
+my_plot(Y_accepted, f, Y_rejected)
+```
+
+<br>
+
+**4. Simula una variable aleatoria $X \sim N(0, 1)$ mediante una variable logística $Y \sim L(0, 1)$ como envolvente.**
+
+$$ f_X(x) = \frac{1}{\sqrt{2\pi}} e^{\left(\frac{-x^2}{2}\right)} $$
+
+$$ g_Y(x) = \frac{1}{(e^{-x} + 1)^2} e^{-x} $$
+
+para todo $x \in \mathbb{R}$. Veamos que existe $M \in (1, \infty)$ tal que $f_X(x) \leq M g_Y(x)$ para todo $x \in \mathbb{R}$. En efecto, la función
+
+$$ h(x) = \frac{\frac{1}{\sqrt{2\pi}} e^{\left(\frac{-x^2}{2}\right)}}{\frac{1}{(e^{-x} + 1)^2} e^{-x}} $$
+
+alcanza el máximo en $h(0) = 2 \sqrt{\frac{2}{\pi}}$. Por lo tanto, $M = 2 \sqrt{\frac{2}{\pi}}$.
+
+```{r}
+f = function (x) (1 / sqrt(2 * pi)) * (exp(1)**((-x**2) / 2))
+g = function (x) (1 / ((exp(1)**(-x)) + 1)**2) * (exp(1)**(-x))
+M = 2 * sqrt(2 / pi)
+N = 10**5
+
+r = general_accept_reject_method(f, g, M,
+                                 rlogis,
+                                 N=N)
+Y_accepted = r[[1]]
+Y_rejected = r[[2]]
+    
+my_plot(Y_accepted, f, Y_rejected)
+```
+
+<br>
+
+**5. Simula una variable aleatoria $ X \sim \beta(2.7, 6.3) $ mediante otra variable beta $ Y \sim \beta(2, 6) $ como envolvente.**
+
+La función de densidad de una variable aleatoria $X \sim \beta(\alpha, \beta)$ viene dada por
+
+$$ f_X(\alpha, \beta) = \frac{x^{\alpha - 1} (1-x)^{\beta - 1}}{B(\alpha, \beta)} = \frac{x^{\alpha - 1} (1-x)^{\beta - 1}}{\frac{\Gamma(\alpha)\Gamma(\beta)}{\Gamma(\alpha + \beta)}} $$
+
+donde
+
+$$ \Gamma(n) = (n - 1)! $$
+
+
+Para las variables aleatorias $X \sim \beta(2.7, 6.3) \ $ y $ \ Y \sim \beta(2, 6)$, sus funciones de densidad vienen dadas por
+
+$$ f_X(x) = \left\{ \begin{array}{ll}{129.339 \ x^{1.7} (1-x)^{5.3}} & {\text{si }}{x \in (0,1)} \\ {0} & {\text{en otro caso}} \end{array} \right. $$
+
+$$$$
+
+$$ g_Y(x) = \left\{ \begin{array}{ll}{42 \ x (1-x)^5} & {\text{si }}{x \in (0,1)} \\ {0} & {\text{en otro caso}} \end{array} \right. $$
+
+para todo $x \in \mathbb{R}$. Veamos que existe $M \in (1, \infty)$ tal que $f_X(x) \leq M g_Y(x)$ para todo $x \in \mathbb{R}$. En efecto, la función
+
+$$ h(x) = \frac{129.339 \ x^{1.7} (1-x)^{5.3}}{42 \ x (1-x)^5} $$
+
+alcanza el máximo en $h(0.7) = 1.6718$. Por lo tanto, $M = 1.6718$.
+
+```{r}
+f = function (x) 129.339 * (x**1.7) * ((1-x)**5.3)
+g = function (x, shape1, shape2) 42 * x * ((1-x)**5)
+M = 1.6718
+N = 10**5
+
+r = general_accept_reject_method(f, g, M,
+                                 rbeta,
+                                 N=N,
+                                 shape1=2, shape2=6)
+Y_accepted = r[[1]]
+Y_rejected = r[[2]]
+    
+my_plot(Y_accepted, f, Y_rejected)
+```
+
+<br>
+
+**6. La función de densidad**
+
+$$ f(x) = e^{(-x^2 / 2)} \ \ (sin((6x)^2) + 3 \ cos(x^2) \ sin((4x)^2) + 1) $$
+
+**puede ser generada utilizando el algoritmo de aceptación - rechazo.**
+
+**a) Comprueba gráficamente que $f(x)$ está acotada por $Mg(x)$, donde $g(x)$ es la densidad normal estándar $g(x) = \frac{e^{(-x^2 / 2)}}{\sqrt{2 \pi}}$. Encuentra un aceptable, no necesariamente óptimo, valor de $M$.**
+
+```{r}
+f = function (x) (exp(1)**(-x**2 / 2) * (sin(6*x)**2 + 3 * cos(x)**2 * sin(4*x)**2 + 1)) / 5.89434
+g = function (x) (exp(1)**(-x**2 / 2) / sqrt(2 * pi)) # = st.norm.pdf
+M = 1.8561
+
+print(paste('¿Está f(x) acotada por Mg(x)? -->', is_envelope_function(f, g, M, xdomain=c(-4, 4))))
+
+plot_envelope_function(f, g, M, xdomain=c(-4, 4))
+```
+
+<br>
+
+```{r}
+N = 10**5
+
+r = general_accept_reject_method(f, g, M,
+                                 rnorm,
+                                 N=N)
+Y_accepted = r[[1]]
+Y_rejected = r[[2]]
+    
+my_plot(Y_accepted, f, Y_rejected)
+```
+
+
+
+
+

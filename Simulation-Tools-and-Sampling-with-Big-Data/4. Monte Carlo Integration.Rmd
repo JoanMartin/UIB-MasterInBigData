@@ -1,0 +1,489 @@
+---
+title: "Simulation Tools and Sampling with Big Data"
+subtitle: "Monte Carlo Integration"
+author: "Juan José Martín"
+output:
+  html_document:
+    number_sections: false
+    highlight: tango
+    toc: yes
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+---
+
+
+
+<style type="text/css">
+
+  body {
+    background-color: #f6f7fd; 
+  }
+  
+  a:link {
+    color: #0174DF;
+  }
+  
+  code.r {
+    font-size: 14px;
+  } 
+  
+  div pre {
+    background-color:#E0ECF8;
+  }
+  pre {
+    font-size: 14px 
+  }
+ 
+  p {
+    text-align: justify;
+  }
+ 
+    
+  h1, h2, h3, h4, h5, h6 {
+    color: #737aaa;
+  }
+
+  th {  
+    background-color:#737aaa;
+    color: #FAFAFA;
+    padding:5px;
+  }
+  
+  td {
+    font-size: 11.5pt;
+  } 
+  
+  tr:nth-child(even){
+    background: white;
+  }
+  
+  tr:nth-child(odd){ 
+    background-color: #EFF8FB;
+  }
+</style>
+
+***  
+
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=9, fig.height=7, fig.align="center", echo=TRUE, 
+                      warning=FALSE, message=FALSE, autodep = TRUE, cache=TRUE)
+library(ggplot2)
+```
+
+```{r include=FALSE}
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+  
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+  
+  numPlots = length(plots)
+  
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                     ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+  
+  if (numPlots==1) {
+    print(plots[[1]])
+    
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+    
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+      
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+
+my_plot = function(Y_accepted, f, Y_rejected){
+  Y_accepted = as.data.frame(r[1])
+  colnames(Y_accepted) <- c("x")
+  Y_rejected = as.data.frame(r[2])
+  colnames(Y_rejected) <- c("x")
+  
+  q1 = ggplot() + geom_density(aes(x=x, color='blue'), data=Y_accepted) + 
+    geom_density(aes(x=x, color='red'), data=Y_rejected) +
+    ggtitle('Simulated') +
+    theme(legend.position = 'right') +
+    scale_color_manual(labels = c('Accepted', 'Rejected'), values = c('blue', 'red')) +
+    theme(legend.title=element_blank(),
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank(),
+          plot.title = element_text(hjust = 0.5))
+  
+  x_original = seq(min(Y_accepted), max(Y_accepted), by=0.01)
+  y_original = f(x_original)
+  q2 = ggplot() + 
+  geom_line(aes(x_original, y_original), color='blue') + 
+  ggtitle('Original') +
+  theme(axis.title.x=element_blank(),
+        axis.title.y=element_blank(),
+        plot.title = element_text(hjust = 0.5))
+  
+  multiplot(q1, q2, cols=2)
+}
+```
+
+<br>
+
+## Método de Aceptación-Rechazo Simple
+
+```{r}
+simple_accept_reject_method = function(f, max_point, xdomain=c(0, 1), N=100000){
+  if (N < 1){
+    stop("N parameter must be greater than 1.")
+  }
+      
+  Y_accepted = c()
+  Y_rejected = c()
+  
+  for (i in 0:N){
+    x = runif(1, xdomain[1], xdomain[2])
+    fx = f(x)
+    u = runif(1, 0, max_point)
+  
+    if (u <= fx){
+        Y_accepted = c(Y_accepted, x)
+    } else {
+        Y_rejected = c(Y_rejected, x)
+    }
+  }
+  
+  r = list(Y_accepted, Y_rejected)
+  return (r)
+}
+```
+
+<br>
+
+## Método de Aceptación-Rechazo General
+
+```{r}
+is_envelope_function = function(f, g, M, xdomain=c(0, 1), ...){
+  if (xdomain[1] >= xdomain[2]){
+    stop("First value of the xdomain must be lower than the second value.")
+  }
+      
+  x = seq(xdomain[1], xdomain[2], by=0.01)
+  y_base = f(x)
+  y_envelope = g(x, ...)
+  
+  return (sum((y_envelope * M - y_base) < 0) == 0)
+}
+```
+
+<br>
+
+```{r}
+plot_envelope_function = function(f, g, M, xdomain=c(0, 1), ...){
+  if (xdomain[1] >= xdomain[2]){
+    stop("First value of the xdomain must be lower than the second value.")
+  }
+    
+  x = seq(xdomain[1], xdomain[2], by=0.01)
+  y_base = f(x)
+  y_envelope = g(x, ...) * M
+  
+  q1 = ggplot() + geom_line(aes(x=x, y=y_base, color='blue')) + 
+    geom_line(aes(x=x, y=y_envelope, color='red')) +
+    theme(legend.position = 'right') +
+    scale_color_manual(labels = c('Base function - f(x)', 'Envelope Function - g(x)'), values = c('blue', 'red')) +
+    theme(legend.title=element_blank(),
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank(),
+          plot.title = element_text(hjust = 0.5))
+  q1
+}
+```
+
+<br>
+
+```{r}
+general_accept_reject_method = function(f, g, M, distrib_func, xdomain=NULL, N=100000, ...){
+  if (N < 1){
+    stop("N parameter must be greater than 1.")
+  }
+      
+  Y_accepted = c()
+  Y_rejected = c()
+  
+  y = distrib_func(n=N, ...)
+  
+  if (!is.null(xdomain)){
+    if (xdomain[1] >= xdomain[2]){
+        stop("First value of the xdomain must be lower than the second value.")
+    }
+    y = y[(y > xdomain[1]) & (y < xdomain[2])]
+  }
+  
+  for (i in y){
+    fy = f(i)
+    gy = g(i, ...)
+    u = runif(1, 0, 1)
+    
+    if (u <= fy / (M * gy)){
+        Y_accepted = c(Y_accepted, i)
+    } else {
+        Y_rejected = c(Y_rejected, i)
+    }
+  }
+          
+  r = list(Y_accepted, Y_rejected)
+  return (r)
+}
+```
+
+<br>
+
+## Método *Hit and Miss*
+
+```{r}
+hit_and_miss_method = function(g, max_point, xdomain, N=100000){
+  if (N < 1){
+    stop("N parameter must be greater than 1.")
+  }
+            
+  r = simple_accept_reject_method(g, max_point, xdomain, N=N)
+  Y_accepted = r[[1]]
+  Y_rejected = r[[2]]
+      
+  n_accepted = length(Y_accepted)
+  p = n_accepted / N
+
+  result = max_point * (xdomain[2] - xdomain[1]) * p
+  error = (max_point * (xdomain[2] - xdomain[1]) * sqrt(p * (1 - p))) / sqrt(N)
+  
+  r = list(result, error)
+  return (r)
+}
+```
+
+<br>
+
+## Método de Muestreo Uniforme
+
+```{r}
+uniform_sampling_method = function(G, xdomain=c(0, 1), N=100000){
+  U = runif(N, xdomain[1], xdomain[2])
+  Y = G(U)
+  result = sum(Y) / N
+  
+  return (result)
+}
+```
+
+<br>
+
+## Ejercicios
+
+**1. Mediante el método *Hit and Miss* determina el valor de las integrales siguientes:**
+
+**a) $\int_{0}^{1} 20 x (1 - x)^3 \ dx$**
+
+```{r}
+g = function (x) 20 * x * (1 - x)**3
+a = 0
+b = 1
+max_point = 135/64
+N = 10**5
+
+r = hit_and_miss_method(g, max_point, xdomain=c(a, b), N=N)
+result = r[1]
+error = r[2]
+
+print(paste("Resultado de la integral -->", result))
+print(paste("Error estándar -->", error))
+```
+
+<br>
+
+**b) $\int_{-1}^{1} \frac{2}{\pi} \sqrt{1 - x^2} \ dx$**
+
+```{r}
+g = function (x) (2 / pi) * sqrt(1 - x**2)
+a = -1
+b = 1
+max_point = 2 / pi
+N = 10**5
+
+r = hit_and_miss_method(g, max_point, xdomain=c(a, b), N=N)
+result = r[1]
+error = r[2]
+
+print(paste("Resultado de la integral -->", result))
+print(paste("Error estándar -->", error))
+```
+
+<br>
+
+**c) $\int_{0}^{1} cos(\frac{\pi x}{2}) \ dx$**
+
+```{r}
+g = function (x) cos((pi * x) / 2)
+a = 0
+b = 1
+max_point = 1
+N = 10**5
+
+r = hit_and_miss_method(g, max_point, xdomain=c(a, b), N=N)
+result = r[1]
+error = r[2]
+
+print(paste("Resultado de la integral -->", result))
+print(paste("Error estándar -->", error))
+```
+
+<br>
+
+**2. Integra mediante el método de integración de Monte Carlo simulando la variable aleatoria *X* con el método de la distribución inversa:**
+
+**a) $\int_{0}^{\infty} \sqrt{x} \ cos(x) \ e^{-x} \ dx$**
+
+```{r}
+N = 10**5
+
+U = runif(N, 0, 1)
+X = -log(U)
+g = function (x) sqrt(x) * cos(x)
+Y = g(X)
+
+result = sum(Y) / N
+print(paste("Resultado de la integral -->", result))
+```
+
+<br>
+
+**b) $\int_{0}^{\infty} (x^2 + 3) \ sin(x) \ e^{-x} \ dx$**
+
+```{r}
+N = 10**5
+
+U = runif(N, 0, 1)
+X = -log(U)
+g = function (x) (x**2 + 3) * sin(x)
+Y = g(X)
+
+result = sum(Y) / N
+print(paste("Resultado de la integral -->", result))
+```
+
+<br>
+
+**3. Integra mediante el método de integración de Monte Carlo de aceptación y rechazo simple:**
+
+$$ \int_{0}^{1} \sqrt{1 - x^2} \ dx $$
+
+**donde $ G(x) = \frac{\sqrt{1 - x^2}}{\frac{3}{2} (1 - x^2)} $ y $ f(x) = \frac{3}{2}(1 - x^2) $. Compara los resultados obtenidos con el método *Hit and Miss* y Muestreo Uniforme.**
+
+Calculamos la integral mediante el método de aceptación y rechazo simple:
+
+```{r}
+f = function (x) (3/2) * (1 - x**2)
+G = function (x) (sqrt(1 - x**2)) / ((3/2) * (1 - x**2))
+M = 3/2
+N = 10**5
+
+r = simple_accept_reject_method(f, M, N=N)
+Y_accepted = r[1]
+
+n_accepted = length(Y_accepted[[1]])
+Y = lapply(Y_accepted, G)
+result = sum(Y[[1]]) / n_accepted
+
+print(paste("Resultado de la integral -->", result))
+```
+
+<br>
+
+Calculamos la integral mediante el método Hit and Miss:
+
+```{r}
+g = function (x) sqrt(1 - x**2)
+a = 0
+b = 1
+max_point = 1
+N = 10**5
+
+r = hit_and_miss_method(g, max_point, xdomain=c(a, b), N=N)
+result = r[1]
+error = r[2]
+
+print(paste("Resultado de la integral -->", result))
+print(paste("Error estándar -->", error))
+```
+
+<br>
+
+Calculamos la integral mediante el método de Muestreo Simple:
+
+```{r}
+g = function (x) sqrt(1 - x**2)
+a = 0
+b = 1
+N = 10**5
+
+result = uniform_sampling_method(g, xdomain=c(a, b), N=N)
+
+print(paste("Resultado de la integral -->", result))
+```
+
+<br>
+
+**4. Integra mediante muestreo uniforme:**
+
+**a) $\int_{-1}^{1} \frac{2}{\pi} \sqrt{1 - x^2} \ dx$**
+
+```{r}
+g = function (x) 2 * (2 / pi) * sqrt(1 - x**2)
+a = -1
+b = 1
+N = 10**5
+
+result = uniform_sampling_method(g, xdomain=c(a, b), N=N)
+
+print(paste("Resultado de la integral -->", result))
+```
+
+<br>
+
+**b) $\int_{0}^{1} cos(\frac{\pi x}{2}) \ dx$**
+
+```{r}
+g = function (x) cos((pi * x) / 2)
+a = 0
+b = 1
+N = 10**7
+
+result = uniform_sampling_method(g, xdomain=c(a, b), N=N)
+
+print(paste("Resultado de la integral -->", result))
+```
+
+<br>
+
+
+
+
+
+
+
+
+
+
+
+
+

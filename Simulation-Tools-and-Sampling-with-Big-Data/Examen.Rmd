@@ -1,0 +1,441 @@
+---
+title: "Simulation Tools and Sampling with Big Data"
+subtitle: "Examen Simulación"
+author: "Juan José Martín Miralles"
+output:
+  html_document:
+    number_sections: false
+    highlight: tango
+    toc: yes
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+---
+
+
+
+<style type="text/css">
+
+  body {
+    background-color: #f6f7fd; 
+  }
+  
+  a:link {
+    color: #0174DF;
+  }
+  
+  code.r {
+    font-size: 14px;
+  } 
+  
+  div pre {
+    background-color:#E0ECF8;
+  }
+  pre {
+    font-size: 14px 
+  }
+ 
+  p {
+    text-align: justify;
+  }
+ 
+    
+  h1, h2, h3, h4, h5, h6 {
+    color: #737aaa;
+  }
+
+  th {  
+    background-color:#737aaa;
+    color: #FAFAFA;
+    padding:5px;
+  }
+  
+  td {
+    font-size: 11.5pt;
+  } 
+  
+  tr:nth-child(even){
+    background: white;
+  }
+  
+  tr:nth-child(odd){ 
+    background-color: #EFF8FB;
+  }
+</style>
+
+***  
+
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=9, fig.height=7, fig.align="center", echo=TRUE, 
+                      warning=FALSE, message=FALSE, autodep = TRUE, cache=TRUE)
+library(ggplot2)
+```
+
+```{r include=FALSE}
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+  
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+  
+  numPlots = length(plots)
+  
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                     ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+  
+  if (numPlots==1) {
+    print(plots[[1]])
+    
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+    
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+      
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+
+my_plot = function(Y_accepted, f){
+  Y_accepted = as.data.frame(r[1])
+  colnames(Y_accepted) <- c("x")
+  Y_rejected = as.data.frame(r[2])
+  colnames(Y_rejected) <- c("x")
+  
+  q1 = ggplot() + geom_density(aes(x=x), data=Y_accepted) + 
+    theme(legend.title=element_blank(),
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank(),
+          plot.title = element_text(hjust = 0.5))
+  
+  x_original = seq(min(Y_accepted), max(Y_accepted), by=0.01)
+  y_original = f(x_original)
+  q2 = ggplot() + 
+  geom_line(aes(x_original, y_original), color='blue') + 
+  ggtitle('Original') +
+  theme(axis.title.x=element_blank(),
+        axis.title.y=element_blank(),
+        plot.title = element_text(hjust = 0.5))
+  
+  multiplot(q1, q2, cols=2)
+}
+```
+
+<br>
+
+## Método de Aceptación-Rechazo Simple
+
+```{r}
+simple_accept_reject_method = function(f, max_point, xdomain=c(0, 1), N=100000){
+  if (N < 1){
+    stop("N parameter must be greater than 1.")
+  }
+      
+  Y_accepted = c()
+  Y_rejected = c()
+  
+  for (i in 0:N){
+    x = runif(1, xdomain[1], xdomain[2])
+    fx = f(x)
+    u = runif(1, 0, max_point)
+  
+    if (u <= fx){
+        Y_accepted = c(Y_accepted, x)
+    } else {
+        Y_rejected = c(Y_rejected, x)
+    }
+  }
+  
+  r = list(Y_accepted, Y_rejected)
+  return (r)
+}
+```
+
+<br>
+
+## Método de Aceptación-Rechazo General
+
+```{r}
+is_envelope_function = function(f, g, M, xdomain=c(0, 1), ...){
+  if (xdomain[1] >= xdomain[2]){
+    stop("First value of the xdomain must be lower than the second value.")
+  }
+      
+  x = seq(xdomain[1], xdomain[2], by=0.01)
+  y_base = f(x)
+  y_envelope = g(x, ...)
+  
+  return (sum((y_envelope * M - y_base) < 0) == 0)
+}
+```
+
+<br>
+
+```{r}
+plot_envelope_function = function(f, g, M, xdomain=c(0, 1), ...){
+  if (xdomain[1] >= xdomain[2]){
+    stop("First value of the xdomain must be lower than the second value.")
+  }
+    
+  x = seq(xdomain[1], xdomain[2], by=0.01)
+  y_base = f(x)
+  y_envelope = g(x, ...) * M
+  
+  q1 = ggplot() + geom_line(aes(x=x, y=y_base, color='blue')) + 
+    geom_line(aes(x=x, y=y_envelope, color='red')) +
+    theme(legend.position = 'right') +
+    scale_color_manual(labels = c('Base function - f(x)', 'Envelope Function - g(x)'), 
+                       values = c('blue', 'red')) +
+    theme(legend.title=element_blank(),
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank(),
+          plot.title = element_text(hjust = 0.5))
+  q1
+}
+```
+
+<br>
+
+```{r}
+general_accept_reject_method = function(f, g, M, distrib_func, xdomain=NULL, N=100000, ...){
+  if (N < 1){
+    stop("N parameter must be greater than 1.")
+  }
+      
+  Y_accepted = c()
+  Y_rejected = c()
+  
+  y = distrib_func(n=N, ...)
+  
+  if (!is.null(xdomain)){
+    if (xdomain[1] >= xdomain[2]){
+        stop("First value of the xdomain must be lower than the second value.")
+    }
+    y = y[(y > xdomain[1]) & (y < xdomain[2])]
+  }
+  
+  for (i in y){
+    fy = f(i)
+    gy = g(i, ...)
+    u = runif(1, 0, 1)
+    
+    if (u <= fy / (M * gy)){
+        Y_accepted = c(Y_accepted, i)
+    } else {
+        Y_rejected = c(Y_rejected, i)
+    }
+  }
+          
+  r = list(Y_accepted, Y_rejected)
+  return (r)
+}
+```
+
+<br>
+
+## Método *Hit and Miss*
+
+```{r}
+hit_and_miss_method = function(g, max_point, xdomain, N=100000){
+  if (N < 1){
+    stop("N parameter must be greater than 1.")
+  }
+            
+  r = simple_accept_reject_method(g, max_point, xdomain, N=N)
+  Y_accepted = r[[1]]
+  Y_rejected = r[[2]]
+      
+  n_accepted = length(Y_accepted)
+  p = n_accepted / N
+
+  result = max_point * (xdomain[2] - xdomain[1]) * p
+  error = (max_point * (xdomain[2] - xdomain[1]) * sqrt(p * (1 - p))) / sqrt(N)
+  
+  r = list(result, error)
+  return (r)
+}
+```
+
+<br>
+
+## Método de Muestreo Uniforme
+
+```{r}
+uniform_sampling_method = function(G, xdomain=c(0, 1), N=100000){
+  U = runif(N, xdomain[1], xdomain[2])
+  Y = G(U)
+  result = sum(Y) / N
+  
+  return (result)
+}
+```
+
+<br>
+
+## Ejercicios
+
+### 1)
+
+$$\int_{0}^{2} (x^2 + cos(x)) \ dx$$
+
+```{r}
+g = function (x) ((x**2) + cos(x))
+a = 0
+b = 2
+max_point = (4 + cos(2))
+N = 10**5
+
+r = hit_and_miss_method(g, max_point, xdomain=c(a, b), N=N)
+result = r[1]
+error = r[2]
+
+print(paste("Resultado simulado de la integral -->", result))
+print(paste("Error estándar -->", error))
+print(paste("Resultado real de la integral -->", integrate(g, a, b)[1]))
+```
+
+<br>
+
+### 2)
+
+$$ \int_{0}^{1} 2 \pi \sqrt{2 - 2x^4} \ dx $$
+
+**a)**
+
+Dado que la integral está acotada entre 0 y 1, usamos un función de densidad uniforme como envolvente.
+
+```{r}
+f = function(x) (5 / 8) * (2 - (2 * x**4))
+a = 0
+b = 1
+max_point = 1.251
+
+print(paste('¿Está f(x) acotada por Mg(x)? -->', is_envelope_function(f, dunif, 
+                                                                      max_point, 
+                                                                      xdomain=c(a, b))))
+plot_envelope_function(f, dunif, max_point, xdomain=c(a, b))
+```
+
+<br>
+
+```{r}
+max_point = 1.25
+N = (10**5) * 2
+
+r = general_accept_reject_method(f, dunif, max_point, 
+                                 runif, xdomain=c(a, b), N=N)
+Y_accepted = r[[1]]
+Y_rejected = r[[2]]
+    
+my_plot(Y_accepted, f)
+```
+
+<br>
+
+```{r}
+g = function (x) 2 * pi * sqrt(2 - 2 * x**4) # Función original de la integral
+
+G = function(x) (2 * pi * sqrt(2 - 2 * x**4)) / ((5/8) * (2 - 2 * x**4))
+
+n_accepted = length(Y_accepted)
+Y = G(Y_accepted)
+result_a = sum(Y / n_accepted)
+variance_a = sqrt(sum((Y - sum(Y) / N)**2) / (N - 1))
+
+print(paste("Resultado de la integral -->", result_a))
+print(paste("Varianza --> ", variance_a))
+print(paste("Resultado real de la integral -->", integrate(g, a, b)[1]))
+```
+
+<br>
+
+**b)**
+
+```{r}
+g = function (x) 2 * pi * sqrt(2 - 2 * x**4)
+a = 0
+b = 1
+max_point = 2 * sqrt(2) * pi
+N = 10**5
+
+r = hit_and_miss_method(g, max_point, xdomain=c(a, b), N=N)
+result = r[1]
+error = r[2]
+
+print(paste("Resultado simulado de la integral -->", result))
+print(paste("Error estándar -->", error))
+print(paste("Resultado real de la integral -->", integrate(g, a, b)[1]))
+```
+
+<br>
+
+**c)**
+
+Dado que la integral está acotada entre 0 y 1, usamos un función de densidad uniforme como envolvente.
+
+```{r}
+f = function(x) (pi / 2) * (1 - x**2)
+a = 0
+b = 1
+max_point = pi / 2
+
+print(paste('¿Está f(x) acotada por Mg(x)? -->', is_envelope_function(f, dunif, max_point, 
+                                                                      xdomain=c(a, b))))
+plot_envelope_function(f, dunif, max_point, xdomain=c(a, b))
+```
+
+<br>
+
+```{r}
+max_point = pi / 2
+N = (10**5) * 2
+
+r = general_accept_reject_method(f, dunif, max_point, runif, xdomain=c(a, b), N=N)
+Y_accepted = r[[1]]
+Y_rejected = r[[2]]
+    
+my_plot(Y_accepted, f)
+```
+
+<br>
+
+```{r}
+g = function (x) 2 * pi * sqrt(2 - 2 * x**4) # Función original de la integral
+
+G = function(x) (4 * sqrt(2 - 2 * x**4)) / (1 - x**2)
+
+n_accepted = length(Y_accepted)
+Y = G(Y_accepted)
+result_c = sum(Y / n_accepted)
+variance_c = sqrt(sum((Y - sum(Y) / N)**2) / (N - 1))
+
+print(paste("Resultado de la integral -->", result_c))
+print(paste("Varianza --> ", variance_c))
+print(paste("Resultado real de la integral -->", integrate(g, a, b)[1]))
+```
+
+<br>
+
+Mediante el **Método de Integración Monte Carlo por Importancia**, se puede comprobar qué función de densidad $f(x)$ proporcionará mejores resultados. Esto se realiza observando la varianza de cada una de las soluciones expuestas. Por un lado, mediante la función de densidad $f(x)$ del apartado *a)* hemos obtenido una varianza de `r variance_a`, mientras que con la del apartado *c)* hemos obtenido una varianza de `r variance_c`. Por este motivo, la descomposición que es mejor para el cálculo de la integral es la del apartado *a)*.
+
+<br>
+<br>
+
+
+
+
+
+
