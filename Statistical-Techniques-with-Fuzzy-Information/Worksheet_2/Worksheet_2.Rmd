@@ -1,0 +1,581 @@
+---
+title: "Técnicas Estadísticas con Información Imprecisa"
+subtitle: "Práctica 2"
+author: "Víctor Marín Juarros y Juan José Martín Miralles"
+output:
+  html_document:
+    number_sections: false
+    highlight: tango
+    toc: no
+    df_print: paged
+editor_options: 
+  chunk_output_type: inline
+---
+
+
+
+<style type="text/css">
+
+  body {
+    background-color: #f6f7fd; 
+  }
+  
+  a:link {
+    color: #0174DF;
+  }
+  
+  code.r {
+    font-size: 14px;
+  } 
+  
+  div pre {
+    background-color:#E0ECF8;
+  }
+  pre {
+    font-size: 14px 
+  }
+ 
+  p {
+    text-align: justify;
+  }
+ 
+    
+  h1, h2, h3, h4, h5, h6 {
+    color: #737aaa;
+  }
+
+  th {  
+    background-color:#737aaa;
+    color: #FAFAFA;
+    padding:5px;
+  }
+  
+  td {
+    font-size: 11.5pt;
+  } 
+  
+  tr:nth-child(even){
+    background: white;
+  }
+  
+  tr:nth-child(odd){ 
+    background-color: #EFF8FB;
+  }
+</style>
+
+***  
+
+
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=10, fig.height=7, fig.align="center", echo=TRUE, warning=FALSE, message=FALSE)
+```
+
+**El fichero *unemployment_sex.txt*, contiene información sobre el porcentaje de población desempleada con respecto a la población activa para cada sexo en los 28 países de la Unión Europea. Los datos corresponden al año 2017. Los datos estan separados por espacios en blanco y la primera fila contiene los nombres de las variables. Las variables de las que se dispone son las siguientes:**
+
+* ***Country*: Nombre del país de la Unión Europea.**
+* ***Unemployment_men*: Porcentaje de hombres desempleados.**
+* ***Unemployment_women*: Porcentaje de mujeres desempleadas.**
+* ***Employed*: Población empleada del país.**
+* ***DQI* (*Data Quality Index*): la calidad de los datos recogidos en el país.**
+
+<br>
+
+```{r}
+library(FuzzyNumbers)
+```
+
+<br>
+
+Ejercicio 1
+-------------------------------------
+**Descargad el fichero y definid un dataframe. Comprobad con *str* y *head* que se ha descargado correctamente y comprobad los nombres de las variables.**
+
+```{r}
+df = read.csv("unemployment_sex.txt", sep = " ")
+head(df)
+str(df)
+```
+
+<br>
+
+Ejercicio 2
+-------------------------------------
+**Cargad el paquete *FuzzyNumbers*, fuzzificad los datos del porcentaje de hombres y mujeres desempleados en base al Data Quality Index. Cread un único gráfico para cada sexo con los porcentajes de desempleo de todos los países expresados como números borrosos. Analizad cada gráfico por separado y ambos en conjunto.**
+
+Primero, convertimos la variable **DQI** a tanto por uno y calculamos su inversa. De esta forma obtenemos el tanto por uno de la incerteza que hay en los datos.
+```{r}
+df$DQI_percent_invert = 1 - (df$DQI / 100)
+```
+
+<br>
+
+Hemos fuzzificado los datos para los hombres y para las mujeres de la misma forma. Para el core, situamos el porcentaje de hombres y mujeres desempleadas y calculamos hacia la derecha y hacia la izquiera la mitad del porcentaje de hombres y mujeres desempleadas multiplicado por la incerteza que tienen los datos. Para el soporte, se hace lo mismo que en el core, pero sin dividir entre dos, es decir, la incerteza total que tienen los datos está hacia ambos lados del número borroso.
+
+```{r}
+aux1_men = df$Unemployment_men - (df$Unemployment_men * df$DQI_percent_invert)
+aux2_men = df$Unemployment_men - ((df$Unemployment_men * df$DQI_percent_invert) / 2)
+aux3_men = df$Unemployment_men + ((df$Unemployment_men * df$DQI_percent_invert) / 2)
+aux4_men = df$Unemployment_men + (df$Unemployment_men * df$DQI_percent_invert)
+
+colors = rainbow(dim(df)[1])
+fuzzy_men_unemp = c()
+for(i in 1:nrow(df)) {
+  fuzzy = PiecewiseLinearFuzzyNumber(aux1_men[i], aux2_men[i], aux3_men[i], aux4_men[i])
+  fuzzy_men_unemp = c(fuzzy_men_unemp, fuzzy)
+  
+  add = TRUE
+  if (i == 1) {
+    add = FALSE
+  }
+  
+  plot(fuzzy, add = add, col = colors[i], xlim = c(0, 30))
+}
+```
+
+<br>
+
+```{r}
+aux1_women = df$Unemployment_women - (df$Unemployment_women * df$DQI_percent_invert)
+aux2_women = df$Unemployment_women - ((df$Unemployment_women * df$DQI_percent_invert) / 2)
+aux3_women = df$Unemployment_women + ((df$Unemployment_women * df$DQI_percent_invert) / 2)
+aux4_women = df$Unemployment_women + (df$Unemployment_women * df$DQI_percent_invert)
+
+colors = rainbow(dim(df)[1])
+fuzzy_women_unemp = c()
+for(i in 1:nrow(df)) {
+  fuzzy = PiecewiseLinearFuzzyNumber(aux1_women[i], aux2_women[i], aux3_women[i], aux4_women[i])
+  fuzzy_women_unemp = c(fuzzy_women_unemp, fuzzy)
+  
+  add = TRUE
+  if (i == 1) {
+    add = FALSE
+  }
+  
+  plot(fuzzy, add = add, col = colors[i], xlim = c(0, 40))
+}
+```
+
+<br>
+
+Podemos observar en ambos gráficos que los países con core mayor son los que tienen un mayor porcentaje de paro, mientras que los que tienen un core menor, tienen menor cantidad de paro. Esto podría deberse a que en países con poco paro, podría haber un mayor control o no se mueve tanto dinero en negro como podría pasar en países con más incerteza en los datos. Además, la mayoría de países tienen entre un 5% y un 10% de paro, tanto por parte de mujeres como de hombres, exceptuando dos países que sobresalen de la media y que, como ya hemos comentado, son los que tienen mayor incertidumbre en sus datos.
+
+<br>
+
+
+Ejercicio 3
+-------------------------------------
+**Calculad el porcentaje de desempleo borroso en cada sexo en la Unión Europea ponderando por la población de cada país. *Indicación para calcular el peso de cada país*: calculad la población empleada total de la Unión Europea, dividid la población empleada de cada país por el total y desfuzzificad el resultado utilizando la función *expectedValue* del paquete *FuzzyNumbers*. Como la suma de estos pesos puede no dar 1, dividid cada peso por la suma. Tendréis que suponer que el 50% de la población de cada país son mujeres. Comparad el resultado con el valor crisp.**
+
+La población total de cada país se calcula de la siguiente manera:
+
+$$ \frac{(100 - \text{% Unemp. Women})}{100} \frac{\text{Population}}{2} +  \frac{(100 - \text{% Unemp. Men})}{100} \frac{\text{Population}}{2} = \text{Employ. Population} $$
+
+<br>
+
+$$ \text{Population} =  \frac{200 * \text{Employ. Population}}{200 - \text{% Unemp. Women} -  \text{% Unemp. Men}} $$ 
+
+<br>
+
+```{r}
+df$Population = (200 * df$Employed) / (200 - df$Unemployment_men - df$Unemployment_women)
+```
+
+<br>
+
+Fuzzyficamos la población con los mismos parámetros que en el anterior ejercicio.
+```{r}
+aux1_population = df$Population - (df$Population * df$DQI_percent)
+aux2_population = df$Population - ((df$Population * df$DQI_percent) / 2)
+aux3_population = df$Population + ((df$Population * df$DQI_percent) / 2)
+aux4_population = df$Population + (df$Population * df$DQI_percent)
+
+colors = rainbow(dim(df)[1])
+
+fuzzy_population = c()
+for(i in 1:nrow(df)) {
+  fuzzy = PiecewiseLinearFuzzyNumber(aux1_population[i], aux2_population[i], aux3_population[i], aux4_population[i])
+  fuzzy_population = c(fuzzy_population, fuzzy)
+}
+```
+
+<br>
+
+Calculamos el total de población
+```{r}
+fuzzy_total_population = 0
+
+for (i in 1:length(fuzzy_population)) {
+  fuzzy_total_population = fuzzy_total_population + fuzzy_population[[i]]
+}
+```
+
+<br>
+
+Calculamos el peso de cada país según la población
+```{r}
+fuzzy_population_weight = c()
+
+for (i in 1:length(fuzzy_population)) {
+  fuzzy_population_weight = c(fuzzy_population_weight, fuzzy_population[[i]] / fuzzy_total_population)
+}
+```
+
+<br>
+
+Desfuzzificamos el resultado.
+```{r}
+crisp_population_weight = c()
+
+for (i in 1:length(fuzzy_population_weight)) {
+  crisp_population_weight = c(crisp_population_weight, expectedValue(fuzzy_population_weight[[i]]))
+}
+
+# Provocamos que el valor de los pesos dé 1
+df$crisp_population_weight = crisp_population_weight / sum(crisp_population_weight)
+df[, c('Country', 'crisp_population_weight')]
+```
+
+<br>
+
+Ahora ya tenemos la ponderación de población que tiene cada país. A continuación, extraemos el número de hombres y mujeres en situación de desempleo de cada país.
+
+```{r}
+df$num_unem_men = df$Population * (df$Unemployment_men / 100) * 0.5
+df$num_unem_women = df$Population * (df$Unemployment_women / 100) * 0.5
+df[, c('Country', 'crisp_population_weight', 'num_unem_men', 'num_unem_women')]
+```
+
+<br>
+
+Calculamos el número de desempleados de cada sexo según la ponderación anterior calculada y fuzzyficamos los valores:
+
+```{r}
+df$unem_men_weight = sum(df$num_unem_men) * df$crisp_population_weight
+df$unem_women_weight = sum(df$num_unem_women) * df$crisp_population_weight
+
+aux1_men = df$unem_men_weight - (df$unem_men_weight * df$DQI_percent_invert)
+aux2_men = df$unem_men_weight - ((df$unem_men_weight * df$DQI_percent_invert) / 2)
+aux3_men = df$unem_men_weight + ((df$unem_men_weight * df$DQI_percent_invert) / 2)
+aux4_men = df$unem_men_weight + (df$unem_men_weight * df$DQI_percent_invert)
+
+aux1_women = df$unem_women_weight - (df$unem_women_weight * df$DQI_percent_invert)
+aux2_women = df$unem_women_weight - ((df$unem_women_weight * df$DQI_percent_invert) / 2)
+aux3_women = df$unem_women_weight + ((df$unem_women_weight * df$DQI_percent_invert) / 2)
+aux4_women = df$unem_women_weight + (df$unem_women_weight * df$DQI_percent_invert)
+
+fuzzy_men_unemp_num = c()
+fuzzy_women_unemp_num = c()
+for(i in 1:nrow(df)) {
+  fuzzy = PiecewiseLinearFuzzyNumber(aux1_men[i], aux2_men[i], aux3_men[i], aux4_men[i])
+  fuzzy_men_unemp_num = c(fuzzy_men_unemp_num, fuzzy)
+  
+  fuzzy = PiecewiseLinearFuzzyNumber(aux1_women[i], aux2_women[i], aux3_women[i], aux4_women[i])
+  fuzzy_women_unemp_num = c(fuzzy_women_unemp_num, fuzzy)
+}
+```
+
+<br>
+
+Por último, desfuzzificamos los valores por cada sexo y lo mostramos junto a su número borroso.
+
+```{r}
+crisp_unem_men_weight = c()
+
+colors = rainbow(dim(df)[1])
+for (i in 1:nrow(df)) {
+  crisp_unem_men_weight = c(crisp_unem_men_weight, expectedValue(fuzzy_men_unemp_num[[i]]))
+  
+  add = TRUE
+  if (i == 1) {
+    add = FALSE
+  }
+  
+  plot(fuzzy_men_unemp_num[[i]], add = add, col = colors[i], xlim = c(0, 2000))
+  points(crisp_unem_men_weight[i],1, col = colors[i], pch = 8)
+}
+```
+
+<br>
+
+```{r}
+crisp_unem_women_weight = c()
+
+colors = rainbow(dim(df)[1])
+for (i in 1:nrow(df)) {
+  crisp_unem_women_weight = c(crisp_unem_women_weight, expectedValue(fuzzy_women_unemp_num[[i]]))
+  
+  add = TRUE
+  if (i == 1) {
+    add = FALSE
+  }
+  
+  plot(fuzzy_women_unemp_num[[i]], add = add, col = colors[i], xlim = c(0, 2000))
+  points(crisp_unem_women_weight[i],1, col = colors[i], pch = 8)
+}
+```
+
+<br>
+
+Ejercicio 4
+-------------------------------------
+**Calculad la mediana borrosa en cada sexo del porcentaje de desempleo en los países de la Unión Europea. Para cada sexo, ¿qué país se encuentra a una menor distancia (utilizando la función *distance* del paquete *FuzzyNumbers*) de esta mediana? Operando con valores crisp, para cada sexo, ¿cuál sería este país?**
+
+Implementamos una función que posibilite el cálculo de los cuantiles. El parámetro **fuzzy_number_list** será una lista de los números borrosos de nuestro conjunto de datos. El parámetro **deltas** será una lista de todos los deltas que se quieran usar para calcular el cuantil. Y, por último, el parámetro **p** será el cuantil que queramos calcular. 
+
+```{r}
+fuzzy_quantile = function(fuzzy_number_list, deltas, p) {
+  # Calculamos los alpha-cuts de todos los números borrosos
+  alphacut_list = c()
+  for(d in 1:length(deltas)) {
+    alphacut = c()
+    for(i in 1:length(fuzzy_number_list)) {
+      alphacut = c(alphacut, alphacut(fuzzy_number_list[[i]], deltas[d]))
+    }
+    alphacut_list[[d]] = sort(alphacut)
+  }
+  
+  freq_dist_L = matrix(rep(0, len = length(deltas) * length(fuzzy_number_list) * 2), 
+                       nrow = length(deltas))
+  freq_dist_U = matrix(rep(0, len = length(deltas) * length(fuzzy_number_list) * 2), 
+                       nrow = length(deltas))
+  
+  # Iterate over alpha-cuts
+  for (i in 1:(length(fuzzy_number_list) * 2)) { 
+    # Iterate over the fuzzy numbers
+    for (fuzzy_num in 1:length(fuzzy_number_list)) { 
+      alphacut = alphacut(fuzzy_number_list[[fuzzy_num]], deltas)
+      
+      # Iterate over deltas
+      for (d in 1:length(deltas)) { 
+        # Intersec
+        if(alphacut[d, 'L'] <= alphacut_list[[d]][i]) { 
+          freq_dist_U[d, i] = freq_dist_U[d, i] + 1
+        }
+        
+        # Subset
+        if(alphacut[d, 'U'] <= alphacut_list[[d]][i]) { 
+          freq_dist_L[d, i] = freq_dist_L[d, i] + 1
+        }
+      }
+    }
+  }
+  
+  freq_dist_L = freq_dist_L / length(fuzzy_number_list)
+  freq_dist_U = freq_dist_U / length(fuzzy_number_list)
+  
+  m = matrix(rep(0, len = 2 * length(deltas)), nrow = length(deltas))
+  fuzzy_quantile = data.frame(m, row.names = deltas)
+  colnames(fuzzy_quantile) = c('L', 'U')
+  
+  # Upper
+  for(r in 1:nrow(freq_dist_L)) {
+    for(c in 1:ncol(freq_dist_L)) {
+      if(freq_dist_L[r, c] >= p) {
+        fuzzy_quantile[r, 'U'] = alphacut_list[[r]][c]
+        break
+      }
+    }
+  }
+  
+  # Lower
+  for(r in 1:nrow(freq_dist_U)) {
+    for(c in 1:ncol(freq_dist_U)) {
+      if(freq_dist_U[r, c] >= p) {
+        fuzzy_quantile[r, 'L'] = alphacut_list[[r]][c]
+        break
+      }
+    }
+  }
+  
+  return(fuzzy_quantile)
+}
+```
+
+<br>
+
+Mediante esta función, ya podemos calcular la mediana borrosa de cada sexo del porcentaje de desempleo, siendo $p = 0.5$ y para los deltas $0, 0.25, 0.5, 0.75, 1$.
+```{r}
+deltas = c(0, 0.25, 0.5, 0.75, 1)
+p = 0.5
+
+fuzzy_quantile_men = fuzzy_quantile(fuzzy_men_unemp, deltas, p)
+fuzzy_quantile_men
+
+fuzzy_quantile_women = fuzzy_quantile(fuzzy_women_unemp, deltas, p)
+fuzzy_quantile_women
+```
+
+<br>
+
+Los valores anteriores resultantes se pueden visualizar de la siguiente forma para el sexo masculino:
+
+```{r}
+fuzzy_median_men = PiecewiseLinearFuzzyNumber(fuzzy_quantile_men[1, "L"],
+                                              fuzzy_quantile_men[length(deltas), "L"],
+                                              fuzzy_quantile_men[length(deltas), "U"],
+                                              fuzzy_quantile_men[1, "U"],
+                                              knot.n = length(deltas), 
+                                              knot.alpha = sort(deltas),
+                                              knot.left = sort(fuzzy_quantile_men[[1]]),
+                                              knot.right = sort(fuzzy_quantile_men[[2]]))
+
+plot(fuzzy_median_men, main="Fuzzy number of the median of unemployed men")
+```
+
+<br>
+
+y para el sexo femenino:
+
+```{r}
+fuzzy_median_women = PiecewiseLinearFuzzyNumber(fuzzy_quantile_women[1, "L"],
+                                                fuzzy_quantile_women[length(deltas), "L"],
+                                                fuzzy_quantile_women[length(deltas), "U"],
+                                                fuzzy_quantile_women[1, "U"],
+                                                knot.n = length(deltas), 
+                                                knot.alpha = sort(deltas),
+                                                knot.left = sort(fuzzy_quantile_women[[1]]),
+                                                knot.right = sort(fuzzy_quantile_women[[2]]))
+
+plot(fuzzy_median_women, main="Fuzzy number of the median of unemployed women")
+```
+
+<br>
+
+Como hemos mencionado en el ejercicio 2, la mayoría de países se encuentran entre el 5% y el 10% de desempleo, como se puede visualizar en las dos gráficas anteriores.
+
+A continuación, comprobamos cuáles son los países más cercanos a la mediana borrosa calculada:
+
+```{r}
+min_fuzzy_distance = function(fuzzy_number_list, fuzzy_number) {
+  fuzzy_distance = c()
+  
+  for(i in 1:length(fuzzy_number_list)) {
+    fuzzy_distance = c(fuzzy_distance, distance(fuzzy_number_list[[i]], fuzzy_number))
+  }
+  
+  min_distance = min(fuzzy_distance)
+  names(min_distance) = which(fuzzy_distance == min_distance)
+  return(min_distance)
+}
+
+min_fuzzy_distance_men = min_fuzzy_distance(fuzzy_men_unemp, fuzzy_median_men)
+min_fuzzy_distance_women = min_fuzzy_distance(fuzzy_women_unemp, fuzzy_median_women)
+
+fuzzy_median_country_men = as.character(df[names(min_fuzzy_distance_men), 'Country'])
+fuzzy_median_country_women = as.character(df[names(min_fuzzy_distance_women), 'Country'])
+
+df_median = data.frame(c('Men', 'Women'), 
+                       c(fuzzy_median_country_men, fuzzy_median_country_women), 
+                       c(min_fuzzy_distance_men, min_fuzzy_distance_women))
+colnames(df_median) = c('Genre', 'Country', 'Distance')
+df_median
+```
+
+<br>
+
+Y, por último, mostramos cuáles son los países que están a menor distancia de la mediana crisp:
+
+```{r}
+s = sort(df$Unemployment_men)
+n = nrow(df)
+crisp_median_country_men = as.character(df$Country[which(df$Unemployment_men %in% c(s[n/2], s[n/2+1]))])
+
+s = sort(df$Unemployment_women)
+n = nrow(df)
+crisp_median_country_women = as.character(df$Country[which(df$Unemployment_women %in% c(s[n/2], s[n/2+1]))])
+
+print(paste("Men: ",  crisp_median_country_men[1], ', ', crisp_median_country_men[2]))
+print(paste("Women: ",  crisp_median_country_women[1], ', ', crisp_median_country_women[2]))
+```
+
+<br>
+
+Observamos que para el sexo masculino sí coincide el pais de Suecia mediante la mediana borrosa y la mediana crisp. No obstante, para el sexo femenino no coincide, siendo Suecia para la mediana borrosa y Estonia o Irlanda para la mediana crisp. Esto puede deberse a la forma con la que hemos fuzzificado los números borrosos, ya que la incerteza de los datos obtenidos puede haber provocado que los valores fueran diferentes entre los números borrosos y los números crisp.
+
+<br>
+
+Ejercicio 5
+-------------------------------------
+**Calculad las frecuencias relativas borrosas de las clases $[0,5)$, $[5,10)$ hasta $[25,30)$ para la variable unemployment_men.**
+
+Implementamos una función que calcule las frecuencias relativas. El parámetro **fuzzy_number_list** será una lista con los números borrosos de nuestro conjunto de datos, **interval_lower** será el número de la izquierda de la clase que queremos calcular, **interval_upper** será el número de la derecha de la clase y **deltas** será una lista de los deltas por los que queremos calcular las frecuencias relativas.
+
+```{r}
+frequency_distribution = function(fuzzy_number_list, interval_lower, interval_upper, deltas) {
+  m = matrix(rep(0, len = 2 * length(deltas)), nrow = length(deltas))
+  freq_dist = data.frame(m, row.names = deltas)
+  colnames(freq_dist) = c('subset', 'intersec')
+  
+  for (i in 1:length(fuzzy_number_list)) {
+    alphacut = alphacut(fuzzy_number_list[[i]], deltas)
+    
+    for (d in 1:nrow(alphacut)) {
+      if(alphacut[d, 'L'] >= interval_lower & alphacut[d, 'U'] < interval_upper) {
+        freq_dist[d, 'subset'] = freq_dist[d, 'subset'] + 1
+      }
+      
+      if(alphacut[d, 'U'] >= interval_lower & alphacut[d, 'L'] < interval_upper) {
+        freq_dist[d, 'intersec'] = freq_dist[d, 'intersec'] + 1
+      }
+    }
+  }
+  
+  freq_dist = freq_dist / length(fuzzy_number_list)
+  return(as.list(as.data.frame(t(freq_dist))))
+}
+```
+
+<br>
+
+Mediante la anterior función, calculamos las frecuencias relativas por cada una de las clases especificadas en el enunciado.
+
+```{r}
+deltas = c(0, 0.25, 0.5, 0.75, 1)
+seq = seq(0, 25, 5)
+
+freq_dist = c()
+idx = 1
+for (interval_lower in seq) {
+  interval_upper = interval_lower + 5
+  freq_dist[[idx]] = frequency_distribution(fuzzy_men_unemp, interval_lower, interval_upper, deltas)
+  idx = idx + 1
+}
+
+intervals = c("[0,5)","[5,10)","[10,15)","[15,20)","[20,25)","[25,30)")
+names(freq_dist) = intervals
+
+freq_dist
+```
+
+<br>
+
+El resultado anterior muestra el valor inferior y superior de cada delta por cada clase calculada. Cada uno de los números borrosos generados mediante las frecuencias relativas, se puede visualizar de la siguiente forma:
+
+```{r}
+
+for(i in 1:length(freq_dist)) {
+  lower_list = c()
+  upper_list = c()
+  for(j in 1:length(deltas)) {
+    lower_list = c(lower_list, freq_dist[[i]][[j]][1])
+    upper_list = c(upper_list, freq_dist[[i]][[j]][2])
+  }
+  fuzzy_freq = PiecewiseLinearFuzzyNumber(lower_list[1], 
+                                          lower_list[length(deltas)],
+                                          upper_list[length(deltas)], 
+                                          upper_list[1],
+                                          knot.n = length(deltas), 
+                                          knot.alpha = sort(deltas),
+                                          knot.left = sort(lower_list),
+                                          knot.right = sort(upper_list))
+  plot(fuzzy_freq, main=names(freq_dist[i]))
+}
+
+
+```
+
+
+<br>
+
+
