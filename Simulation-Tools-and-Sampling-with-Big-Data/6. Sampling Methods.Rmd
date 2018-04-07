@@ -1,0 +1,318 @@
+---
+title: "Simulation Tools and Sampling with Big Data"
+subtitle: "Sampling Methods"
+author: "Juan José Martín Miralles"
+output:
+  html_document:
+    number_sections: false
+    highlight: tango
+    toc: yes
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+---
+
+
+
+<style type="text/css">
+
+  body {
+    background-color: #f6f7fd; 
+  }
+  
+  a:link {
+    color: #0174DF;
+  }
+  
+  code.r {
+    font-size: 14px;
+  } 
+  
+  div pre {
+    background-color:#E0ECF8;
+  }
+  pre {
+    font-size: 14px 
+  }
+ 
+  p {
+    text-align: justify;
+  }
+ 
+    
+  h1, h2, h3, h4, h5, h6 {
+    color: #737aaa;
+  }
+
+  th {  
+    background-color:#737aaa;
+    color: #FAFAFA;
+    padding:5px;
+  }
+  
+  td {
+    font-size: 11.5pt;
+  } 
+  
+  tr:nth-child(even){
+    background: white;
+  }
+  
+  tr:nth-child(odd){ 
+    background-color: #EFF8FB;
+  }
+</style>
+
+***  
+
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=9, fig.height=7, fig.align="center", echo=TRUE, warning=FALSE, message=FALSE)
+```
+
+<br>
+
+**Con los datos de la *Encuesta modular habitos sociales 2010 (Ibestat)*, realiza las siguientes tareas:**
+
+Leemos los datos del fichero CSV.
+
+```{r}
+hogar = read.csv("datasets/HOGAR_SP.csv", header=T)
+attach(hogar)
+names(hogar)
+```
+
+<br>
+
+```{r}
+head(hogar)
+```
+
+<br>
+
+La variable de **televisión por cable** (*tvc*) tiene los siguientes valores y sus respectivos registros:
+
+```{r}
+table(hogar$tvc)
+```
+
+<br>
+
+siendo: 
+
+* 1 = Sí.
+* 6 = No
+* -1 = Desconocido
+
+<br>
+
+**1) Estima el porcentaje de hogares con *televisión por cable* en casa con y sin usar el factor de elevación.**
+
+Para calcular el porcentaje, se tendrá en cuenta $tvc = 1$ para la variable *p* y $tvc = 1$ y $tvc = 6$ para la variable *n*. De esta forma obtendremos el porcentaje haciendo $p / n$.
+
+```{r}
+porcentaje.encuesta = function(variable, variable.to.filter, filter.code="all", factor.elev){
+  if (filter.code != "all") {
+    variable = variable[variable.to.filter == filter.code]
+  }
+  
+  if (missing(factor.elev) || factor.elev==1) {
+    factor.elev = rep(1, length(variable))
+  }
+  
+  p = sum(factor.elev[variable == 1])
+  n = sum(factor.elev[variable == 1]) + sum(factor.elev[variable == 6])
+  
+  return (p/n)
+}
+```
+
+<br>
+
+El porcentaje de hogares con **televisión por cable** usando el factor de elevación es el siguiente:
+
+```{r}
+porcentaje.encuesta(tvc, factor.elev=factor_h)
+```
+
+<br>
+
+El porcentaje de hogares con **televisión por cable** sin usar el factor de elevación es el siguiente:
+
+```{r}
+porcentaje.encuesta(tvc)
+```
+
+<br>
+
+**2) Determina el tamaño muestral para que el error de estimación de un porcentage sea inferior, en valor absoluto, a 0.025 con una probabilidad del 95%. Considera tanto un muestreo con como sin reposición.**
+
+Para calcular el tamaño muestral con reposición, se emplea la siguiente fórmula:
+
+$$ n_{CR} = Z_{\alpha/2}^2 \frac{p (1 - p)}{e^2} $$
+
+Para calcular el tamño muestral sin reposición, se emplea la siguiente fórmula:
+
+$$ n_{SR} = \frac{z_{\alpha/2}^2 \ p \ (1 - p) \ N}{e^2 (N - 1) + z_{\alpha/2}^2 \ p \ (1 - p)}  $$
+
+Las variables de las anteriores fórmulas obtienen los siguientes valores, siendo $N =$ `r length(hogar$idviv)`.
+
+```{r}
+N = length(hogar$idviv)
+e = 0.025
+z = 1.96
+p = 1/2
+```
+
+<br>
+
+El tamaño muestral con reposición es el siguiente:
+
+```{r}
+n_cr = z^2 * ((p * (1 - p)) / e^2)
+round(n_cr)
+```
+
+<br>
+
+El tamaño muestral sin reposición es el siguiente:
+
+```{r}
+n_sr = (z^2 * p * (1 - p) * N) / ((e^2 * (N - 1)) + (z^2 * p * (1 - p)))
+round(n_sr)
+```
+
+<br>
+
+**3) Obtén una muestra sin reposición de dicho tamaño de la anterior base de datos y estima el porcentaje de hogares con televisión por cable en casa en dicha muestra (con y sin usar el factor de elevación).**
+
+```{r}
+muestra = function(x, n, replace=F, prob=NULL){
+  s = sample(1:length(x[[1]]), n, replace, prob)
+  return(x[s,])
+}
+```
+
+<br>
+
+Cogemos la muestra sin reemplazo usando el factor de elevación para calcular *p* y usarlo en el parámetro *prob*, y el tamaño de la muestra sin reposición calculado en el ejercicio anterior. Dado que la muestra se coge de forma aleatoria, le ponemos una semilla (*1111*) para que la muestra nos salga igual en cada ejecución que hagamos.
+
+```{r}
+set.seed(1111)
+p = (1/factor_h) / sum(1/factor_h)
+hogar_muestra = muestra(hogar, n_sr, prob=p)
+head(hogar_muestra)
+```
+
+<br>
+
+El porcentaje de hogares con **televisión por cable** usando el factor de elevación de la muestra escogida es el siguiente:
+
+```{r}
+porcentaje.encuesta(hogar_muestra$tvc, factor.elev=hogar_muestra$factor_h)
+```
+
+<br>
+
+El porcentaje de hogares con **televisión por cable** sin usar el factor de elevación de la muestra escogida es el siguiente:
+
+```{r}
+porcentaje.encuesta(hogar_muestra$tvc)
+```
+
+<br>
+
+Podemos observar como el porcentaje de hogares con **televisión por cable** del dataset entero o de la muestra no varía en gran medida. Esto se debe al número de elementos calculados para la muestra, el cual es el óptimo para realizar un correcto análisis, además de habernos basado en el factor de elevación de cada elemento para seleccionar dicha muestra (parámetro *prob*).
+
+<br>
+
+**4) Repite lo mismo que el anterior ejercicio pero cogiendo una muestra mediante muestreo sistemático.**
+
+```{r}
+muestreo.sistematico = function(x, n){
+  N = length(x[[1]])
+  k = floor(N/n)
+  a = sample(1:k, 1)
+  s = seq(a, N, by=k)
+  return(x[s,])
+}
+```
+
+<br>
+
+Usamos el tamaño de la muestra sin reposición calculado en el ejercicio 2). Dado que la muestra se coge de forma aleatoria, le ponemos una semilla (*1111*) para que la muestra nos salga igual en cada ejecución que hagamos.
+
+```{r}
+set.seed(1111)
+hogar_muestra = muestreo.sistematico(hogar, n_sr)
+head(hogar_muestra)
+```
+
+<br>
+
+El porcentaje de hogares con **televisión por cable** usando el factor de elevación de la muestra escogida es el siguiente:
+
+```{r}
+porcentaje.encuesta(hogar_muestra$tvc, factor.elev=hogar_muestra$factor_h)
+```
+
+<br>
+
+El porcentaje de hogares con **televisión por cable** sin usar el factor de elevación de la muestra escogida es el siguiente:
+
+```{r}
+porcentaje.encuesta(hogar_muestra$tvc)
+```
+
+<br>
+
+**5) Simula un método de respuesta a preguntas comprometidas.**
+
+```{r}
+respuesta = function(p, v){
+  if (runif(1) <= p) {
+    y = 1   # individuo
+  } else {
+    y = 0
+  }
+  if (runif(1) <= v){ 
+    x = y # respuesta individuo
+  } else { 
+    x = 1 - y
+  }
+  
+  return(x)
+}
+
+simula.respuestas = function(p, v, n) {
+  x = numeric(n)
+  for(i in 1:n) {
+    x[i] = respuesta(p, v)
+  }
+  return(x)
+}
+
+estima.p = function(x, v) {
+  p = (mean(x) - (1 - v)) / (2 * v - 1)
+  return(p)
+}
+```
+
+<br>
+
+```{r}
+x = simula.respuestas(0.2, 1/3, 2000)
+estima.p(x, 1/3)
+```
+
+<br>
+
+```{r}
+x = simula.respuestas(0.2, 1/3, 2000)
+estima.p(x, 1/3)
+```
+
+<br>
+<br>
+
+
