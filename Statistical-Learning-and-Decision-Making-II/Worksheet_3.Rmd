@@ -1,0 +1,295 @@
+---
+title: "Aprendizaje Estadístico y Toma de Decisiones II"
+author: "Juan José Martín Miralles"
+output:
+  html_document:
+    df_print: paged
+    highlight: tango
+    number_sections: no
+    toc: yes
+  pdf_document:
+    toc: yes
+subtitle: Tarea 3
+editor_options:
+  chunk_output_type: console
+---
+
+
+
+<style type="text/css">
+
+  body {
+    background-color: #f6f7fd; 
+  }
+  
+  a:link {
+    color: #0174DF;
+  }
+  
+  code.r {
+    font-size: 14px;
+  } 
+  
+  div pre {
+    background-color:#E0ECF8;
+  }
+  pre {
+    font-size: 14px 
+  }
+ 
+  p {
+    text-align: justify;
+  }
+ 
+    
+  h1, h2, h3, h4, h5, h6 {
+    color: #737aaa;
+  }
+
+  th {  
+    background-color:#737aaa;
+    color: #FAFAFA;
+    padding:5px;
+  }
+  
+  td {
+    font-size: 11.5pt;
+  } 
+  
+  tr:nth-child(even){
+    background: white;
+  }
+  
+  tr:nth-child(odd){ 
+    background-color: #EFF8FB;
+  }
+</style>
+
+***     
+
+<br/>
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width = 12, fig.height = 8, fig.align="center", echo=TRUE, warning=FALSE, message=FALSE)
+```
+
+```{r}
+library(ggplot2)
+library(reshape2)
+library(neuralnet)
+```
+
+<br>
+
+**Model a binary to decimal decoder.**
+
+| $x_1$ | $x_2$ | $x_3$ | $d$ |
+|---|---|---|---|
+| 0 | 0 | 1 | 1|
+| 0 | 1 | 0 | 2|
+| 0 | 1 | 1 | 3|
+| 1 | 0 | 0 | 4|
+| 1 | 0 | 1 | 5|
+| 1 | 1 | 0 | 6|
+| 1 | 1 | 1 | 7|
+
+<br>
+
+**Given the training set provided, using Adaline, find the weights that minimize the error (SSE). Give final weights and error. Train for different values of the parameters.**
+
+Creamos un dataframe con los datos de la tabla del enunciado.
+
+```{r}
+x1 = c(0, 0, 0, 1, 1, 1, 1) 
+x2 = c(0, 1, 1, 0, 0, 1, 1) 
+x3 = c(1, 0, 1, 0, 1, 0, 1)
+d = c(1, 2, 3, 4, 5, 6, 7) 
+df = data.frame(x1, x2, x3, d)
+```
+
+<br>
+
+La función siguiente es la implementación del tipo de red neuronal artificial **Adaline** con *Gradient Descent*.
+
+```{r}
+adalineGD = function(X, d, n_iter=10, eta=0.01) {
+  X[, dim(X)[2] + 1] = 1 
+  X = as.matrix(X)
+  w = as.matrix(rep(0, dim(X)[2]))
+
+  cost = rep(0, n_iter)
+  error = rep(0, n_iter)
+  
+  # loop over the number of epochs
+  for (i in 1:n_iter) {  
+    # find the number of wrong prediction before weight update
+    for (j in 1:dim(X)[1]) {
+      # compute net input
+      z = sum(w * X[j, ])
+      ypred = round(z)
+      
+      # comparison with actual labels and counting error
+      if(ypred != d[j]) {
+        error[i] = error[i] + 1
+      }
+    }
+    cost[i] = sum((d - X %*% w)^2)/2
+    
+    # update weight according to gradient descent
+    w = w + eta*t(X) %*% (d - X %*% w)
+  }
+  
+  infomatrix = matrix(rep(0, 3 * n_iter), nrow = n_iter, ncol = 3)
+  infomatrix[, 1] = 1:n_iter
+  infomatrix[, 2] = round(cost, 3)
+  infomatrix[, 3] = error
+  
+  infodf = as.data.frame(infomatrix)
+  names(infodf) = c("epoch", "cost", "error")
+  
+  return(infodf)
+}
+```
+
+<br>
+
+A continuación, separamos los predictores de la variable independiente, y normalizamos y estandarizamos los predictores.
+
+```{r}
+X = df[, 1:3]
+y = df[,4]
+
+normalize.bipolar = function(v){
+  return((v - min(v)) / (max(v) - min(v)) * (1 - (-1)) + (-1))
+}
+X_norm = as.data.frame(lapply(X, normalize.bipolar))
+
+standardize = function(x) { 
+  return((x - mean(x)) / (sd(x)))
+}
+X_std = as.data.frame(lapply(X, standardize))
+```
+
+<br>
+
+Por último, usamos la función de **Adaline** con los datos originales, estandarizados y normalizados para $eta = 0.1$, $eta = 0.01$ y $eta = 0.001$.
+
+```{r}
+eta = c(0.1, 0.01, 0.001)
+n_iter = 40
+
+result_orig = c()
+result_std = c()
+result_norm = c()
+
+for(i in 1:length(eta)) {
+  ada_orig = adalineGD(X, y, n_iter, eta[i])
+  label = rep("original", dim(ada_orig)[1])
+  result_orig[[i]] = cbind(label, ada_orig)
+
+  ada_std = adalineGD(X_std, y, n_iter, eta[i])
+  label = rep("standard", dim(ada_std)[1])
+  result_std[[i]] = cbind(label, ada_std)
+
+  ada_norm = adalineGD(X_norm, y, n_iter, eta[i])
+  label = rep("normalize", dim(ada_norm)[1])
+  result_norm[[i]] = cbind(label, ada_norm)
+}
+```
+
+<br>
+
+Y por último, visualizamos los resultados.
+
+```{r}
+for(i in 1:length(eta)) {
+  title = paste("Cost and error function for a dataset \n and its standardized form: eta", " = ", eta[i])
+  
+  adaline_models = rbind(result_orig[[i]], result_std[[i]], result_norm[[i]])
+  df_adaline = melt(adaline_models, id.vars=c("epoch", "label"))
+  
+  gg = ggplot(df_adaline, aes(x=epoch, y=value)) + 
+    geom_line(aes(color=label, linetype=label), size = 1) +
+    facet_grid(variable ~ .) + xlab("Epoch #") + ylab("") +
+    ggtitle(title) +
+    theme(plot.title = element_text(hjust = 0.5))
+  print(gg)
+}
+```
+
+<br>
+
+Podemos observar que con un $eta = 0.1$ la función converge más rápidamente y, por lo tanto, es capaz de resolver todos los registros correctamente en una menor cantidad de pasos. Además, con los datos normalizados es de la manera con la que ha ido mejor, dado que ha realizado un menor número de iteraciones
+
+<br>
+
+
+**Given the training set provided, find a multilayer perceptron that models the data. Give final weights and error. Train for different values of the parameters.**
+
+Calculamos para los datos orginales, estandarizados y normalizados una red neuronal. Se generará una red neuronal con 2, 3, 4, 5 y 6 neuronas en la capa oculta y un *threshold* de 0.1, 0.01 y 0.0001. Esto se realiza para poder comparar diferentes valores pasados por parámetro y saber qué red neuronal y con qué tipo de datos es la más idónea.
+
+```{r}
+hidden_layers = c(2, 3, 4, 5, 6)
+threshold = c(0.1, 0.01, 0.001)
+
+# Original
+for(h in hidden_layers) {
+  for(t in threshold) {
+    neu_net_orig = neuralnet(y ~ X[[1]] + X[[2]] + X[[3]], X, hidden = h, lifesign = "minimal", linear.output = TRUE, threshold = t)
+  }
+}
+```
+
+<br>
+
+```{r}
+# Standardized
+for(h in hidden_layers) {
+  for(t in threshold) {
+    neu_net_std = neuralnet(y ~ X_std[[1]] + X_std[[2]] + X_std[[3]], X_std, hidden = h, lifesign = "minimal", linear.output = TRUE, threshold = t)
+  }
+}
+```
+
+<br>
+
+```{r}
+# Normalized
+for(h in hidden_layers) {
+  for(t in threshold) {
+    neu_net_norm = neuralnet(y ~ X_norm[[1]] + X_norm[[2]] + X_norm[[3]], X_norm, hidden = h, lifesign = "minimal", linear.output = TRUE, threshold = t)
+  }
+}
+```
+
+<br>
+
+De nuevo, los datos normalizados son los que han ido mejor para la red neuronal, dado que generalmente ha dado un menor error para cualquier número de neuronas de la capa oculta. Además, el *threshold* que generalmente ha dado mejor resultado es el de 0.001, aunque realizando un mayor número de iteraciones. Para 0.1 y 0.01 no ha llegado a dar en ningún caso un error de 0. Por último, observamos que, para este conjunto de datos, da igual tener 3, 4, 5 o 6 neuronas en la capa oculta, ya que llegará a un error de 0 en una cantidad de iteraciones muy parecida. 
+
+A continuación, mostramos los pesos para la red neuronal con los datos normalizados, 4 neuronas en la capa oculta y un *threshold* de 0.001:
+
+```{r}
+neural = neuralnet(y ~ X_norm[[1]] + X_norm[[2]] + X_norm[[3]], X_norm, hidden = 4, 
+                   lifesign = "minimal", linear.output = TRUE, threshold = 0.001)
+neural$weights
+```
+
+<br>
+
+
+**Which neural network gives the better results?**
+
+Se ha elegido para **Adaline** la red con los datos normalizados y un *threshold* de 0.1, y para *neuralnet* también los datos normalizados, con 4 neuronas en la capa oculta y un *threshold* de 0.001. Estas dos compararemos a continuación.
+
+```{r}
+ada = adalineGD(X_norm, y, 10, 0.1)
+ada
+
+neural = neuralnet(y ~ X_norm[[1]] + X_norm[[2]] + X_norm[[3]], X_norm, hidden = 4, 
+                   lifesign = "minimal", linear.output = TRUE, threshold = 0.001)
+```
+
+
+En este caso **Adaline** ha dado un mejor resultado, ya que en 3 iteraciones a logrado un error de 0, mientras que *neuralnet* ha necesitado muchas más iteraciones para llegar al mismo error. No obstante, el conjunto de datos es demasiado pequeño para dar una valoración rotunda y, por lo tanto, habría que probarlo con un dataset mucho más mayor para poder comparar tiempos, iteraciones y costes.
+
+
