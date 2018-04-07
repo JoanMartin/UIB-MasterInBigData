@@ -147,7 +147,7 @@ $(document).ready(function () {
 
 
 <h1 class="title toc-ignore">Aprendizaje Estadístico y Toma de Decisiones II</h1>
-<h3 class="subtitle"><em>Tarea 3</em></h3>
+<h3 class="subtitle"><em>Adaline y Perceptrón Multicapa</em></h3>
 <h4 class="author"><em>Juan José Martín Miralles</em></h4>
 
 </div>
@@ -375,21 +375,21 @@ threshold =<span class="st"> </span><span class="kw">c</span>(<span class="fl">0
     neu_net_orig =<span class="st"> </span><span class="kw">neuralnet</span>(y <span class="op">~</span><span class="st"> </span>X[[<span class="dv">1</span>]] <span class="op">+</span><span class="st"> </span>X[[<span class="dv">2</span>]] <span class="op">+</span><span class="st"> </span>X[[<span class="dv">3</span>]], X, <span class="dt">hidden =</span> h, <span class="dt">lifesign =</span> <span class="st">&quot;minimal&quot;</span>, <span class="dt">linear.output =</span> <span class="ot">TRUE</span>, <span class="dt">threshold =</span> t)
   }
 }</code></pre></div>
-<pre><code>## hidden: 2    thresh: 0.1    rep: 1/1    steps:      65   error: 0.0215   time: 0.01 secs
-## hidden: 2    thresh: 0.01    rep: 1/1    steps:     404  error: 0.00154  time: 0.03 secs
-## hidden: 2    thresh: 0.001    rep: 1/1    steps:     569 error: 0.00002  time: 0.04 secs
-## hidden: 3    thresh: 0.1    rep: 1/1    steps:      58   error: 0.03815  time: 0.01 secs
-## hidden: 3    thresh: 0.01    rep: 1/1    steps:     101  error: 0.00229  time: 0.01 secs
-## hidden: 3    thresh: 0.001    rep: 1/1    steps:    1047 error: 0.00011  time: 0.08 secs
-## hidden: 4    thresh: 0.1    rep: 1/1    steps:      57   error: 0.02013  time: 0 secs
-## hidden: 4    thresh: 0.01    rep: 1/1    steps:     105  error: 0.00092  time: 0.01 secs
-## hidden: 4    thresh: 0.001    rep: 1/1    steps:     160 error: 0        time: 0.01 secs
-## hidden: 5    thresh: 0.1    rep: 1/1    steps:      30   error: 0.03601  time: 0 secs
-## hidden: 5    thresh: 0.01    rep: 1/1    steps:      85  error: 0.00093  time: 0.01 secs
-## hidden: 5    thresh: 0.001    rep: 1/1    steps:     227 error: 0        time: 0.02 secs
-## hidden: 6    thresh: 0.1    rep: 1/1    steps:      44   error: 0.05338  time: 0.01 secs
-## hidden: 6    thresh: 0.01    rep: 1/1    steps:     104  error: 0.00168  time: 0.01 secs
-## hidden: 6    thresh: 0.001    rep: 1/1    steps:     167 error: 0        time: 0.02 secs</code></pre>
+<pre><code>## hidden: 2    thresh: 0.1    rep: 1/1    steps:      57   error: 0.06637  time: 0.01 secs
+## hidden: 2    thresh: 0.01    rep: 1/1    steps:     177  error: 0.00301  time: 0.02 secs
+## hidden: 2    thresh: 0.001    rep: 1/1    steps:     428 error: 0.00005  time: 0.03 secs
+## hidden: 3    thresh: 0.1    rep: 1/1    steps:      64   error: 0.0957   time: 0.01 secs
+## hidden: 3    thresh: 0.01    rep: 1/1    steps:     285  error: 0.00324  time: 0.02 secs
+## hidden: 3    thresh: 0.001    rep: 1/1    steps:     370 error: 0.00001  time: 0.03 secs
+## hidden: 4    thresh: 0.1    rep: 1/1    steps:      66   error: 0.05683  time: 0.01 secs
+## hidden: 4    thresh: 0.01    rep: 1/1    steps:     142  error: 0.00014  time: 0.01 secs
+## hidden: 4    thresh: 0.001    rep: 1/1    steps:     463 error: 0.00004  time: 0.04 secs
+## hidden: 5    thresh: 0.1    rep: 1/1    steps:      49   error: 0.01374  time: 0.01 secs
+## hidden: 5    thresh: 0.01    rep: 1/1    steps:     108  error: 0.00098  time: 0.01 secs
+## hidden: 5    thresh: 0.001    rep: 1/1    steps:     121 error: 0        time: 0.01 secs
+## hidden: 6    thresh: 0.1    rep: 1/1    steps:      46   error: 0.03568  time: 0 secs
+## hidden: 6    thresh: 0.01    rep: 1/1    steps:     114  error: 0.00236  time: 0.01 secs
+## hidden: 6    thresh: 0.001    rep: 1/1    steps:     132 error: 0.00001  time: 0.01 secs</code></pre>
 <p><br></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Standardized</span>
 <span class="cf">for</span>(h <span class="cf">in</span> hidden_layers) {
@@ -397,21 +397,21 @@ threshold =<span class="st"> </span><span class="kw">c</span>(<span class="fl">0
     neu_net_std =<span class="st"> </span><span class="kw">neuralnet</span>(y <span class="op">~</span><span class="st"> </span>X_std[[<span class="dv">1</span>]] <span class="op">+</span><span class="st"> </span>X_std[[<span class="dv">2</span>]] <span class="op">+</span><span class="st"> </span>X_std[[<span class="dv">3</span>]], X_std, <span class="dt">hidden =</span> h, <span class="dt">lifesign =</span> <span class="st">&quot;minimal&quot;</span>, <span class="dt">linear.output =</span> <span class="ot">TRUE</span>, <span class="dt">threshold =</span> t)
   }
 }</code></pre></div>
-<pre><code>## hidden: 2    thresh: 0.1    rep: 1/1    steps:      63   error: 0.22294  time: 0.01 secs
-## hidden: 2    thresh: 0.01    rep: 1/1    steps:     109  error: 0.00034  time: 0.01 secs
-## hidden: 2    thresh: 0.001    rep: 1/1    steps:     260 error: 0.00003  time: 0.02 secs
-## hidden: 3    thresh: 0.1    rep: 1/1    steps:      26   error: 0.01384  time: 0 secs
-## hidden: 3    thresh: 0.01    rep: 1/1    steps:      84  error: 0.0006   time: 0.01 secs
-## hidden: 3    thresh: 0.001    rep: 1/1    steps:     154 error: 0        time: 0.02 secs
-## hidden: 4    thresh: 0.1    rep: 1/1    steps:      33   error: 0.04901  time: 0 secs
-## hidden: 4    thresh: 0.01    rep: 1/1    steps:      51  error: 0.00064  time: 0 secs
-## hidden: 4    thresh: 0.001    rep: 1/1    steps:     114 error: 0        time: 0.01 secs
-## hidden: 5    thresh: 0.1    rep: 1/1    steps:      30   error: 0.01215  time: 0 secs
-## hidden: 5    thresh: 0.01    rep: 1/1    steps:      47  error: 0.00029  time: 0 secs
-## hidden: 5    thresh: 0.001    rep: 1/1    steps:      66 error: 0.00001  time: 0.01 secs
-## hidden: 6    thresh: 0.1    rep: 1/1    steps:      23   error: 0.0174   time: 0 secs
-## hidden: 6    thresh: 0.01    rep: 1/1    steps:      38  error: 0.00019  time: 0 secs
-## hidden: 6    thresh: 0.001    rep: 1/1    steps:      72 error: 0        time: 0.01 secs</code></pre>
+<pre><code>## hidden: 2    thresh: 0.1    rep: 1/1    steps:      63   error: 0.2038   time: 0 secs
+## hidden: 2    thresh: 0.01    rep: 1/1    steps:     127  error: 0.00018  time: 0.01 secs
+## hidden: 2    thresh: 0.001    rep: 1/1    steps:     472 error: 0.00001  time: 0.04 secs
+## hidden: 3    thresh: 0.1    rep: 1/1    steps:      42   error: 0.07615  time: 0 secs
+## hidden: 3    thresh: 0.01    rep: 1/1    steps:      58  error: 0.00027  time: 0.01 secs
+## hidden: 3    thresh: 0.001    rep: 1/1    steps:     143 error: 0        time: 0.01 secs
+## hidden: 4    thresh: 0.1    rep: 1/1    steps:      27   error: 0.07855  time: 0.01 secs
+## hidden: 4    thresh: 0.01    rep: 1/1    steps:     106  error: 0.00047  time: 0.01 secs
+## hidden: 4    thresh: 0.001    rep: 1/1    steps:     152 error: 0.00001  time: 0.02 secs
+## hidden: 5    thresh: 0.1    rep: 1/1    steps:      37   error: 0.02005  time: 0 secs
+## hidden: 5    thresh: 0.01    rep: 1/1    steps:      67  error: 0.00013  time: 0.01 secs
+## hidden: 5    thresh: 0.001    rep: 1/1    steps:      84 error: 0        time: 0.01 secs
+## hidden: 6    thresh: 0.1    rep: 1/1    steps:      22   error: 0.0343   time: 0 secs
+## hidden: 6    thresh: 0.01    rep: 1/1    steps:      46  error: 0.00046  time: 0 secs
+## hidden: 6    thresh: 0.001    rep: 1/1    steps:      78 error: 0        time: 0.01 secs</code></pre>
 <p><br></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Normalized</span>
 <span class="cf">for</span>(h <span class="cf">in</span> hidden_layers) {
@@ -419,43 +419,43 @@ threshold =<span class="st"> </span><span class="kw">c</span>(<span class="fl">0
     neu_net_norm =<span class="st"> </span><span class="kw">neuralnet</span>(y <span class="op">~</span><span class="st"> </span>X_norm[[<span class="dv">1</span>]] <span class="op">+</span><span class="st"> </span>X_norm[[<span class="dv">2</span>]] <span class="op">+</span><span class="st"> </span>X_norm[[<span class="dv">3</span>]], X_norm, <span class="dt">hidden =</span> h, <span class="dt">lifesign =</span> <span class="st">&quot;minimal&quot;</span>, <span class="dt">linear.output =</span> <span class="ot">TRUE</span>, <span class="dt">threshold =</span> t)
   }
 }</code></pre></div>
-<pre><code>## hidden: 2    thresh: 0.1    rep: 1/1    steps:      58   error: 0.0375   time: 0.01 secs
-## hidden: 2    thresh: 0.01    rep: 1/1    steps:     169  error: 0.00112  time: 0.01 secs
-## hidden: 2    thresh: 0.001    rep: 1/1    steps:     176 error: 0        time: 0.01 secs
-## hidden: 3    thresh: 0.1    rep: 1/1    steps:      57   error: 0.02383  time: 0 secs
-## hidden: 3    thresh: 0.01    rep: 1/1    steps:      73  error: 0.00063  time: 0.01 secs
-## hidden: 3    thresh: 0.001    rep: 1/1    steps:      74 error: 0        time: 0.01 secs
-## hidden: 4    thresh: 0.1    rep: 1/1    steps:      25   error: 0.05048  time: 0 secs
-## hidden: 4    thresh: 0.01    rep: 1/1    steps:      53  error: 0.00022  time: 0 secs
-## hidden: 4    thresh: 0.001    rep: 1/1    steps:     137 error: 0        time: 0.01 secs
-## hidden: 5    thresh: 0.1    rep: 1/1    steps:      33   error: 0.02435  time: 0 secs
-## hidden: 5    thresh: 0.01    rep: 1/1    steps:      53  error: 0.00025  time: 0.01 secs
-## hidden: 5    thresh: 0.001    rep: 1/1    steps:      76 error: 0        time: 0.01 secs
-## hidden: 6    thresh: 0.1    rep: 1/1    steps:      21   error: 0.05421  time: 0 secs
-## hidden: 6    thresh: 0.01    rep: 1/1    steps:      60  error: 0.00048  time: 0.01 secs
-## hidden: 6    thresh: 0.001    rep: 1/1    steps:      51 error: 0        time: 0.01 secs</code></pre>
+<pre><code>## hidden: 2    thresh: 0.1    rep: 1/1    steps:      71   error: 0.00996  time: 0.01 secs
+## hidden: 2    thresh: 0.01    rep: 1/1    steps:     127  error: 0.0006   time: 0.01 secs
+## hidden: 2    thresh: 0.001    rep: 1/1    steps:     983 error: 0.0001   time: 0.08 secs
+## hidden: 3    thresh: 0.1    rep: 1/1    steps:      40   error: 0.01195  time: 0 secs
+## hidden: 3    thresh: 0.01    rep: 1/1    steps:     179  error: 0.0014   time: 0.01 secs
+## hidden: 3    thresh: 0.001    rep: 1/1    steps:     112 error: 0        time: 0.01 secs
+## hidden: 4    thresh: 0.1    rep: 1/1    steps:      44   error: 0.02202  time: 0 secs
+## hidden: 4    thresh: 0.01    rep: 1/1    steps:      59  error: 0.00032  time: 0.01 secs
+## hidden: 4    thresh: 0.001    rep: 1/1    steps:      98 error: 0.00001  time: 0.01 secs
+## hidden: 5    thresh: 0.1    rep: 1/1    steps:      27   error: 0.01439  time: 0.01 secs
+## hidden: 5    thresh: 0.01    rep: 1/1    steps:      78  error: 0.00017  time: 0.01 secs
+## hidden: 5    thresh: 0.001    rep: 1/1    steps:      52 error: 0        time: 0.01 secs
+## hidden: 6    thresh: 0.1    rep: 1/1    steps:      22   error: 0.05188  time: 0 secs
+## hidden: 6    thresh: 0.01    rep: 1/1    steps:      45  error: 0.00013  time: 0.01 secs
+## hidden: 6    thresh: 0.001    rep: 1/1    steps:      76 error: 0        time: 0.01 secs</code></pre>
 <p><br></p>
 <p>De nuevo, los datos normalizados son los que han ido mejor para la red neuronal, dado que generalmente ha dado un menor error para cualquier número de neuronas de la capa oculta. Además, el <em>threshold</em> que generalmente ha dado mejor resultado es el de 0.001, aunque realizando un mayor número de iteraciones. Para 0.1 y 0.01 no ha llegado a dar en ningún caso un error de 0. Por último, observamos que, para este conjunto de datos, da igual tener 3, 4, 5 o 6 neuronas en la capa oculta, ya que llegará a un error de 0 en una cantidad de iteraciones muy parecida.</p>
 <p>A continuación, mostramos los pesos para la red neuronal con los datos normalizados, 4 neuronas en la capa oculta y un <em>threshold</em> de 0.001:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">neural =<span class="st"> </span><span class="kw">neuralnet</span>(y <span class="op">~</span><span class="st"> </span>X_norm[[<span class="dv">1</span>]] <span class="op">+</span><span class="st"> </span>X_norm[[<span class="dv">2</span>]] <span class="op">+</span><span class="st"> </span>X_norm[[<span class="dv">3</span>]], X_norm, <span class="dt">hidden =</span> <span class="dv">4</span>, 
                    <span class="dt">lifesign =</span> <span class="st">&quot;minimal&quot;</span>, <span class="dt">linear.output =</span> <span class="ot">TRUE</span>, <span class="dt">threshold =</span> <span class="fl">0.001</span>)</code></pre></div>
-<pre><code>## hidden: 4    thresh: 0.001    rep: 1/1    steps:      84 error: 0        time: 0.01 secs</code></pre>
+<pre><code>## hidden: 4    thresh: 0.001    rep: 1/1    steps:      82 error: 0        time: 0.01 secs</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">neural<span class="op">$</span>weights</code></pre></div>
 <pre><code>## [[1]]
 ## [[1]][[1]]
-##              [,1]         [,2]          [,3]         [,4]
-## [1,] -1.138145266 0.2224502363  0.5151548651 -0.800591743
-## [2,]  1.348459367 3.7320609567  2.9007713760 -2.216151014
-## [3,]  1.566578983 0.8391015387  1.2368009105 -1.226842460
-## [4,]  1.205815720 0.1212836534 -0.8713345486  1.099078650
+##               [,1]          [,2]          [,3]          [,4]
+## [1,] -0.2641146681  0.4029817718  0.8404102901 -0.5185371129
+## [2,]  0.5218718009  0.0833849389  3.6615363513  2.1608263378
+## [3,] -0.2369949912  2.7051621461  0.3596189275  1.3000309208
+## [4,]  2.3001640034 -1.6256607623 -0.1796330126  0.5759374232
 ## 
 ## [[1]][[2]]
 ##               [,1]
-## [1,]  1.2249584577
-## [2,]  3.3017881271
-## [3,]  1.6211610658
-## [4,]  1.0655136911
-## [5,] -0.4506177244</code></pre>
+## [1,] -0.4743532935
+## [2,]  1.5121703350
+## [3,]  1.9664339294
+## [4,]  2.8482843935
+## [5,]  1.6979956302</code></pre>
 <p><br></p>
 <p><strong>Which neural network gives the better results?</strong></p>
 <p>Se ha elegido para <strong>Adaline</strong> la red con los datos normalizados y un <em>threshold</em> de 0.1, y para <em>neuralnet</em> también los datos normalizados, con 4 neuronas en la capa oculta y un <em>threshold</em> de 0.001. Estas dos compararemos a continuación.</p>
@@ -468,8 +468,10 @@ ada</code></pre></div>
 </div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">neural =<span class="st"> </span><span class="kw">neuralnet</span>(y <span class="op">~</span><span class="st"> </span>X_norm[[<span class="dv">1</span>]] <span class="op">+</span><span class="st"> </span>X_norm[[<span class="dv">2</span>]] <span class="op">+</span><span class="st"> </span>X_norm[[<span class="dv">3</span>]], X_norm, <span class="dt">hidden =</span> <span class="dv">4</span>, 
                    <span class="dt">lifesign =</span> <span class="st">&quot;minimal&quot;</span>, <span class="dt">linear.output =</span> <span class="ot">TRUE</span>, <span class="dt">threshold =</span> <span class="fl">0.001</span>)</code></pre></div>
-<pre><code>## hidden: 4    thresh: 0.001    rep: 1/1    steps:     125 error: 0        time: 0.01 secs</code></pre>
+<pre><code>## hidden: 4    thresh: 0.001    rep: 1/1    steps:     119 error: 0        time: 0.01 secs</code></pre>
+<p><br></p>
 <p>En este caso <strong>Adaline</strong> ha dado un mejor resultado, ya que en 3 iteraciones a logrado un error de 0, mientras que <em>neuralnet</em> ha necesitado muchas más iteraciones para llegar al mismo error. No obstante, el conjunto de datos es demasiado pequeño para dar una valoración rotunda y, por lo tanto, habría que probarlo con un dataset mucho más mayor para poder comparar tiempos, iteraciones y costes.</p>
+<p><br></p>
 
 
 

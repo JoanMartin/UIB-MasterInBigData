@@ -1,6 +1,6 @@
 ---
 title: "Aprendizaje Estadístico y Toma de Decisiones II"
-subtitle: "Tarea 2"
+subtitle: "Red Neuronal Simple"
 author: "Juan José Martín Miralles"
 output:
   html_document:
