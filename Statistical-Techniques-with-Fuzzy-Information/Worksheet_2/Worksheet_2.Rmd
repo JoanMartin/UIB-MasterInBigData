@@ -1,5 +1,6 @@
 ---
-title: "Pràctica 2. Tècniques Estadístiques amb Informació Imprecisa"
+title: "Técnicas Estadísticas con Información Imprecisa"
+subtitle: "Práctica 2"
 author: "Víctor Marín Juarros y Juan José Martín Miralles"
 output:
   html_document:
@@ -70,13 +71,13 @@ editor_options:
 knitr::opts_chunk$set(fig.width=10, fig.height=7, fig.align="center", echo=TRUE, warning=FALSE, message=FALSE)
 ```
 
-El fichero ``unemployment_sex.txt'', que podréis encontrar en Aula Digital, contiene información sobre el porcentaje de población desempleada con respecto a la población activa para cada sexo en los 28 países de la Unión Europea. Los datos corresponden al año 2017. Los datos estan separados por espacios en blanco y la primera fila contiene los nombres de las variables. Las variables de las que se dispone son las siguientes:
+**El fichero *unemployment_sex.txt*, contiene información sobre el porcentaje de población desempleada con respecto a la población activa para cada sexo en los 28 países de la Unión Europea. Los datos corresponden al año 2017. Los datos estan separados por espacios en blanco y la primera fila contiene los nombres de las variables. Las variables de las que se dispone son las siguientes:**
 
-* Country: Nombre del país de la Unión Europea.
-* Unemployment_men: Porcentaje de hombres desempleados.
-* Unemployment_women: Porcentaje de mujeres desempleadas.
-* Employed: Población empleada del país.
-* DQI: *Data Quality Index*, sobre la calidad de los datos recogidos en el país.
+* ***Country*: Nombre del país de la Unión Europea.**
+* ***Unemployment_men*: Porcentaje de hombres desempleados.**
+* ***Unemployment_women*: Porcentaje de mujeres desempleadas.**
+* ***Employed*: Población empleada del país.**
+* ***DQI* (*Data Quality Index*): la calidad de los datos recogidos en el país.**
 
 <br>
 
@@ -84,12 +85,11 @@ El fichero ``unemployment_sex.txt'', que podréis encontrar en Aula Digital, con
 library(FuzzyNumbers)
 ```
 
+<br>
+
 Ejercicio 1
 -------------------------------------
-Descargad el fichero i definid un dataframe. Comprobad con *str* y *head* que se ha descargado correctamente y comprobad los nombres de las variables.
-
-Solución
--------------------------------------
+**Descargad el fichero y definid un dataframe. Comprobad con *str* y *head* que se ha descargado correctamente y comprobad los nombres de las variables.**
 
 ```{r}
 df = read.csv("unemployment_sex.txt", sep = " ")
@@ -101,10 +101,7 @@ str(df)
 
 Ejercicio 2
 -------------------------------------
-Cargad el paquete *FuzzyNumbers*, fuzzificad los datos del porcentaje de hombres y mujeres desempleados en base al Data Quality Index. Cread un único gráfico para cada sexo con los porcentajes de desempleo de todos los países expresados como números borrosos. Analizad cada gráfico por separado y ambos en conjunto.
-
-Solución
--------------------------------------
+**Cargad el paquete *FuzzyNumbers*, fuzzificad los datos del porcentaje de hombres y mujeres desempleados en base al Data Quality Index. Cread un único gráfico para cada sexo con los porcentajes de desempleo de todos los países expresados como números borrosos. Analizad cada gráfico por separado y ambos en conjunto.**
 
 Primero, convertimos la variable **DQI** a tanto por uno y calculamos su inversa. De esta forma obtenemos el tanto por uno de la incerteza que hay en los datos.
 ```{r}
@@ -168,10 +165,7 @@ Podemos observar en ambos gráficos que los países con core mayor son los que t
 
 Ejercicio 3
 -------------------------------------
-Calculad el porcentaje de desempleo borroso en cada sexo en la Unión Europea ponderando por la población de cada país. **Indicación para calcular el peso de cada país**: calculad la población empleada total de la Unión Europea, dividid la población empleada de cada país por el total y desfuzzificad el resultado utilizando la función *expectedValue* del paquete *FuzzyNumbers*. Como la suma de estos pesos puede no dar 1, dividid cada peso por la suma. Tendréis que suponer que el 50% de la población de cada país son mujeres. Comparad el resultado con el valor crisp.
-
-Solución
--------------------------------------
+**Calculad el porcentaje de desempleo borroso en cada sexo en la Unión Europea ponderando por la población de cada país. *Indicación para calcular el peso de cada país*: calculad la población empleada total de la Unión Europea, dividid la población empleada de cada país por el total y desfuzzificad el resultado utilizando la función *expectedValue* del paquete *FuzzyNumbers*. Como la suma de estos pesos puede no dar 1, dividid cada peso por la suma. Tendréis que suponer que el 50% de la población de cada país son mujeres. Comparad el resultado con el valor crisp.**
 
 La población total de cada país se calcula de la siguiente manera:
 
@@ -325,10 +319,7 @@ for (i in 1:nrow(df)) {
 
 Ejercicio 4
 -------------------------------------
-Calculad la mediana borrosa en cada sexo del porcentaje de desempleo en los países de la Unión Europea. Para cada sexo, ¿qué país se encuentra a una menor distancia (utilizando la función *distance* del paquete *FuzzyNumbers*) de esta mediana? Operando con valores crisp, para cada sexo, ¿cuál sería este país?
-
-Solución
--------------------------------------
+**Calculad la mediana borrosa en cada sexo del porcentaje de desempleo en los países de la Unión Europea. Para cada sexo, ¿qué país se encuentra a una menor distancia (utilizando la función *distance* del paquete *FuzzyNumbers*) de esta mediana? Operando con valores crisp, para cada sexo, ¿cuál sería este país?**
 
 Implementamos una función que posibilite el cálculo de los cuantiles. El parámetro **fuzzy_number_list** será una lista de los números borrosos de nuestro conjunto de datos. El parámetro **deltas** será una lista de todos los deltas que se quieran usar para calcular el cuantil. Y, por último, el parámetro **p** será el cuantil que queramos calcular. 
 
@@ -506,11 +497,7 @@ Observamos que para el sexo masculino sí coincide el pais de Suecia mediante la
 
 Ejercicio 5
 -------------------------------------
-Calculad las frecuencias relativas borrosas de las clases $[0,5)$, $[5,10)$ hasta $[25,30)$ para la variable unemployment_men.
-
-
-Solución
--------------------------------------
+**Calculad las frecuencias relativas borrosas de las clases $[0,5)$, $[5,10)$ hasta $[25,30)$ para la variable unemployment_men.**
 
 Implementamos una función que calcule las frecuencias relativas. El parámetro **fuzzy_number_list** será una lista con los números borrosos de nuestro conjunto de datos, **interval_lower** será el número de la izquierda de la clase que queremos calcular, **interval_upper** será el número de la derecha de la clase y **deltas** será una lista de los deltas por los que queremos calcular las frecuencias relativas.
 
