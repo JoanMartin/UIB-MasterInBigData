@@ -1,15 +1,13 @@
 ---
 title: "Aprendizaje Estadístico y Toma de Decisiones II"
+subtitle: "Adaline y Perceptrón Multicapa"
 author: "Juan José Martín Miralles"
 output:
   html_document:
-    df_print: paged
+    number_sections: false
     highlight: tango
-    number_sections: no
     toc: yes
-  pdf_document:
-    toc: yes
-subtitle: Tarea 3
+    df_print: paged
 editor_options:
   chunk_output_type: console
 ---
@@ -289,7 +287,8 @@ neural = neuralnet(y ~ X_norm[[1]] + X_norm[[2]] + X_norm[[3]], X_norm, hidden =
                    lifesign = "minimal", linear.output = TRUE, threshold = 0.001)
 ```
 
+<br>
 
 En este caso **Adaline** ha dado un mejor resultado, ya que en 3 iteraciones a logrado un error de 0, mientras que *neuralnet* ha necesitado muchas más iteraciones para llegar al mismo error. No obstante, el conjunto de datos es demasiado pequeño para dar una valoración rotunda y, por lo tanto, habría que probarlo con un dataset mucho más mayor para poder comparar tiempos, iteraciones y costes.
 
-
+<br>
