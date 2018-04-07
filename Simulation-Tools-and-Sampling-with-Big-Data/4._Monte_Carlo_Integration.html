@@ -154,8 +154,6 @@ $(document).ready(function () {
 
 <div id="TOC">
 <ul>
-<li><a href="#metodo-de-aceptacion-rechazo-simple">Método de Aceptación-Rechazo Simple</a></li>
-<li><a href="#metodo-de-aceptacion-rechazo-general">Método de Aceptación-Rechazo General</a></li>
 <li><a href="#metodo-hit-and-miss">Método <em>Hit and Miss</em></a></li>
 <li><a href="#metodo-de-muestreo-uniforme">Método de Muestreo Uniforme</a></li>
 <li><a href="#ejercicios">Ejercicios</a></li>
@@ -211,102 +209,11 @@ $(document).ready(function () {
   }
 </style>
 <hr />
-<p><br></p>
-<div id="metodo-de-aceptacion-rechazo-simple" class="section level2">
-<h2>Método de Aceptación-Rechazo Simple</h2>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">simple_accept_reject_method =<span class="st"> </span><span class="cf">function</span>(f, max_point, <span class="dt">xdomain=</span><span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="dt">N=</span><span class="dv">100000</span>){
-  <span class="cf">if</span> (N <span class="op">&lt;</span><span class="st"> </span><span class="dv">1</span>){
-    <span class="kw">stop</span>(<span class="st">&quot;N parameter must be greater than 1.&quot;</span>)
-  }
-      
-  Y_accepted =<span class="st"> </span><span class="kw">c</span>()
-  Y_rejected =<span class="st"> </span><span class="kw">c</span>()
-  
-  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">0</span><span class="op">:</span>N){
-    x =<span class="st"> </span><span class="kw">runif</span>(<span class="dv">1</span>, xdomain[<span class="dv">1</span>], xdomain[<span class="dv">2</span>])
-    fx =<span class="st"> </span><span class="kw">f</span>(x)
-    u =<span class="st"> </span><span class="kw">runif</span>(<span class="dv">1</span>, <span class="dv">0</span>, max_point)
-  
-    <span class="cf">if</span> (u <span class="op">&lt;=</span><span class="st"> </span>fx){
-        Y_accepted =<span class="st"> </span><span class="kw">c</span>(Y_accepted, x)
-    } <span class="cf">else</span> {
-        Y_rejected =<span class="st"> </span><span class="kw">c</span>(Y_rejected, x)
-    }
-  }
-  
-  r =<span class="st"> </span><span class="kw">list</span>(Y_accepted, Y_rejected)
-  <span class="kw">return</span> (r)
-}</code></pre></div>
-<p><br></p>
+<div class="alert alert-danger">
+<p><strong>Información!</strong></p>
+<p>Las funciones de <i>plot</i> y de los métodos de Aceptación-Rechazo Simple y General son las mismas que las usadas en el fichero <i>3. Acceptance-rejection method</i>. Por este motivo, se han ocultado en el HTML generado, pero se puede ver su implementación en el fichero <strong>.Rmd</strong>.</p>
 </div>
-<div id="metodo-de-aceptacion-rechazo-general" class="section level2">
-<h2>Método de Aceptación-Rechazo General</h2>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">is_envelope_function =<span class="st"> </span><span class="cf">function</span>(f, g, M, <span class="dt">xdomain=</span><span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), ...){
-  <span class="cf">if</span> (xdomain[<span class="dv">1</span>] <span class="op">&gt;=</span><span class="st"> </span>xdomain[<span class="dv">2</span>]){
-    <span class="kw">stop</span>(<span class="st">&quot;First value of the xdomain must be lower than the second value.&quot;</span>)
-  }
-      
-  x =<span class="st"> </span><span class="kw">seq</span>(xdomain[<span class="dv">1</span>], xdomain[<span class="dv">2</span>], <span class="dt">by=</span><span class="fl">0.01</span>)
-  y_base =<span class="st"> </span><span class="kw">f</span>(x)
-  y_envelope =<span class="st"> </span><span class="kw">g</span>(x, ...)
-  
-  <span class="kw">return</span> (<span class="kw">sum</span>((y_envelope <span class="op">*</span><span class="st"> </span>M <span class="op">-</span><span class="st"> </span>y_base) <span class="op">&lt;</span><span class="st"> </span><span class="dv">0</span>) <span class="op">==</span><span class="st"> </span><span class="dv">0</span>)
-}</code></pre></div>
 <p><br></p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">plot_envelope_function =<span class="st"> </span><span class="cf">function</span>(f, g, M, <span class="dt">xdomain=</span><span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), ...){
-  <span class="cf">if</span> (xdomain[<span class="dv">1</span>] <span class="op">&gt;=</span><span class="st"> </span>xdomain[<span class="dv">2</span>]){
-    <span class="kw">stop</span>(<span class="st">&quot;First value of the xdomain must be lower than the second value.&quot;</span>)
-  }
-    
-  x =<span class="st"> </span><span class="kw">seq</span>(xdomain[<span class="dv">1</span>], xdomain[<span class="dv">2</span>], <span class="dt">by=</span><span class="fl">0.01</span>)
-  y_base =<span class="st"> </span><span class="kw">f</span>(x)
-  y_envelope =<span class="st"> </span><span class="kw">g</span>(x, ...) <span class="op">*</span><span class="st"> </span>M
-  
-  q1 =<span class="st"> </span><span class="kw">ggplot</span>() <span class="op">+</span><span class="st"> </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">x=</span>x, <span class="dt">y=</span>y_base, <span class="dt">color=</span><span class="st">'blue'</span>)) <span class="op">+</span><span class="st"> </span>
-<span class="st">    </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">x=</span>x, <span class="dt">y=</span>y_envelope, <span class="dt">color=</span><span class="st">'red'</span>)) <span class="op">+</span>
-<span class="st">    </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="st">'right'</span>) <span class="op">+</span>
-<span class="st">    </span><span class="kw">scale_color_manual</span>(<span class="dt">labels =</span> <span class="kw">c</span>(<span class="st">'Base function - f(x)'</span>, <span class="st">'Envelope Function - g(x)'</span>), <span class="dt">values =</span> <span class="kw">c</span>(<span class="st">'blue'</span>, <span class="st">'red'</span>)) <span class="op">+</span>
-<span class="st">    </span><span class="kw">theme</span>(<span class="dt">legend.title=</span><span class="kw">element_blank</span>(),
-          <span class="dt">axis.title.x=</span><span class="kw">element_blank</span>(),
-          <span class="dt">axis.title.y=</span><span class="kw">element_blank</span>(),
-          <span class="dt">plot.title =</span> <span class="kw">element_text</span>(<span class="dt">hjust =</span> <span class="fl">0.5</span>))
-  q1
-}</code></pre></div>
-<p><br></p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">general_accept_reject_method =<span class="st"> </span><span class="cf">function</span>(f, g, M, distrib_func, <span class="dt">xdomain=</span><span class="ot">NULL</span>, <span class="dt">N=</span><span class="dv">100000</span>, ...){
-  <span class="cf">if</span> (N <span class="op">&lt;</span><span class="st"> </span><span class="dv">1</span>){
-    <span class="kw">stop</span>(<span class="st">&quot;N parameter must be greater than 1.&quot;</span>)
-  }
-      
-  Y_accepted =<span class="st"> </span><span class="kw">c</span>()
-  Y_rejected =<span class="st"> </span><span class="kw">c</span>()
-  
-  y =<span class="st"> </span><span class="kw">distrib_func</span>(<span class="dt">n=</span>N, ...)
-  
-  <span class="cf">if</span> (<span class="op">!</span><span class="kw">is.null</span>(xdomain)){
-    <span class="cf">if</span> (xdomain[<span class="dv">1</span>] <span class="op">&gt;=</span><span class="st"> </span>xdomain[<span class="dv">2</span>]){
-        <span class="kw">stop</span>(<span class="st">&quot;First value of the xdomain must be lower than the second value.&quot;</span>)
-    }
-    y =<span class="st"> </span>y[(y <span class="op">&gt;</span><span class="st"> </span>xdomain[<span class="dv">1</span>]) <span class="op">&amp;</span><span class="st"> </span>(y <span class="op">&lt;</span><span class="st"> </span>xdomain[<span class="dv">2</span>])]
-  }
-  
-  <span class="cf">for</span> (i <span class="cf">in</span> y){
-    fy =<span class="st"> </span><span class="kw">f</span>(i)
-    gy =<span class="st"> </span><span class="kw">g</span>(i, ...)
-    u =<span class="st"> </span><span class="kw">runif</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>)
-    
-    <span class="cf">if</span> (u <span class="op">&lt;=</span><span class="st"> </span>fy <span class="op">/</span><span class="st"> </span>(M <span class="op">*</span><span class="st"> </span>gy)){
-        Y_accepted =<span class="st"> </span><span class="kw">c</span>(Y_accepted, i)
-    } <span class="cf">else</span> {
-        Y_rejected =<span class="st"> </span><span class="kw">c</span>(Y_rejected, i)
-    }
-  }
-          
-  r =<span class="st"> </span><span class="kw">list</span>(Y_accepted, Y_rejected)
-  <span class="kw">return</span> (r)
-}</code></pre></div>
-<p><br></p>
-</div>
 <div id="metodo-hit-and-miss" class="section level2">
 <h2>Método <em>Hit and Miss</em></h2>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">hit_and_miss_method =<span class="st"> </span><span class="cf">function</span>(g, max_point, xdomain, <span class="dt">N=</span><span class="dv">100000</span>){
@@ -355,9 +262,9 @@ result =<span class="st"> </span>r[<span class="dv">1</span>]
 error =<span class="st"> </span>r[<span class="dv">2</span>]
 
 <span class="kw">print</span>(<span class="kw">paste</span>(<span class="st">&quot;Resultado de la integral --&gt;&quot;</span>, result))</code></pre></div>
-<pre><code>## [1] &quot;Resultado de la integral --&gt; 1.00210078125&quot;</code></pre>
+<pre><code>## [1] &quot;Resultado de la integral --&gt; 0.99999140625&quot;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>(<span class="kw">paste</span>(<span class="st">&quot;Error estándar --&gt;&quot;</span>, error))</code></pre></div>
-<pre><code>## [1] &quot;Error estándar --&gt; 0.00333106643534373&quot;</code></pre>
+<pre><code>## [1] &quot;Error estándar --&gt; 0.0033307267374925&quot;</code></pre>
 <p><br></p>
 <p><strong>b) <span class="math inline">\(\int_{-1}^{1} \frac{2}{\pi} \sqrt{1 - x^2} \ dx\)</span></strong></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">g =<span class="st"> </span><span class="cf">function</span> (x) (<span class="dv">2</span> <span class="op">/</span><span class="st"> </span>pi) <span class="op">*</span><span class="st"> </span><span class="kw">sqrt</span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>x<span class="op">**</span><span class="dv">2</span>)
@@ -371,9 +278,9 @@ result =<span class="st"> </span>r[<span class="dv">1</span>]
 error =<span class="st"> </span>r[<span class="dv">2</span>]
 
 <span class="kw">print</span>(<span class="kw">paste</span>(<span class="st">&quot;Resultado de la integral --&gt;&quot;</span>, result))</code></pre></div>
-<pre><code>## [1] &quot;Resultado de la integral --&gt; 1.00117371881615&quot;</code></pre>
+<pre><code>## [1] &quot;Resultado de la integral --&gt; 0.998334394631394&quot;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>(<span class="kw">paste</span>(<span class="st">&quot;Error estándar --&gt;&quot;</span>, error))</code></pre></div>
-<pre><code>## [1] &quot;Error estándar --&gt; 0.00165040950887385&quot;</code></pre>
+<pre><code>## [1] &quot;Error estándar --&gt; 0.00165664500304048&quot;</code></pre>
 <p><br></p>
 <p><strong>c) <span class="math inline">\(\int_{0}^{1} cos(\frac{\pi x}{2}) \ dx\)</span></strong></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">g =<span class="st"> </span><span class="cf">function</span> (x) <span class="kw">cos</span>((pi <span class="op">*</span><span class="st"> </span>x) <span class="op">/</span><span class="st"> </span><span class="dv">2</span>)
@@ -387,9 +294,9 @@ result =<span class="st"> </span>r[<span class="dv">1</span>]
 error =<span class="st"> </span>r[<span class="dv">2</span>]
 
 <span class="kw">print</span>(<span class="kw">paste</span>(<span class="st">&quot;Resultado de la integral --&gt;&quot;</span>, result))</code></pre></div>
-<pre><code>## [1] &quot;Resultado de la integral --&gt; 0.63666&quot;</code></pre>
+<pre><code>## [1] &quot;Resultado de la integral --&gt; 0.63433&quot;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>(<span class="kw">paste</span>(<span class="st">&quot;Error estándar --&gt;&quot;</span>, error))</code></pre></div>
-<pre><code>## [1] &quot;Error estándar --&gt; 0.00152093406957698&quot;</code></pre>
+<pre><code>## [1] &quot;Error estándar --&gt; 0.0015230083752232&quot;</code></pre>
 <p><br></p>
 <p><strong>2. Integra mediante el método de integración de Monte Carlo simulando la variable aleatoria <em>X</em> con el método de la distribución inversa:</strong></p>
 <p><strong>a) <span class="math inline">\(\int_{0}^{\infty} \sqrt{x} \ cos(x) \ e^{-x} \ dx\)</span></strong></p>
@@ -402,7 +309,7 @@ Y =<span class="st"> </span><span class="kw">g</span>(X)
 
 result =<span class="st"> </span><span class="kw">sum</span>(Y) <span class="op">/</span><span class="st"> </span>N
 <span class="kw">print</span>(<span class="kw">paste</span>(<span class="st">&quot;Resultado de la integral --&gt;&quot;</span>, result))</code></pre></div>
-<pre><code>## [1] &quot;Resultado de la integral --&gt; 0.198418301243848&quot;</code></pre>
+<pre><code>## [1] &quot;Resultado de la integral --&gt; 0.198357035187526&quot;</code></pre>
 <p><br></p>
 <p><strong>b) <span class="math inline">\(\int_{0}^{\infty} (x^2 + 3) \ sin(x) \ e^{-x} \ dx\)</span></strong></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">N =<span class="st"> </span><span class="dv">10</span><span class="op">**</span><span class="dv">5</span>
@@ -414,11 +321,11 @@ Y =<span class="st"> </span><span class="kw">g</span>(X)
 
 result =<span class="st"> </span><span class="kw">sum</span>(Y) <span class="op">/</span><span class="st"> </span>N
 <span class="kw">print</span>(<span class="kw">paste</span>(<span class="st">&quot;Resultado de la integral --&gt;&quot;</span>, result))</code></pre></div>
-<pre><code>## [1] &quot;Resultado de la integral --&gt; 1.99661327918078&quot;</code></pre>
+<pre><code>## [1] &quot;Resultado de la integral --&gt; 2.01661570937189&quot;</code></pre>
 <p><br></p>
 <p><strong>3. Integra mediante el método de integración de Monte Carlo de aceptación y rechazo simple:</strong></p>
 <p><span class="math display">\[ \int_{0}^{1} \sqrt{1 - x^2} \ dx \]</span></p>
-<p><strong>donde $ G(x) =  $ y $ f(x) = (1 - x^2) $. Compara los resultados obtenidos con el método <em>Hit and Miss</em> y Muestreo Uniforme.</strong></p>
+<p><strong>donde <span class="math inline">\(G(x) = \frac{\sqrt{1 - x^2}}{\frac{3}{2} (1 - x^2)} \ \)</span> y <span class="math inline">\(\ f(x) = \frac{3}{2}(1 - x^2)\)</span>. Compara los resultados obtenidos con el método <em>Hit and Miss</em> y Muestreo Uniforme.</strong></p>
 <p>Calculamos la integral mediante el método de aceptación y rechazo simple:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">f =<span class="st"> </span><span class="cf">function</span> (x) (<span class="dv">3</span><span class="op">/</span><span class="dv">2</span>) <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>x<span class="op">**</span><span class="dv">2</span>)
 G =<span class="st"> </span><span class="cf">function</span> (x) (<span class="kw">sqrt</span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>x<span class="op">**</span><span class="dv">2</span>)) <span class="op">/</span><span class="st"> </span>((<span class="dv">3</span><span class="op">/</span><span class="dv">2</span>) <span class="op">*</span><span class="st"> </span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>x<span class="op">**</span><span class="dv">2</span>))
@@ -433,7 +340,7 @@ Y =<span class="st"> </span><span class="kw">lapply</span>(Y_accepted, G)
 result =<span class="st"> </span><span class="kw">sum</span>(Y[[<span class="dv">1</span>]]) <span class="op">/</span><span class="st"> </span>n_accepted
 
 <span class="kw">print</span>(<span class="kw">paste</span>(<span class="st">&quot;Resultado de la integral --&gt;&quot;</span>, result))</code></pre></div>
-<pre><code>## [1] &quot;Resultado de la integral --&gt; 0.784704172339324&quot;</code></pre>
+<pre><code>## [1] &quot;Resultado de la integral --&gt; 0.784583925349097&quot;</code></pre>
 <p><br></p>
 <p>Calculamos la integral mediante el método Hit and Miss:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">g =<span class="st"> </span><span class="cf">function</span> (x) <span class="kw">sqrt</span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>x<span class="op">**</span><span class="dv">2</span>)
@@ -447,9 +354,9 @@ result =<span class="st"> </span>r[<span class="dv">1</span>]
 error =<span class="st"> </span>r[<span class="dv">2</span>]
 
 <span class="kw">print</span>(<span class="kw">paste</span>(<span class="st">&quot;Resultado de la integral --&gt;&quot;</span>, result))</code></pre></div>
-<pre><code>## [1] &quot;Resultado de la integral --&gt; 0.78503&quot;</code></pre>
+<pre><code>## [1] &quot;Resultado de la integral --&gt; 0.78409&quot;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>(<span class="kw">paste</span>(<span class="st">&quot;Error estándar --&gt;&quot;</span>, error))</code></pre></div>
-<pre><code>## [1] &quot;Error estándar --&gt; 0.00129906850897095&quot;</code></pre>
+<pre><code>## [1] &quot;Error estándar --&gt; 0.00130112594278955&quot;</code></pre>
 <p><br></p>
 <p>Calculamos la integral mediante el método de Muestreo Simple:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">g =<span class="st"> </span><span class="cf">function</span> (x) <span class="kw">sqrt</span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>x<span class="op">**</span><span class="dv">2</span>)
@@ -460,7 +367,7 @@ N =<span class="st"> </span><span class="dv">10</span><span class="op">**</span>
 result =<span class="st"> </span><span class="kw">uniform_sampling_method</span>(g, <span class="dt">xdomain=</span><span class="kw">c</span>(a, b), <span class="dt">N=</span>N)
 
 <span class="kw">print</span>(<span class="kw">paste</span>(<span class="st">&quot;Resultado de la integral --&gt;&quot;</span>, result))</code></pre></div>
-<pre><code>## [1] &quot;Resultado de la integral --&gt; 0.785391002833026&quot;</code></pre>
+<pre><code>## [1] &quot;Resultado de la integral --&gt; 0.784534324076486&quot;</code></pre>
 <p><br></p>
 <p><strong>4. Integra mediante muestreo uniforme:</strong></p>
 <p><strong>a) <span class="math inline">\(\int_{-1}^{1} \frac{2}{\pi} \sqrt{1 - x^2} \ dx\)</span></strong></p>
@@ -472,7 +379,7 @@ N =<span class="st"> </span><span class="dv">10</span><span class="op">**</span>
 result =<span class="st"> </span><span class="kw">uniform_sampling_method</span>(g, <span class="dt">xdomain=</span><span class="kw">c</span>(a, b), <span class="dt">N=</span>N)
 
 <span class="kw">print</span>(<span class="kw">paste</span>(<span class="st">&quot;Resultado de la integral --&gt;&quot;</span>, result))</code></pre></div>
-<pre><code>## [1] &quot;Resultado de la integral --&gt; 0.999873896590481&quot;</code></pre>
+<pre><code>## [1] &quot;Resultado de la integral --&gt; 0.998726618463308&quot;</code></pre>
 <p><br></p>
 <p><strong>b) <span class="math inline">\(\int_{0}^{1} cos(\frac{\pi x}{2}) \ dx\)</span></strong></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">g =<span class="st"> </span><span class="cf">function</span> (x) <span class="kw">cos</span>((pi <span class="op">*</span><span class="st"> </span>x) <span class="op">/</span><span class="st"> </span><span class="dv">2</span>)
@@ -483,7 +390,7 @@ N =<span class="st"> </span><span class="dv">10</span><span class="op">**</span>
 result =<span class="st"> </span><span class="kw">uniform_sampling_method</span>(g, <span class="dt">xdomain=</span><span class="kw">c</span>(a, b), <span class="dt">N=</span>N)
 
 <span class="kw">print</span>(<span class="kw">paste</span>(<span class="st">&quot;Resultado de la integral --&gt;&quot;</span>, result))</code></pre></div>
-<pre><code>## [1] &quot;Resultado de la integral --&gt; 0.636768726006404&quot;</code></pre>
+<pre><code>## [1] &quot;Resultado de la integral --&gt; 0.63678690518845&quot;</code></pre>
 <p><br></p>
 </div>
 

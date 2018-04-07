@@ -350,7 +350,7 @@ my_plot(Y_accepted, f, Y_rejected)
 
 <br>
 
-**5. Simula una variable aleatoria $ X \sim \beta(2.7, 6.3) $ mediante otra variable beta $ Y \sim \beta(2, 6) $ como envolvente.**
+**5. Simula una variable aleatoria $X \sim \beta(2.7, 6.3)$ mediante otra variable beta $Y \sim \beta(2, 6)$ como envolvente.**
 
 La función de densidad de una variable aleatoria $X \sim \beta(\alpha, \beta)$ viene dada por
 
@@ -361,11 +361,11 @@ donde
 $$ \Gamma(n) = (n - 1)! $$
 
 
-Para las variables aleatorias $X \sim \beta(2.7, 6.3) \ $ y $ \ Y \sim \beta(2, 6)$, sus funciones de densidad vienen dadas por
+Para las variables aleatorias $X \sim \beta(2.7, 6.3) \ $ y $\ Y \sim \beta(2, 6)$, sus funciones de densidad vienen dadas por
 
 $$ f_X(x) = \left\{ \begin{array}{ll}{129.339 \ x^{1.7} (1-x)^{5.3}} & {\text{si }}{x \in (0,1)} \\ {0} & {\text{en otro caso}} \end{array} \right. $$
 
-$$$$
+\
 
 $$ g_Y(x) = \left\{ \begin{array}{ll}{42 \ x (1-x)^5} & {\text{si }}{x \in (0,1)} \\ {0} & {\text{en otro caso}} \end{array} \right. $$
 

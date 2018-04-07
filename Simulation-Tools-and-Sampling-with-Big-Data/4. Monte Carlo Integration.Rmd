@@ -65,6 +65,11 @@ editor_options:
 
 ***  
 
+<div class="alert alert-danger">
+  <strong>Información!</strong> 
+  
+  Las funciones de <i>plot</i> y de los métodos de Aceptación-Rechazo Simple y General son las mismas que las usadas en el fichero <i>3. Acceptance-rejection method</i>. Por este motivo, se han ocultado en el HTML generado, pero se puede ver su implementación en el fichero <strong>.Rmd</strong>.
+</div>
 
 ```{r global_options, include=FALSE}
 knitr::opts_chunk$set(fig.width=9, fig.height=7, fig.align="center", echo=TRUE, 
@@ -138,11 +143,8 @@ my_plot = function(Y_accepted, f, Y_rejected){
 }
 ```
 
-<br>
 
-## Método de Aceptación-Rechazo Simple
-
-```{r}
+```{r include=FALSE}
 simple_accept_reject_method = function(f, max_point, xdomain=c(0, 1), N=100000){
   if (N < 1){
     stop("N parameter must be greater than 1.")
@@ -168,11 +170,8 @@ simple_accept_reject_method = function(f, max_point, xdomain=c(0, 1), N=100000){
 }
 ```
 
-<br>
 
-## Método de Aceptación-Rechazo General
-
-```{r}
+```{r include=FALSE}
 is_envelope_function = function(f, g, M, xdomain=c(0, 1), ...){
   if (xdomain[1] >= xdomain[2]){
     stop("First value of the xdomain must be lower than the second value.")
@@ -184,11 +183,7 @@ is_envelope_function = function(f, g, M, xdomain=c(0, 1), ...){
   
   return (sum((y_envelope * M - y_base) < 0) == 0)
 }
-```
 
-<br>
-
-```{r}
 plot_envelope_function = function(f, g, M, xdomain=c(0, 1), ...){
   if (xdomain[1] >= xdomain[2]){
     stop("First value of the xdomain must be lower than the second value.")
@@ -208,11 +203,7 @@ plot_envelope_function = function(f, g, M, xdomain=c(0, 1), ...){
           plot.title = element_text(hjust = 0.5))
   q1
 }
-```
 
-<br>
-
-```{r}
 general_accept_reject_method = function(f, g, M, distrib_func, xdomain=NULL, N=100000, ...){
   if (N < 1){
     stop("N parameter must be greater than 1.")
@@ -387,7 +378,7 @@ print(paste("Resultado de la integral -->", result))
 
 $$ \int_{0}^{1} \sqrt{1 - x^2} \ dx $$
 
-**donde $ G(x) = \frac{\sqrt{1 - x^2}}{\frac{3}{2} (1 - x^2)} $ y $ f(x) = \frac{3}{2}(1 - x^2) $. Compara los resultados obtenidos con el método *Hit and Miss* y Muestreo Uniforme.**
+**donde $G(x) = \frac{\sqrt{1 - x^2}}{\frac{3}{2} (1 - x^2)} \ $ y $\ f(x) = \frac{3}{2}(1 - x^2)$. Compara los resultados obtenidos con el método *Hit and Miss* y Muestreo Uniforme.**
 
 Calculamos la integral mediante el método de aceptación y rechazo simple:
 
