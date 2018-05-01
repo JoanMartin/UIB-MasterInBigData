@@ -1,6 +1,6 @@
 ---
-title: "Perception Index Corruption"
-subtitle: "Statistical Techniques with Fuzzy Information"
+title: "Índice de percepción de corrupción"
+subtitle: "Técnicas estadísticas con información imprecisa"
 author: "Juan José Martín Miralles"
 output:
   html_document:
@@ -80,8 +80,33 @@ library(reshape2)
 library(rworldmap)
 ```
 
+<br>
 
-### **Análisis exploratorio de los datos**
+El objetivo del proyecto es analizar el **CPI** (*Corruption Perception Index*) del 2017 con los datos proporcionados por la organización no gubernamental [Transparencia Internacional](https://www.transparency.org/news/feature/corruption_perceptions_index_2017). El CPI se define en una escala de cero (percepción de alta corrupción) a cien (percepción de ausencia de corrupción).
+
+El CPI es un índice compuesto por las siguientes 13 fuentes de datos:
+
+1) African Development Bank Country Policy and Institutional Assessment 2016
+2) Bertelsmann Stiftung Sustainable Governance Indicators 2017
+3) Bertelsmann Stiftung Transformation Index 2017-2018
+4) Economist Intelligence Unit Country Risk Service 2017
+5) Freedom House Nations in Transit 2017
+6) Global Insight Country Risk Ratings 2016
+7) IMD World Competitiveness Center World Competitiveness Yearbook Executive Opinion Survey 2017
+8) Political and Economic Risk Consultancy Asian Intelligence 2017
+9) The PRS Group International Country Risk Guide 2017
+10) World Bank Country Policy and Institutional Assessment 2017
+11) World Economic Forum Executive Opinion Survey 2017
+12) World Justice Project Rule of Law Index Expert Survey 2017-2018
+13) Varieties of Democracy (V-Dem) 2017
+
+Cada fuente de dados debe seguir una serie de características para que sea válida. Entre ellas se encuentran la cuantificación de percepción de corrupción en el sector público, cuantificar múltiples países con la misma escala, ser una institución acreditada y tener varios años de datos disponibles. Cabe mencionar que los países no tienen porqué tener información sobre todas las fuentes de datos.
+
+Cada una de estas fuente de datos se estandariza en una escala entre el 0 y el 100, donde 0 es el nivel más alto de percepción de corrupción y 100 es el nivel más bajo. Posteriormente, se calcula el CPI para cada país realizando la media de todas las fuentes de datos que tenga disponibles, con un mínimo de 3 fuentes de datos para poder ser calculado.
+
+Por último, se calcula un error estándar para cada país a partir de la desviación estándar de las fuentes de datos estandarizadas, dividido por la raíz cuadrada de número de fuentes. Este error estándar sirve para calcular un 90% de intervalo de confianza, asumiendo una distribución normal.
+
+### **Carga de datos**
 
 ```{r}
 data = read.csv('Corruption Perceptions Index - Dataset.csv', sep = ';')
@@ -102,6 +127,27 @@ str(data)
 ```
 
 <br>
+
+La variable **region** representa la región a la que pertenece cada país, siendo:
+
+* **AME**: The Americas
+* **AP**: Asia & the Pacific
+* **ECA**: Eastern Europe & Central Asia
+* **WE/EU**: Western Europe
+* **MENA**: Middle East and North Africa
+* **SSA**: Sub-Saharan Africa
+
+Las variables **african_union**, **arab_states**, **BRICS**, **EU**, **G20** y **OECD** son booleanas y representan grupos económicos o foros de los que forman parte los países.
+
+Las variables que representan el CPI, el error estándar y el número de fuentes usadas corresponden desde el año 2012 hasta el 2017. Además, para el año 2017 tenemos el intervalo de confianza mínimo (*lower_CI_2017*) y el intervalo de confianza máximo (*upper_CI_2017*) que representa el 90% de intervalo de confianza explicado anteriormente.
+
+Por último, tenemos los valores estandarizados de cada una de las 13 fuentes de datos usadas para calcular el CPI de 2017.
+
+<br>
+
+### **Análisis exploratorio de los datos**
+
+La siguiente gráfica muestra una línea temporal desde 2012 hasta 2017 del CPI de cada año de los 20 países con mayor CPI (menor percepción de corrupción) de 2017.
 
 ```{r}
 cols = c('country', 
@@ -129,6 +175,8 @@ ggplot(data_cpi_top_20_melt, aes(x=variable, y=value, color=country)) +
 
 <br>
 
+A continuación, se muestra una línea temporal desde 2012 hasta 2017 del CPI de cada año de los 20 países con menor CPI (mayor percepción de corrupción) de 2017.
+
 ```{r}
 data_cpi_top_20 = head(data_cpi[sort(data_cpi$`2017`, decreasing = FALSE, index.return=TRUE)$ix, ], 20)
 data_cpi_top_20_melt = melt(data_cpi_top_20, id.vars='country')
@@ -144,6 +192,10 @@ ggplot(data_cpi_top_20_melt, aes(x=variable, y=value, color=country)) +
 ```
 
 <br>
+
+Entre las dos gráficas, se puede apreciar como los países con mayor CPI son regulares año tras año y se mantienen alrededor de las mismas posiciones, mientras que los países con menor CPI son irregulares y cambian de posición continuamente, aunque se mantienen con puntuaciones similares.
+
+La siguiente gráfica muestra una comparación entre la media de CPI y el número de fuentes usadas de cada uno de los años para cada región.
 
 ```{r}
 CPI_score_cols = c('CPI_score_2012',
@@ -200,6 +252,10 @@ grid.arrange(g1, g2, nrow = 1)
 
 <br>
 
+Se puede apreciar una correlación alta entre el CPI y número de fuentes usadas en el cálculo. De media, Europa es la región que mayor CPI tiene en todos los años y la que mayor número de fuentes tiene disponibles. América y Asia/Pacífico están en segunda posición mostrando media muy semblantes. Un caso a analizar es el del Este de Europa/Centro Asia, ya que tiene una baja media de CPI pero con número de fuentes usadas parecido al de Asia/Pacífico y por debajo que América. Estos países tendrán un bajo error estándar ya que se han usado bastantes fuentes para realizar el cálculo.
+
+La siguiente gráfica muestra lo mismo que la anterior, pero por cada grupo económico o foro en el que forman parte los países.
+
 ```{r}
 # Calculate mean por each economic group
 african_union = sapply(data[data$african_union == TRUE, cols], mean)
@@ -241,7 +297,32 @@ grid.arrange(g1, g2, nrow = 1)
 
 <br>
 
+En este caso se aprecia aún más que a mayor número de fuentes usadas, mayor CPI, sobre todo en EU, G20 y OECD, los cuales forman parte los países con menor percepción de corrupción y más transparencia. No obstante, BRICS, formada por Brasil, Rusia, India, China y Sudáfrica, es posible que tenga un mayor número de fuentes disponibles por ser una asociación económica-comercial de las economías nacionales emergentes más importantes del mundo y tengan una mayor transparencia, a pesar de ser países con alta percepción de corrupción.
+
+La siguiente gráfica muestra la correlación que hay entre el error estándar y el número de fuentes disponibles en 2017.
+
+```{r}
+ggplot(data, aes(x = standard_error_2017, y = number_sources_2017)) + 
+  geom_point() +
+  geom_smooth(method = "loess") +
+  xlab("Standard Error 2017") + ylab("Number of sources 2017") +
+  ggtitle("Correlation between standard error and number of sources of 2017 
+          with loess smoothed fit curve") +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.title=element_blank())
+```
+
+<br>
+
+Se puede observar como, en general, los países con mayor número de fuentes son los que tienen un error estándar menor, y viceversa.
+
+<br>
+
 ### **Fuzzificación del CPI de 2017**
+
+Se ha visto que hay una relación entre el CPI, el número de fuentes usadas y el error estándar producido en el cálculo del CPI. Por este motivo, una opción es fuzzificar el CPI de 2017 mediante estas dos últimas variables. No obstante, las variables **lower_CI_2017** y **upper_CI_2017** indican un intervalo de confianza del 90% calculado a partir del error estándar, por lo que sería más conveniente usar estas variable. Por otro lado, el hecho de que se haya calculado el CPI para un país con pocas fuentes de datos, debería penalizar más que a otro país con el mismo CPI y mayor fuentes de datos. Esto se debe a que, cuantas menos fuentes, más impreciso será el CPI y mayor error se podrá cometer.
+
+Por estos motivos, las variables **lower_CI_2017** y **upper_CI_2017** se han usado para especificar el *core* del número borroso ya que, con un 90% de confianza, el CPI de un país estará dentro de ese intervalo. De esta forma, se podrá saber, además, si el error estándar de un país es alto o bajo. El *soporte* es dos veces la anchura del core. No obstante, para penalizar o beneficiar a un país según el número de fuentes disponibles, se ha aplicado a cada lado del número borroso la proporción del número de fuentes disponibles sobre el total de número de fuentes. Es decir, si un país tiene un número elevado de fuentes disponibles su lado derecho será más largo que el izquierdo, lo que dará más posibilidades de tener valores de CPI mayores que el core que menores. En cambio, si un país tiene un número de fuentes disponibles pequeño, su lado izquierdo será más largo que el derecho, pudiendo obtener un mayor número de valores por debajo del core que por encima. El cálculo para fuzzificar el CPI de cada país se realiza de la siguiente manera, siendo **aux1** el valor izquierdo del soporte, **aux2** el valor izquierdo del core, **aux3** el valor derecho del core y **aux4** el valor derecho del soporte:
 
 ```{r}
 aux1 = data$lower_CI_2017 - 
@@ -250,7 +331,26 @@ aux2 = data$lower_CI_2017
 aux3 = data$upper_CI_2017
 aux4 = data$upper_CI_2017 + 
   (2 * (data$upper_CI_2017 - data$lower_CI_2017) * (data$number_sources_2017 / 13))
+```
 
+<br>
+
+A continuación, se muestra un ejemplo con la República Checa, la cual tiene 10 fuentes disponibles sobre 13, y las Bahamas, que tiene únicamente 3 fuentes disponibles:
+
+```{r}
+fuzzy_bahamas = PiecewiseLinearFuzzyNumber(aux1[28], aux2[28], aux3[28], aux4[28])
+fuzzy_czech_republic = PiecewiseLinearFuzzyNumber(aux1[43], aux2[43], aux3[43], aux4[43])
+
+par(mfrow = c(1, 2))
+plot(fuzzy_bahamas, xlim = c(20, 90), main='Bahamas - 3 sources')
+plot(fuzzy_czech_republic, xlim = c(45, 75), main='Czech Republic - 10 sources')
+```
+
+<br>
+
+La fuzzificación del CPI de todos los países puede verse en la siguiente gráfica. La variable **fuzzy_CPI** guardará los números borrosos de todos los países para posteriores usos.
+
+```{r}
 colors = rainbow(dim(data)[1])
 fuzzy_CPI = c()
 for(i in 1:nrow(data)) {
@@ -268,7 +368,17 @@ for(i in 1:nrow(data)) {
 
 <br>
 
+Se puede observar que hay países que tienen parte del core y del soporte por debajo de 0 y por encima de 100. A pesar de que estos valores no serían válidos para el estudio crisp, en la fuzzificación sí que se tendrán en cuenta por la penalización o el beneficio que causa tener un lado del número borroso más largo que el otro. Si, posteriormente, se saca un número crisp de un número borroso y este está por debajo de 0 o por encima de 100, se dejará como 0 o 100, respectivamente.
+
+Hay un país que destaca por llegar a un valor muy por debajo de 0. Esto puede ser debido a un error estándar muy alto y pocas fuentes disponibles para calcular su CPI. Este país es Comoros y tiene un CPI de 27. Efectivamente, su error estándar es 8.87, dejando los valores del intervalo de confianza en $[12, 42]$, y el número de fuentes disponibles que tiene es 4.
+
+<br>
+
 ### **Mediana borrosa por región**
+
+Los cuartiles de números borrosos pueden calcularse a partir de funciones de distribución acumulada generadas mediante una serie de valores *delta-cuts* especificados por parámetro. Los cuartiles $Q_1$, $Q_2$ y $Q_3$ determinan los valores correspondientes al 25%, 50% y 75% de los datos, siendo $Q_2$ coincidente con la mediana. 
+
+La siguiente función **fuzzy_quantile** puede calcular el cuartil especificado por el parámetro **p**, mediante unos **delta-cuts** especificados en el parámetro **deltas**. El parámetro **fuzzy_number_list** será una lista de los números borrosos de nuestro conjunto de datos.
 
 ```{r}
 fuzzy_quantile = function(fuzzy_number_list, deltas, p) {
@@ -341,6 +451,15 @@ fuzzy_quantile = function(fuzzy_number_list, deltas, p) {
 
 <br>
 
+Primero, calculamos la mediana crisp por región. Las regiones son:
+
+* **AME**: The Americas
+* **AP**: Asia & the Pacific
+* **ECA**: Eastern Europe & Central Asia
+* **WE/EU**: Western Europe
+* **MENA**: Middle East and North Africa
+* **SSA**: Sub-Saharan Africa
+
 ```{r}
 CPI_score_cols = c('CPI_score_2017')
 
@@ -358,29 +477,19 @@ crisp_median_regions
 
 <br>
 
-```{r}
-# Get index from the original data for each region
-ame = as.integer(rownames(data[data$region == 'AME', ]))
-we_eu = as.integer(rownames(data[data$region == 'WE/EU', ]))
-ap = as.integer(rownames(data[data$region == 'AP', ]))
-eca = as.integer(rownames(data[data$region == 'ECA', ]))
-mena = as.integer(rownames(data[data$region == 'MENA', ]))
-ssa = as.integer(rownames(data[data$region == 'SSA', ]))
+Destaca la región del Oeste de Europa, con una mayor mediana de CPI. El resto de regiones tienen una mediana de CPI muy parecido.
 
-# Calculate median for each region
+A continuación, calculamos la mediana borrosa por región con unos **delta-cuts** de 0, 0.25, 0.5, 0.75 y 1, y una $p = 0.5$.
+
+```{r}
+region_list = c('AME', 'WE/EU', 'AP', 'ECA', 'MENA', 'SSA')
 deltas = c(0, 0.25, 0.5, 0.75, 1)
 p = 0.5
-median_fuzzy_CPI_ame = fuzzy_quantile(fuzzy_CPI[ame], deltas, p)
-median_fuzzy_CPI_we_eu = fuzzy_quantile(fuzzy_CPI[we_eu], deltas, p)
-median_fuzzy_CPI_ap = fuzzy_quantile(fuzzy_CPI[ap], deltas, p)
-median_fuzzy_CPI_eca = fuzzy_quantile(fuzzy_CPI[eca], deltas, p)
-median_fuzzy_CPI_mena = fuzzy_quantile(fuzzy_CPI[mena], deltas, p)
-median_fuzzy_CPI_ssa = fuzzy_quantile(fuzzy_CPI[ssa], deltas, p)
 
-median_fuzzy_regions = list(median_fuzzy_CPI_ame, median_fuzzy_CPI_we_eu, median_fuzzy_CPI_ap, 
-                         median_fuzzy_CPI_eca, median_fuzzy_CPI_mena, median_fuzzy_CPI_ssa)
-regions = c('AME', 'WE/EU', 'AP', 'ECA', 'MENA', 'SSA')
-crisp_unem_women_weight = c()
+country_index_list = lapply(region_list, function(x) as.integer(rownames(data[data$region == x, ])))
+median_fuzzy_regions = lapply(country_index_list, function(x) fuzzy_quantile(fuzzy_CPI[x], deltas, p))
+
+median_fuzzy_region_list = c()
 legend_text = c()
 colors = rainbow(length(median_fuzzy_regions))
 
@@ -400,16 +509,77 @@ for (i in 1:length(median_fuzzy_regions)) {
                                             knot.left = sort(fuzzy[[1]]),
                                             knot.right = sort(fuzzy[[2]]))
   
+  median_fuzzy_region_list = c(median_fuzzy_region_list, fuzzy_median) 
+  
   plot(fuzzy_median, add = add, col = colors[i], xlim = c(10, 90))
   points(crisp_median_regions[i, ], 1, col = colors[i], pch = 8)
-  legend_text = c(legend_text, regions[i])
+  legend_text = c(legend_text, region_list[i])
 }
 legend('topright', legend=legend_text, lty=1, col=colors)
 ```
 
 <br>
 
-### **Map comparativo del CPI crisp con el fuzzificado**
+Los puntos que aparecen en el core de las medianas borrosas representan los valores de las medianas crisp calculadas anteriormente. Se puede observar como los países del Oeste de Europa son los que mayor CPI tienen (menor percepción de corrupción) y, además, los laterales de su número borroso demuestran que la mayoría tienen un número alto de fuentes disponibles. Del resto de regiones, se aprecia como la que tiene un mayor error estándar es MENA pero con un número de fuentes disponibles de aproximadamente la mitad de las que se podrían tener. La región de África Subsahariana es la que puede llegar a tener un valor de CPI más bajo (mayor percepción de corrupción), además de tener la mayoría de sus países con pocas fuentes de datos disponibles.
+
+A continuación, calculamos el país que se encuentra a una menor distancia de la mediana de cada región mediante la función **min_fuzzy_distance**, la cual usa la función **distance** del paquete **FuzzyNumbers**:
+
+```{r}
+min_fuzzy_distance = function(fuzzy_number_list, fuzzy_number) {
+  fuzzy_distance = c()
+  
+  for(i in 1:length(fuzzy_number_list)) {
+    fuzzy_distance = c(fuzzy_distance, distance(fuzzy_number_list[[i]], fuzzy_number))
+  }
+  
+  min_distance = min(fuzzy_distance)
+  names(min_distance) = which(fuzzy_distance == min_distance)
+  return(min_distance)
+}
+
+min_country_index_list = c()
+for (i in 1:length(median_fuzzy_region_list)) {
+  country_index = country_index_list[[i]]
+  fuzzy_median = median_fuzzy_region_list[[i]]
+  
+  min_distance = min_fuzzy_distance(fuzzy_CPI[country_index], fuzzy_median)
+  
+  min_country_index_list = c(min_country_index_list, 
+                             country_index_list[[i]][as.integer(names(min_distance))])
+}
+
+data[min_country_index_list, c('region', 'country')]
+```
+
+<br>
+
+La siguiente gráfica muestra que los países más cercanos a la mediana de su respectiva región ocupan la misma posición que la gráfica anterior: 
+
+```{r}
+legend_text = c()
+colors = rainbow(length(median_fuzzy_regions))
+
+for (i in 1:length(min_country_index_list)) {
+  add = TRUE
+  if (i == 1) {
+    add = FALSE
+  }
+  fuzzy = fuzzy_CPI[[min_country_index_list[i]]]
+  crisp_CPI = data[min_country_index_list[i], 'CPI_score_2017']
+  country = as.character(data[min_country_index_list[i], 'country'])
+  
+  plot(fuzzy, add = add, col = colors[i], xlim = c(10, 90))
+  points(crisp_CPI, 1, col = colors[i], pch = 8)
+  legend_text = c(legend_text, country)
+}
+legend('topright', legend=legend_text, lty=1, col=colors)
+```
+
+<br>
+
+### **Mapa comparativo del CPI crisp con el CPI fuzzificado**
+
+La siguiente tabla muestra la comparación entre el CPI crisp de 2017 y el CPI desfuzzificado mediante la función **expectedValue**:
 
 ```{r}
 fuzzy_CPI_score_2017 = sapply(fuzzy_CPI, expectedValue)
@@ -418,6 +588,8 @@ data[c('country', 'CPI_score_2017', 'fuzzy_CPI_score_2017')]
 ```
 
 <br>
+
+A partir de esta desfuzzificación, la cual beneficiará o perjudicará a algunos países por cómo se han fuzzificado anteriormente (según el número de fuentes que tengan disponibles y su error estándar). Por lo tanto, se muestra una comparación entre el número crisp y el número desfuzzificado para comprobar cómo ha afectado la fuzzificación del CPI de 2017 de cada país.
 
 ```{r, results='hide', fig.height=12}
 par(mfrow = c(2, 1), mai = c(0.1, 0.2, 0.2, 0.2))
@@ -454,3 +626,9 @@ do.call(addMapLegend,
           legendMar=5))
 ```
 
+<br>
+
+En esta comparación puede observarse como algunos países de Norte-América y el Oeste de Europa mejoran su CPI cuando se fuzzifica debido a que deben de tener un número alto de fuentes disponibles o un error estándar bajo. No obstante, no se aprecia fácilmente si algún país a empeorado sus resultados ya que se pintan diferentes colocres en intervalos de 5 puntos de CPI, por lo que para apreciar un cambio, debería cambiar de rango o haber una diferencia alta. Esto significa que, al haber desfuzzificado el CPI, no ha habido grandes cambios con respecto al valor crisp. A pesar de esto, la fuzzificación del CPI del modo en el que se ha hecho ha servido para saber fácilmente si un país tiene un error estándar o un número de fuentes disponibles alto o bajo.
+
+<br>
+<br>
