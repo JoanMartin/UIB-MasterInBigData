@@ -81,7 +81,7 @@ library(rworldmap)
 ```
 
 
-### Análisis exploratorio de los datos
+### **Análisis exploratorio de los datos**
 
 ```{r}
 data = read.csv('Corruption Perceptions Index - Dataset.csv', sep = ';')
@@ -93,12 +93,6 @@ data$G20 = as.logical(data$G20)
 data$OECD = as.logical(data$OECD)
 
 head(data)
-```
-
-<br>
-
-```{r}
-summary(data)
 ```
 
 <br>
@@ -126,8 +120,11 @@ data_cpi_top_20_melt = melt(data_cpi_top_20, id.vars='country')
 ggplot(data_cpi_top_20_melt, aes(x=variable, y=value, color=country)) + 
   geom_point() +
   geom_line(aes(group=country)) +
+  xlab("Year") + ylab("CPI") +
   scale_color_discrete(name="Countries",
-                       breaks=data_cpi_top_20$country)
+                       breaks=data_cpi_top_20$country) +
+  ggtitle("20 countries with higher CPI in 2017") +
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
 <br>
@@ -139,8 +136,11 @@ data_cpi_top_20_melt = melt(data_cpi_top_20, id.vars='country')
 ggplot(data_cpi_top_20_melt, aes(x=variable, y=value, color=country)) + 
   geom_point() +
   geom_line(aes(group=country)) +
+  xlab("Year") + ylab("CPI") +
   scale_color_discrete(name="Countries",
-                       breaks=data_cpi_top_20$country)
+                       breaks=data_cpi_top_20$country) +
+  ggtitle("20 countries with lower CPI in 2017") +
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
 <br>
@@ -160,6 +160,7 @@ number_sources_cols = c('number_sources_2012',
                         'number_sources_2017')
 cols = c(CPI_score_cols, number_sources_cols)
 
+# Calculate mean por each region
 ame = sapply(data[data$region == 'AME', cols], mean)
 we_eu = sapply(data[data$region == 'WE/EU', cols], mean)
 ap = sapply(data[data$region == 'AP', cols], mean)
@@ -170,6 +171,7 @@ ssa = sapply(data[data$region == 'SSA', cols], mean)
 regions = rbind(ame, we_eu, ap, eca, mena, ssa)
 rownames(regions) = c('AME', 'WE/EU', 'AP', 'ECA', 'MENA', 'SSA')
 
+# Melt dataframes by region
 cpi_score_df = regions[, CPI_score_cols]
 colnames(cpi_score_df) = c('2012', '2013', '2014', '2015', '2016', '2017')
 cpi_score_df_melt = melt(cpi_score_df, id.vars=rownames)
@@ -178,6 +180,7 @@ number_sources_df = regions[, number_sources_cols]
 colnames(number_sources_df) = c('2012', '2013', '2014', '2015', '2016', '2017')
 number_sources_df_melt = melt(number_sources_df, id.vars=rownames)
          
+# Plot comparative between CPI and number of sources
 g1 = ggplot(cpi_score_df_melt, aes(x=Var1, y=value, fill=as.factor(Var2))) + 
   geom_bar(aes(group=Var2), stat = "identity", position = "dodge") +
   xlab("Regions") + ylab("Mean CPI") +
@@ -198,6 +201,7 @@ grid.arrange(g1, g2, nrow = 1)
 <br>
 
 ```{r}
+# Calculate mean por each economic group
 african_union = sapply(data[data$african_union == TRUE, cols], mean)
 arab_states = sapply(data[data$arab_states == TRUE, cols], mean)
 BRICS = sapply(data[data$BRICS == TRUE, cols], mean)
@@ -208,6 +212,7 @@ OECD = sapply(data[data$OECD == TRUE, cols], mean)
 economic_groups = rbind(african_union, arab_states, BRICS, EU, G20, OECD)
 rownames(economic_groups) = c('African Union', 'Arab States', 'BRICS', 'EU', 'G20', 'OECD')
 
+# Melt dataframes by economic group
 cpi_score_df = economic_groups[, CPI_score_cols]
 colnames(cpi_score_df) = c('2012', '2013', '2014', '2015', '2016', '2017')
 cpi_score_df_melt = melt(cpi_score_df, id.vars=rownames)
@@ -216,6 +221,7 @@ number_sources_df = economic_groups[, number_sources_cols]
 colnames(number_sources_df) = c('2012', '2013', '2014', '2015', '2016', '2017')
 number_sources_df_melt = melt(number_sources_df, id.vars=rownames)
          
+# Plot comparative between CPI and number of sources
 g1 = ggplot(cpi_score_df_melt, aes(x=Var1, y=value, fill=as.factor(Var2))) + 
   geom_bar(aes(group=Var2), stat = "identity", position = "dodge") +
   xlab("Economic groups") + ylab("Mean CPI") +
@@ -235,44 +241,19 @@ grid.arrange(g1, g2, nrow = 1)
 
 <br>
 
-### Fuzzificación básica
+### **Fuzzificación del CPI de 2017**
 
 ```{r}
-aux1 = data$lower_CI_2017
-aux2 = data$CPI_score_2017 - data$standard_error_2017
-aux3 = data$CPI_score_2017 + data$standard_error_2017
-aux4 = data$upper_CI_2017
-
-colors = rainbow(dim(data)[1])
-fuzzyNumbers = c()
-for(i in 1:nrow(data)) {
-  fuzzy = PiecewiseLinearFuzzyNumber(aux1[i], aux2[i], aux3[i], aux4[i])
-  fuzzyNumbers = c(fuzzyNumbers, fuzzy)
-  
-  add = TRUE
-  if (i == 1) {
-    add = FALSE
-  }
-  
-  plot(fuzzy, add = add, col = colors[i], xlim = c(0, 100))
-}
-```
-
-<br>
-
-### Fuzzificación
-
-```{r}
-aux1 = data$lower_CI_2017 - (2 * (data$upper_CI_2017 - data$lower_CI_2017) * (1 - (data$number_sources_2017 / 13)))
+aux1 = data$lower_CI_2017 - 
+  (2 * (data$upper_CI_2017 - data$lower_CI_2017) * (1 - (data$number_sources_2017 / 13)))
 aux2 = data$lower_CI_2017
 aux3 = data$upper_CI_2017
-aux4 = data$upper_CI_2017 + (2 * (data$upper_CI_2017 - data$lower_CI_2017) * (data$number_sources_2017 / 13))
+aux4 = data$upper_CI_2017 + 
+  (2 * (data$upper_CI_2017 - data$lower_CI_2017) * (data$number_sources_2017 / 13))
 
 colors = rainbow(dim(data)[1])
 fuzzy_CPI = c()
 for(i in 1:nrow(data)) {
-  print(data$country[i])
-  print(i)
   fuzzy = PiecewiseLinearFuzzyNumber(aux1[i], aux2[i], aux3[i], aux4[i])
   fuzzy_CPI = c(fuzzy_CPI, fuzzy)
   
@@ -281,17 +262,17 @@ for(i in 1:nrow(data)) {
     add = FALSE
   }
   
-  plot(fuzzy, add = add, col = colors[i], xlim = c(-35, 130))
+  plot(fuzzy, add = add, col = colors[i], xlim = c(-35, 110))
 }
 ```
 
 <br>
 
-### Mediana borrosa
+### **Mediana borrosa por región**
 
 ```{r}
 fuzzy_quantile = function(fuzzy_number_list, deltas, p) {
-  # Calculamos los alpha-cuts de todos los números borrosos
+  # Calculate delta-cuts of all fuzzy numbers
   alphacut_list = c()
   for(d in 1:length(deltas)) {
     alphacut = c()
@@ -306,7 +287,7 @@ fuzzy_quantile = function(fuzzy_number_list, deltas, p) {
   freq_dist_U = matrix(rep(0, len = length(deltas) * length(fuzzy_number_list) * 2), 
                        nrow = length(deltas))
   
-  # Iterate over alpha-cuts
+  # Iterate over delta-cuts
   for (i in 1:(length(fuzzy_number_list) * 2)) { 
     # Iterate over the fuzzy numbers
     for (fuzzy_num in 1:length(fuzzy_number_list)) { 
@@ -358,13 +339,7 @@ fuzzy_quantile = function(fuzzy_number_list, deltas, p) {
 }
 ```
 
-```{r}
-delta = 0.5
-p = 0.5
-
-median_fuzzy_CPI = fuzzy_quantile(fuzzy_CPI, delta, p)
-median_fuzzy_CPI
-```
+<br>
 
 ```{r}
 CPI_score_cols = c('CPI_score_2017')
@@ -376,120 +351,106 @@ eca = median(data[data$region == 'ECA', 'CPI_score_2017'])
 mena = median(data[data$region == 'MENA', 'CPI_score_2017'])
 ssa = median(data[data$region == 'SSA', 'CPI_score_2017'])
 
-regions = rbind(ame, we_eu, ap, eca, mena, ssa)
-rownames(regions) = c('AME', 'WE/EU', 'AP', 'ECA', 'MENA', 'SSA')
-regions
+crisp_median_regions = rbind(ame, we_eu, ap, eca, mena, ssa)
+rownames(crisp_median_regions) = c('AME', 'WE/EU', 'AP', 'ECA', 'MENA', 'SSA')
+crisp_median_regions
 ```
 
+<br>
 
 ```{r}
-tt = as.integer(rownames(data[data$region == 'SSA', ]))
+# Get index from the original data for each region
+ame = as.integer(rownames(data[data$region == 'AME', ]))
+we_eu = as.integer(rownames(data[data$region == 'WE/EU', ]))
+ap = as.integer(rownames(data[data$region == 'AP', ]))
+eca = as.integer(rownames(data[data$region == 'ECA', ]))
+mena = as.integer(rownames(data[data$region == 'MENA', ]))
+ssa = as.integer(rownames(data[data$region == 'SSA', ]))
 
-delta = 0.5
+# Calculate median for each region
+deltas = c(0, 0.25, 0.5, 0.75, 1)
 p = 0.5
+median_fuzzy_CPI_ame = fuzzy_quantile(fuzzy_CPI[ame], deltas, p)
+median_fuzzy_CPI_we_eu = fuzzy_quantile(fuzzy_CPI[we_eu], deltas, p)
+median_fuzzy_CPI_ap = fuzzy_quantile(fuzzy_CPI[ap], deltas, p)
+median_fuzzy_CPI_eca = fuzzy_quantile(fuzzy_CPI[eca], deltas, p)
+median_fuzzy_CPI_mena = fuzzy_quantile(fuzzy_CPI[mena], deltas, p)
+median_fuzzy_CPI_ssa = fuzzy_quantile(fuzzy_CPI[ssa], deltas, p)
 
-median_fuzzy_CPI = fuzzy_quantile(fuzzy_CPI[tt], delta, p)
-median_fuzzy_CPI
+median_fuzzy_regions = list(median_fuzzy_CPI_ame, median_fuzzy_CPI_we_eu, median_fuzzy_CPI_ap, 
+                         median_fuzzy_CPI_eca, median_fuzzy_CPI_mena, median_fuzzy_CPI_ssa)
+regions = c('AME', 'WE/EU', 'AP', 'ECA', 'MENA', 'SSA')
+crisp_unem_women_weight = c()
+legend_text = c()
+colors = rainbow(length(median_fuzzy_regions))
+
+# Plot median of the fuzzy numbers with the respective crisp number
+for (i in 1:length(median_fuzzy_regions)) {
+  add = TRUE
+  if (i == 1) {
+    add = FALSE
+  }
+  fuzzy = median_fuzzy_regions[[i]]
+  fuzzy_median = PiecewiseLinearFuzzyNumber(fuzzy[1, "L"],
+                                            fuzzy[length(deltas), "L"],
+                                            fuzzy[length(deltas), "U"],
+                                            fuzzy[1, "U"],
+                                            knot.n = length(deltas),
+                                            knot.alpha = sort(deltas),
+                                            knot.left = sort(fuzzy[[1]]),
+                                            knot.right = sort(fuzzy[[2]]))
+  
+  plot(fuzzy_median, add = add, col = colors[i], xlim = c(10, 90))
+  points(crisp_median_regions[i, ], 1, col = colors[i], pch = 8)
+  legend_text = c(legend_text, regions[i])
+}
+legend('topright', legend=legend_text, lty=1, col=colors)
 ```
-
 
 <br>
 
-### Reducción de las variables existentes
+### **Map comparativo del CPI crisp con el fuzzificado**
 
 ```{r}
-data_sources = c('world_bank_CPIA', 
-                 'world_economic_forum_EOS', 
-                 'global_insight_country_risk_ratings',
-                 'bertelsmann_foundation_transformation_index',
-                 'african_development_bank_CPIA',
-                 'IMD_world_competitiveness_yearbook',
-                 'bertelsmann_foundation_sustainable_governance_index',
-                 'world_justice_project_rule_of_law_index',
-                 'PRS_international_country_risk_guide',
-                 'varieties_of_democracy_project',
-                 'economist_intelligence_unit_country_ratings',
-                 'freedom_house_nations_in_transit_ratings',
-                 'PERC_asia_risk_guide')
-
-zero_counter = apply(data[data_sources], 2, function(x) length(which(x == 0))/length(x))
-data_sources_selected = colnames(data[data_sources])[zero_counter <= 0.5]
-data_sources_selected
+fuzzy_CPI_score_2017 = sapply(fuzzy_CPI, expectedValue)
+data['fuzzy_CPI_score_2017'] = round(fuzzy_CPI_score_2017)
+data[c('country', 'CPI_score_2017', 'fuzzy_CPI_score_2017')]
 ```
 
 <br>
 
-```{r}
-basic_columns = c('country',
-                  'ISO3',
-                  'region',
-                  'african_union',
-                  'arab_states',
-                  'BRICS',
-                  'EU',
-                  'G20',
-                  'OECD',
-                  'CPI_score_2017',
-                  'standard_error_2017',
-                  'lower_CI_2017',
-                  'upper_CI_2017',
-                  'number_sources_2017')
+```{r, results='hide', fig.height=12}
+par(mfrow = c(2, 1), mai = c(0.1, 0.2, 0.2, 0.2))
 
-data_sources_df = data[c(basic_columns, data_sources_selected)]
-is.na(data_sources_df[data_sources_selected]) = data_sources_df[data_sources_selected] == 0
-data_sources_df['new_CPI'] = round(rowMeans(data_sources_df[data_sources_selected], na.rm=TRUE))
-
-data_sources_df['n_na'] = apply(data_sources_df[data_sources_selected], 1, function(x) sum(is.na(x)))
-```
-
-
-```{r}
-basic_columns = c('country',
-                  'ISO3',
-                  'region',
-                  'african_union',
-                  'arab_states',
-                  'BRICS',
-                  'EU',
-                  'G20',
-                  'OECD',
-                  'CPI_score_2017',
-                  'standard_error_2017',
-                  'lower_CI_2017',
-                  'upper_CI_2017',
-                  'number_sources_2017')
-
-data_sources_df = data[c(basic_columns, data_sources)]
-is.na(data_sources_df[data_sources]) = data_sources_df[data_sources] == 0
-data_sources_df['new_CPI'] = rowMeans(data_sources_df[data_sources], na.rm=TRUE)
-
-data_sources_df['n_na'] = 13 - apply(data_sources_df[data_sources_selected], 1, function(x) sum(is.na(x)))
-```
-
-```{r}
-# View(data_sources_df[c('country', 'CPI_score_2017', 'new_CPI', 'n_na')])
-```
-
-
-
-
-### Map
-```{r}
 n = joinCountryData2Map(data, joinCode="ISO3", nameJoinColumn="ISO3")
-mapParams = mapCountryData(n, 
-                           nameColumnToPlot="CPI_score_2017", 
-                           mapTitle="Crisp Corruption Perceptions Index 2017",
-                           missingCountryCol="snow2",
-                           colourPalette=c('darkred', 'red', 'yellow'),
-                           addLegend=FALSE,
-                           numCats=10,
-                           catMethod=seq(from = 0, to = 100, by = 10))
+
+# Crisp CPI map
+map_params = mapCountryData(n, 
+                            nameColumnToPlot="CPI_score_2017", 
+                            mapTitle="Crisp Corruption Perception Index 2017",
+                            missingCountryCol="snow2",
+                            colourPalette=c('darkred', 'red', 'yellow'),
+                            borderCol='white',
+                            addLegend=FALSE,
+                            numCats=10,
+                            catMethod=seq(from = 0, to = 100, by = 5))
+
+# Fuzzy CPI map
+map_params = mapCountryData(n, 
+                            nameColumnToPlot="fuzzy_CPI_score_2017", 
+                            mapTitle="Fuzzy Corruption Perception Index 2017",
+                            missingCountryCol="snow2",
+                            colourPalette=c('darkred', 'red', 'yellow'),
+                            borderCol='white',
+                            addLegend=FALSE,
+                            numCats=10,
+                            catMethod=seq(from = 0, to = 100, by = 5))
+# Create legend
 do.call(addMapLegend,
-        c(mapParams,
+        c(map_params,
           legendLabels="all",
           legendWidth=0.5,
           legendIntervals="data",
-          legendMar = 5))
+          legendMar=5))
 ```
-
 
