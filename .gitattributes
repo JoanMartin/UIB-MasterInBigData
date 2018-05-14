@@ -1,0 +1,3 @@
+python-igraph-year2015-modified/* linguist-vendored
+wiki-small/* linguist-vendored
+*.html linguist-detectable=false
