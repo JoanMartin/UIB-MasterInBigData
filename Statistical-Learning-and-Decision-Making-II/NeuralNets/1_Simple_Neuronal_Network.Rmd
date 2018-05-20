@@ -1,0 +1,274 @@
+---
+title: "Aprendizaje Estadístico y Toma de Decisiones II"
+subtitle: "Red Neuronal Simple"
+author: "Juan José Martín Miralles"
+output:
+  html_document:
+    number_sections: false
+    highlight: tango
+    toc: yes
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+---
+
+
+
+<style type="text/css">
+
+  body {
+    background-color: #f6f7fd; 
+  }
+  
+  a:link {
+    color: #0174DF;
+  }
+  
+  code.r {
+    font-size: 14px;
+  } 
+  
+  div pre {
+    background-color:#E0ECF8;
+  }
+  pre {
+    font-size: 14px 
+  }
+ 
+  p {
+    text-align: justify;
+  }
+ 
+    
+  h1, h2, h3, h4, h5, h6 {
+    color: #737aaa;
+  }
+
+  th {  
+    background-color:#737aaa;
+    color: #FAFAFA;
+    padding:5px;
+  }
+  
+  td {
+    font-size: 11.5pt;
+  } 
+  
+  tr:nth-child(even){
+    background: white;
+  }
+  
+  tr:nth-child(odd){ 
+    background-color: #EFF8FB;
+  }
+</style>
+
+***     
+
+<br/>
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.align="center", echo=TRUE, warning=FALSE, message=FALSE)
+```
+
+
+**A typical neural network application is classification. Consider the simple example of classifying trucks given their masses (in tons) and lengths (in meters):**
+
+| Mass | Length | Class |
+|---|---|---|
+| 10 | 6 | lorry |
+| 20 | 5 | lorry |
+| 5 | 4 | van |
+| 2 | 5 | van |
+| 2 | 5 | van |
+| 3 | 6 | lorry |
+| 10 | 7 | lorry |
+| 15 | 8 | lorry |
+| 5 | 9 | lorry |
+
+**How do we construct a neural network that can classify any Lorry and Van? Train the network using the data provided. How would you classify a vehicle with mass 6 and length 6?**
+
+<br>
+
+Creamos un dataframe con los datos de la tabla del enunciado.
+
+```{r}
+mass = c(10, 20, 5, 2, 2, 3, 10, 15, 5) 
+length = c(6, 5, 4, 5, 5, 6, 7, 8, 9) 
+class = c("lorry", "lorry", "van", "van", "van", "lorry", "lorry", "lorry", "lorry") 
+df = data.frame(mass, length, class)
+
+df
+```
+
+<br>
+
+***
+
+# Modelo binario
+
+Creamos la regla de propagación que será:
+
+$$ net_k = \sum_{i=1}^n {w_{ik}x_i}  $$
+
+donde $w_{ik}$ es el vector de pesos y $x_i$ es el vector de entrada del perceptrón.
+
+```{r}
+weighted.sum = function(a, b) {
+  sum(a * b) 
+}
+```
+
+<br>
+
+La función de transferencia $F_k$ devolverá un 0 en caso de que $net_k$ sea menor que 0, y un 1 en caso contrario.
+
+```{r}
+binary.step = function(a, b) {
+  output = apply(a, 1, weighted.sum, b)   
+  return(ifelse(output < 0, 0, 1))
+}
+```
+
+<br>
+
+Creo la función para realizar la regla de aprendizaje del perceptrón y que aprenda a clasificar. Se basa en ir cambiando los pesos del vector $W$, que inicialmente los pondré a 0, hasta que no se produzca ningún error de clasificación del conjunto de entrenamiento.
+
+```{r}
+p.binary = function(a, d, learning.rate=1) {  
+  W = c(0, 0, 0) # initialize W
+  k = 0 # count updates
+  made.mistake = TRUE # to enter the while loop (error!=0)
+  while (made.mistake) {
+    made.mistake = FALSE
+    yk = binary.step(a, W)
+    for (i in 1:nrow(a)) {
+      if (d[i] != yk[i]) {
+        W = W + learning.rate * (d[i] - yk[i]) * a[i,]
+        k = k + 1
+        made.mistake = TRUE
+        break
+      }
+    }
+  }
+  return(list(W = W, updates = k))	
+}
+```
+
+<br>
+
+A continuación, entrenamos el modelo. Primero, cambiamos las variables cualitativas, *lorry* y *van*, a cuantitativas con 0 y 1, respectivamente.
+
+```{r}
+df$class_num = ifelse(df$class == 'lorry', 0, 1)
+
+X_train = cbind(1, df$mass, df$length)
+y_train = df$class_num
+
+pred_class_binary  = p.binary(X_train, y_train)
+pred_class_binary
+```
+
+<br>
+
+Finalmente, comprobamos cómo queda clasificado nuestro conjunto de datos.
+
+```{r}
+plot(df$mass, df$length, pch = 21,
+     col = factor(df$class_num), 
+     xlab = "Truck mass", ylab = "Truck length")
+
+abline(-pred_class_binary$W[1] / pred_class_binary$W[3], -pred_class_binary$W[2] / pred_class_binary$W[3], col = "green")
+```
+
+<br>
+
+***
+
+# Modelo bipolar
+
+Usando la misma regla de propagación, se crea una nueva función de transferencia $F_k$ que, en este caso, devolverá un -1 en caso de que $net_k$ sea menor que 0, y un 1 en caso contrario.
+
+```{r}
+bipolar.step = function(a, b) {
+  output = apply(a, 1, weighted.sum, b)   
+  return(ifelse(output < 0, -1, +1))
+}
+```
+
+<br>
+
+La función para enseñar al perceptrón a clasificar es la misma que para el modelo binario, solo que usa la nueva función de transferencia.
+
+```{r}
+p.bipolar = function(a, d, learning.rate=1) {
+  W = c(0, 0, 0) # initialize W
+  k = 0 # count updates
+  made.mistake = TRUE # to enter the while loop (error!=0)
+  while (made.mistake) {
+    made.mistake = FALSE
+    yk = bipolar.step(a, W)
+    for (i in 1:nrow(a)) {
+      if (d[i] != yk[i]) {
+        W = W + learning.rate * (d[i] - yk[i]) * a[i,]
+        k = k + 1
+        made.mistake = TRUE
+        break
+      }
+    }
+  }
+  return(list(W = W, updates = k))	
+}
+```
+
+<br>
+
+A continuación, entrenamos el modelo. En este caso, hay que cambiar las variables cualitativas, *lorry* y *van*, a cuantitativas con -1 y 1, respectivamente.
+
+```{r}
+df$class_num = ifelse(df$class == 'lorry', -1, 1)
+
+X_train = cbind(1, df$mass, df$length)
+y_train = df$class_num
+
+pred_class_bipolar  = p.bipolar(X_train, y_train)
+pred_class_bipolar
+```
+
+<br>
+
+Finalmente, comprobamos cómo queda clasificado nuestro conjunto de datos.
+
+```{r}
+plot(df$mass, df$length, pch = 21,
+     col = factor(df$class_num), 
+     xlab = "Truck mass", ylab = "Truck length")
+
+abline(-pred_class_bipolar$W[1] / pred_class_bipolar$W[3], -pred_class_bipolar$W[2] / pred_class_bipolar$W[3], col = "red")
+```
+
+<br>
+
+Podemos observar por las gráficas, que ambos modelos han dado prácticamente los mismos resultados.
+
+<br>
+
+***
+
+# Clasificación de nuevos registros
+
+Comprobamos cómo el modelo entrenado clasificaría un nuevo registro que tiene masa 6 y longitud 6. Para ello, usamos las funciones de transferencia definidas anteriormente, a las que les pasamos por parámetro el nuevo registro y los pesos que hemos obtenido con el entrenamiento del percentón en ambos modelos.
+
+```{r}
+new_df = cbind(1, 6, 6)
+
+binary.step(new_df, pred_class_binary$W)
+bipolar.step(new_df, pred_class_bipolar$W)
+```
+
+<br>
+
+Con ambos modelos, el resultado del nuevo registro de masa 6 y longitud 6 ha sido clasificado como **lorry**.
+
+<br>
+
