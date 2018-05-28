@@ -1,0 +1,768 @@
+---
+title: "Descubrimiento de subgrupos en el censo de EEUU en 1990"
+subtitle: "Nuevas tendencias en minería de datos"
+author: "Juan José Martín Miralles"
+output:
+  html_document:
+    number_sections: false
+    highlight: tango
+    toc: yes
+    df_print: paged
+editor_options: 
+  chunk_output_type: inline
+---
+
+
+
+<style type="text/css">
+
+  body {
+    background-color: #f6f7fd; 
+  }
+  
+  a:link {
+    color: #0174DF;
+  }
+  
+  code.r {
+    font-size: 14px;
+  } 
+  
+  div pre {
+    background-color:#E0ECF8;
+  }
+  pre {
+    font-size: 14px 
+  }
+ 
+  p {
+    text-align: justify;
+  }
+ 
+    
+  h1, h2, h3, h4, h5, h6 {
+    color: #737aaa;
+  }
+
+  th {  
+    background-color:#737aaa;
+    color: #FAFAFA;
+    padding:5px;
+  }
+  
+  td {
+    font-size: 11.5pt;
+  } 
+  
+  tr:nth-child(even){
+    background: white;
+  }
+  
+  tr:nth-child(odd){ 
+    background-color: #EFF8FB;
+  }
+</style>
+
+***
+
+```{r global_options, include=FALSE}
+options(java.parameters = "-Xmx4g")
+knitr::opts_chunk$set(fig.width=8, fig.height=8, fig.align="center", echo=TRUE, 
+                      warning=FALSE, message=FALSE, autodep=TRUE, cache=TRUE)
+```
+
+Cargamos los datos del fichero **USCensus1990.data.txt**:
+
+```{r get_data}
+df = read.csv("USCensus1990.data.txt", sep = ",")
+df = data.frame(lapply(df, as.factor))
+head(df)
+```
+
+<br>
+
+Las variables del dataset, con cada uno de sus niveles, se puede ver a continuación:
+
+```{r}
+str(df)
+```
+
+<br>
+
+La descripción de cada una de las anteriores variables se puede ver en los ficheros **USCensus1990-desc.html** y **USCensus1990.attributes.txt**. Además, los mapeos realizados por los autores del dataset para reducir el número de categorías de las variables que empiezan por **d** se puede encontrar en **USCensus1990.mapping.sql**.
+
+Las variables objetivo sobre las que se descubrirán los subgrupos son **el salario ganado en EEUU** (*dIncome1*), **el conocimiento para hablar en inglés** (*iEnglish*), **las personas nacidas en Europa** (*dPOB*) y **el conflicto de Corea** (*iKorean*), sobre diferentes variables, medidas de calidad y algoritmos.
+
+<br>
+
+### Paquete 'rsubgroup'
+
+A continuación, cargamos el paquete **rsubgroup**:
+
+```{r}
+library("rsubgroup")
+```
+
+La función principal de este paquete para descubrimiento de subgrupos es **DiscoverSubgroups**, la cual admite, entre otros, los siguientes parámetros:
+
+* **qf**: Función de calidad.
+
+    * **bin**: Binomial-Test
+
+    * **chi2**: Chi-Square-Test
+
+    * **lift**: Lift
+
+    * **ps**: Piatetsky-Shapiro (*por defecto*)
+
+    * **gain**: Gain
+
+    * **relgain**: Relative Gain
+
+    * **wracc**: Weighted Relative Accuracy
+
+* **method**: Algoritmo.
+
+    * **beam**: Beam-Search
+
+    * **bsd**: BSD
+
+    * **sdmap**: SD-Map (*por defecto*)
+
+    * **sdmap-dis**: SD-Map enabling internal disjunctions
+
+* **k**: Número máximo (top-k) de patrones a descubrir.
+
+* **minqual**: Calidad mínima.
+
+* **minsize**: Mínimo tamaño de un subgrupo.
+
+* **attributes**: Lista de atributos a considerar por el algoritmo. Puede ser un vector de nombres de atributos, o NULL si se desea computar todos los atributos.
+
+<br>
+
+### Medidas de calidad
+
+Dado que para el descubrimiento de subgrupos se utilizará una muestra del 10% de los registros del dataset, se han de calcular posteriormente las medidas de calidad de algunos de los subgrupos sobre todo el dataset. Para ello se usarán las medidas de calidad **WRAcc**, **Accuracy**, **Precision**, **Lift** y **Significance**. De estas, las que se pueden calcular con el paquete *rsubgroup* son **WRAcc**, **Accuracy (*p*)** y **Lift**, mientras que **Precision** y **Significance** no están implementadas en dicho paquete.
+
+<br>
+
+#### Weighted Relative Accuracy
+
+Esta medida se define como la precisión relativa ponderada de una regla:
+
+$$ WRAcc(Cond \rightarrow Targ) = p(Cond) \ (p(Targ | Cond) - p(Targ)) = \frac{n(Cond)}{n_s} \ \left(\frac{n(Cond \cap Targ)}{n(Cond)} - \frac{n(Targ)}{n_s}\right) $$
+
+<br>
+
+#### Accuracy
+
+Mide la frecuencia relativa de ejemplos que satisfacen la regla completa entre los que satisfacen solo el antecedente.
+
+$$ cnf(Cond \rightarrow Targ) = \frac{n(Cond \cap Targ)}{n(Cond)} $$
+
+<br>
+
+#### Precisión
+
+Mide el balance entre el número de ejemplos clasificados perfectamente y la "rareza" de su distribución:
+
+$$ Q_g(Cond \rightarrow Targ) = \frac{TP}{FP + g} = \frac{n(Cond \cap Targ)}{n(Cond \cap \overline{Targ}) + g} $$
+
+donde g se usa como un parámetro de generalización, configurado entre 0,5 y 100.
+
+<br>
+
+#### Lift
+
+Es una medida de correlación que mide cuan alejados están los itemsets de la independencia.
+
+* Si $lift(X \rightarrow Y) < 1$, la ocurrencia de $X$ está negativamente correlacionada con la ocurrencia de $Y$.
+
+* Si $lift(X \rightarrow Y) > 1$, entonces $X$ y $Y$ están positivamente correlacionadas.
+
+* Si $lift(X \rightarrow Y) = 1$, entonces $X$ y $Y$ son independientes.
+
+$$ lift(Cond \rightarrow Targ) = \frac{n(Cond \cup Targ)}{n(Cond) \ n(Targ)} $$
+
+<br>
+
+#### Significance
+
+Esta medida indica la significación de un descubrimiento, si es medida por la razón de verosimilitud de una regla:
+
+$$ Sig(Cond \rightarrow Targ) = 2 \sum_{k=1}^{n_c} n(Cond \cap Targ_k) \cdot log \left(\frac{n(Cond \cap Targ_k)}{n(Targ_k) \frac{n(cond)}{n_s}} \right) $$
+
+donde $n_c$ es el número de valores de la variable objetivo.
+
+<br>
+
+A continuación están implementadas las funciones para calcular cada una de las medidas de calidad:
+
+```{r}
+wracc_f = function(n_s, n_cond, n_targ, n_cond_and_targ) {
+  return((n_cond / n_s) * ((n_cond_and_targ / n_cond) - (n_targ / n_s)))
+}
+
+acc_f = function(n_cond, n_cond_and_targ) {
+  return(n_cond_and_targ / n_cond)
+}
+
+precision_f = function(n_cond_and_targ, n_cond_and_notTarg, g) {
+  return(n_cond_and_targ / (n_cond_and_notTarg + g))
+}
+
+lift_f = function(n_s, n_cond, n_targ, n_cond_or_targ) {
+  return((n_cond_or_targ / (n_s**2)) / ((n_cond / n_s) * (n_targ / n_s)))
+}
+
+significance_f = function(n_s, n_cond, t_targ_and_cond, t_targ) {
+  return(2 * sum(t_targ_and_cond * log(t_targ_and_cond / (t_targ * (n_cond / n_s)))))
+}
+```
+
+<br>
+
+### Selección de la muestra
+
+La muestra seleccionada tendrá un 10% de los registros del dataset original, escogidos al azar:
+
+```{r get_sampled_data}
+set.seed(1234)
+
+df_sampled = df[sample(nrow(df), size=nrow(df) * 0.1), ]
+nrow(df_sampled)
+```
+
+<br>
+
+El número de registros con los que se realizará el descubrimiento de subgrupos será de 245.828.
+
+<br>
+
+### Salario ganado en EEUU
+
+La variable **dIncome1** muestra el salario ganado en el año anterior (1989) de forma discreta. Sus categorías son:
+
+* **0** si $salario = 0$
+
+* **1** si $salario < 15000$
+
+* **2** si $salario < 30000$
+
+* **3** si $salario < 60000$
+
+* **4** si $salario > 60000$
+
+<br>
+
+El número de elementos de cada categoría que hay en la muestra es la siguiente:
+
+```{r}
+table(df_sampled$dIncome1)
+```
+
+<br>
+
+Los grupos que se desean descubrir son los que hacen referencia a las personas que ganaron más de 60.000 dolares (categoría 4) en el año 1989 para conocer qué las caracterizan y, posteriormente, compararlas con las que ganaron menos de 15.000 dolares (categoría 1). En este caso, la medida de calidad que se usará para descubrir los subgrupos será **ps**, y los algoritmos serán **bds** y **sdmap**. 
+
+<br>
+
+__Más de 60.000 dólares con el algoritmo **bsd**__
+
+```{r millionaire_bsd_ps}
+df_c = df_sampled[, c("dIncome1", "dAge", "iClass", "iFertil", "iCitizen", 
+                      "iRPOB", "iRspouse", "iLang1", "iMeans", "iSex", 
+                      "iMarital", "dPOB", "iYearsch")]
+
+result = DiscoverSubgroups(df_c, as.target("dIncome1", "4"), 
+                           new("SDTaskConfig", 
+                               qf="ps", 
+                               k=40,
+                               method="bsd",
+                               attributes=c("dAge", "iClass", "iFertil", "iCitizen", 
+                                            "iRPOB", "iRspouse", "iLang1", "iMeans", 
+                                            "iSex", "iMarital", "dPOB", "iYearsch")), 
+                           as.df=TRUE)
+result
+```
+
+<br>
+
+__Más de 60.000 dólares con el algoritmo **sdmap**__
+
+```{r millionaire_sdmap_ps}
+df_c = df_sampled[, c("dIncome1", "dAge", "iClass", "iFertil", "iCitizen", 
+                      "iRPOB", "iRspouse", "iLang1", "iMeans", "iSex", 
+                      "iMarital", "dPOB", "iYearsch")]
+
+result = DiscoverSubgroups(df_c, as.target("dIncome1", "4"), 
+                           new("SDTaskConfig", 
+                               qf="ps", 
+                               k=40,
+                               method="sdmap",
+                               attributes=c("dAge", "iClass", "iFertil", "iCitizen", 
+                                            "iRPOB", "iRspouse", "iLang1", "iMeans", 
+                                            "iSex", "iMarital", "dPOB", "iYearsch")), 
+                           as.df=TRUE)
+result
+```
+
+<br>
+
+Podemos observar como con ambos algoritmos aparecen los mismos subgrupos, con la misma calidad, misma *accuracy* y mismo tamaño. La mayoría de subgrupos muestran que las personas que ganaron más de 60.000 dólares en 1989 fueron hombres, casados y sin hijos. Otros subgrupos también indican que son de nacionalidad americana y que solo saben hablar inglés.
+
+Se ha cogido la regla de **iRspouse = 1**, **iSex = 0**, **iMarital = 0** y **iFertil = 0** para calcular, a continuación, las medidas de calidad con todo el dataset:
+
+```{r}
+n_s = nrow(df)
+n_targ = nrow(df[df$dIncome1 == 4, ])
+n_cond = nrow(df[(df$iRspouse == 1) & (df$iSex == 0) & 
+                   (df$iMarital == 0) & (df$iFertil == 0), ])
+t_targ = table(df$dIncome1)
+t_targ_and_cond = table(df[(df$iRspouse == 1) & (df$iSex == 0) & 
+                             (df$iMarital == 0) & (df$iFertil == 0), "dIncome1"])
+n_cond_and_targ = nrow(df[(df$dIncome1 == 4) & (df$iRspouse == 1) & 
+                            (df$iSex == 0) & (df$iMarital == 0) & (df$iFertil == 0), ])
+n_cond_and_notTarg = nrow(df[(df$dIncome1 != 4) & (df$iRspouse == 1) & 
+                               (df$iSex == 0) & (df$iMarital == 0) & (df$iFertil == 0), ])
+n_cond_or_targ = nrow(df[(df$dIncome1 == 4) | 
+                           ((df$iRspouse == 1) & (df$iSex == 0) & 
+                              (df$iMarital == 0) & (df$iFertil == 0)), ])
+g = 1
+
+wracc = wracc_f(n_s, n_cond, n_targ, n_cond_and_targ)
+acc = acc_f(n_cond, n_cond_and_targ)
+precision = precision_f(n_cond_and_targ, n_cond_and_notTarg, g)
+lift = lift_f(n_s, n_cond, n_targ, n_cond_or_targ)
+significance = significance_f(n_s, n_cond, t_targ_and_cond, t_targ)
+
+data.frame("WRAcc"=wracc, "Accuracy"=acc, "Precision"=precision, 
+           "Lift"=lift, "Significance"=significance)
+```
+
+<br>
+
+Dado este *Accuracy* bajo de 0.0694, se puede decir que las condiciones puestas se repiten bastantes veces en el dataframe, independientemente del salario que se haya ganado. Además, si observamos la precisión, las personas que ganaron más de 60.000 dólares y que tienen estas condiciones es una porción muy pequeña con respecto a las demás categorías de salario bajo las mismas condiciones. Por este motivo, aunque se pueda decir que las personas con un salario alto en EEUU son hombres, casados y sin hijos, muy probablemente las demás categorías de salario tengan el mismo subgrupo en mayor o menor medida.
+
+<br>
+
+__Menos de 15.000 dólares con el algoritmo **bsd**__
+
+```{r poor_bsd_ps}
+df_c = df_sampled[, c("dIncome1", "dAge", "iClass", "iFertil", "iCitizen", 
+                      "iRPOB", "iRspouse", "iLang1", "iMeans", "iSex", 
+                      "iMarital", "dPOB", "iYearsch")]
+
+result = DiscoverSubgroups(df_c, as.target("dIncome1", "1"), 
+                           new("SDTaskConfig", 
+                               qf="ps", 
+                               k=40,
+                               method="bsd",
+                               attributes=c("dAge", "iClass", "iFertil", "iCitizen", 
+                                            "iRPOB", "iRspouse", "iLang1", "iMeans", 
+                                            "iSex", "iMarital", "dPOB", "iYearsch")), 
+                           as.df=TRUE)
+result
+```
+
+<br>
+
+__Menos de 15.000 dólares con el algoritmo **sdmap**__
+
+```{r poor_sdmap_ps}
+df_c = df_sampled[, c("dIncome1", "dAge", "iClass", "iFertil", "iCitizen", 
+                      "iRPOB", "iRspouse", "iLang1", "iMeans", "iSex", 
+                      "iMarital", "dPOB", "iYearsch")]
+
+result = DiscoverSubgroups(df_c, as.target("dIncome1", "1"), 
+                           new("SDTaskConfig", 
+                               qf="ps", 
+                               k=40,
+                               method="sdmap",
+                               attributes=c("dAge", "iClass", "iFertil", "iCitizen", 
+                                            "iRPOB", "iRspouse", "iLang1", "iMeans", 
+                                            "iSex", "iMarital", "dPOB", "iYearsch")), 
+                           as.df=TRUE)
+result
+```
+
+<br>
+
+En el caso de las personas que cobraron menos de 15.000 dólares, se observa que la mayoría de subgrupos creados representan a mujeres, de nacionalidad americana, que trabajan en una compañía privada y solo saben inglés. Además, el **Accuracy** obtenido es de entre el 45% y 60%, lo que quiere decir que estas condiciones representan en su mayoría a las personas que cobraron menos de 15.000 dólares.
+
+Para calcular las medidas de calidad para todo el dataset, se ha cogido el subgrupo **iClass = 1**, **iSex = 1**, **iLang1 = 2**, **iCitizen = 0** y **dPOB = 0**
+
+```{r}
+n_s = nrow(df)
+n_targ = nrow(df[df$dIncome1 == 1, ])
+n_cond = nrow(df[(df$iClass == 1) & (df$iSex == 1) & (df$iLang1 == 2) & 
+                   (df$iCitizen == 0) & (df$dPOB == 0), ])
+t_targ = table(df$dIncome1)
+t_targ_and_cond = table(df[(df$iClass == 1) & (df$iSex == 1) & (df$iLang1 == 2) & 
+                             (df$iCitizen == 0) & (df$dPOB == 0), "dIncome1"])
+n_cond_and_targ = nrow(df[(df$dIncome1 == 1) & (df$iClass == 1) & (df$iSex == 1) & 
+                            (df$iLang1 == 2) & (df$iCitizen == 0) & (df$dPOB == 0), ])
+n_cond_and_notTarg = nrow(df[(df$dIncome1 != 1) & (df$iClass == 1) & (df$iSex == 1) & 
+                               (df$iLang1 == 2) & (df$iCitizen == 0) & (df$dPOB == 0), ])
+n_cond_or_targ = nrow(df[(df$dIncome1 == 1) | 
+                           ((df$iClass == 1) & (df$iSex == 1) & (df$iLang1 == 2) & 
+                              (df$iCitizen == 0) & (df$dPOB == 0)), ])
+g = 1
+
+wracc = wracc_f(n_s, n_cond, n_targ, n_cond_and_targ)
+acc = acc_f(n_cond, n_cond_and_targ)
+precision = precision_f(n_cond_and_targ, n_cond_and_notTarg, g)
+lift = lift_f(n_s, n_cond, n_targ, n_cond_or_targ)
+significance = significance_f(n_s, n_cond, t_targ_and_cond, t_targ)
+
+data.frame("WRAcc"=wracc, "Accuracy"=acc, "Precision"=precision, 
+           "Lift"=lift, "Significance"=significance)
+```
+
+<br>
+
+Como podemos observar, el **Accuracy** para todo el dataset se encuentra en un 54% con este valor objetivo y las condiciones mencionadas. Además, podemos ver como la precisión sobre pasa el 100%. Esto se debe a lo comentado anteriormente: hay más personas que cumplen estas condiciones cobrando menos de 15.000 dólares, que cobrando cualquier otra cantidad. Exactamente, hay `r n_cond_and_targ` personas que cumplen estas condiciones y que cobran menos de 15.000 dólares y `r n_cond_and_notTarg` personas que, bajo estas mismas condiciones, cobran más de 15.000 dólares. Por lo tanto, estas condiciones son muy representativas de las personas que cobraron menos de 15.000 dólares en 1989.
+
+<br>
+
+### Conocimiento para hablar inglés
+
+Se va a analizar qué características tienen las personas en EEUU que no saben hablar nada inglés. La variable **iEnglish** tiene las siguientes categorías:
+
+* **0** - Menor de 5 años / Solo habla inglés
+
+* **1** - Muy bien
+
+* **2** - Bien
+
+* **3** - No muy bien
+
+* **4** - Nada
+
+<br>
+
+El número de elementos de cada categoría es:
+
+```{r}
+table(df_sampled$iEnglish)
+```
+
+<br>
+
+El descubrimiento de estos subgrupos se realizará a partir del tipo de ciudadanía (**iCitizen**), la edad (**dAge**), la clase (**iClass**), el salario ganado (**dIncome1**), el lugar de nacimiento (**dPOB**), el número de hijos (**iFertil**) y el año de entrada a EEUU (**iImmigr**). En este caso se va a usar el algoritmo **sdmap** y se compararán las medidas de calidad **ps** y **WRAcc**.
+
+<br>
+
+__Nivel de inglés bajo mediante la medida de calidad **ps**__
+
+```{r english_sdmap_ps}
+df_c = df_sampled[, c("iEnglish", "iCitizen", "dAge", "iClass", 
+                      "dIncome1", "dPOB", "iFertil", "iImmigr")]
+
+result = DiscoverSubgroups(df_c, as.target("iEnglish", "4"), 
+                           new("SDTaskConfig", 
+                               qf="ps", 
+                               method="sdmap",
+                               attributes=c("iCitizen", "dAge", "iClass", "dIncome1", 
+                                            "dPOB", "iFertil", "iImmigr")), 
+                           as.df=TRUE)
+result
+```
+
+<br>
+
+__Nivel de inglés bajo mediante la medida de calidad **WRAcc**__
+
+```{r english_sdmap_wracc}
+df_c = df_sampled[, c("iEnglish", "iCitizen", "dAge", "iClass", 
+                      "dIncome1", "dPOB", "iFertil", "iImmigr")]
+
+result = DiscoverSubgroups(df_c, as.target("iEnglish", "4"), 
+                           new("SDTaskConfig", 
+                               qf="wracc", 
+                               method="sdmap",
+                               attributes=c("iCitizen", "dAge", "iClass", "dIncome1", 
+                                            "dPOB", "iFertil", "iImmigr")), 
+                           as.df=TRUE)
+result
+```
+
+<br>
+
+Los subgrupos extraídos para las personas que viven en EEUU que no hablan nada de inglés hacen referencia a personas extrajeras (**iCitizen = 4**), concretamente de América (**dPOB = 4**), sin contar Canadá y EEUU, y sin ningún tipo de ingresos (**dIncome1 = 0**). Su *Accuracy* es de aproximadamente un 20%, por lo que lo más probable es que las categorias de nivel de inglés 3, y en menor medida la 2, también cumplan las mismas condiciones en sus subgrupos. Por este motivo, se van a calcular las medidas de calidad para la categoría 3 y la categoría 4 de nivel de inglés bajo estas mismas condiciones y, así, se podrán comparar las dos categorías.
+
+Para la categoría 4 de nivel de inglés, las medidas de calidad son las siguientes:
+
+```{r}
+n_s = nrow(df)
+n_targ = nrow(df[df$iEnglish == 4, ])
+n_cond = nrow(df[(df$dPOB == 4) & (df$dIncome1 == 0) & (df$iCitizen == 4), ])
+t_targ = table(df$iEnglish)
+t_targ_and_cond = table(df[(df$dPOB == 4) & (df$dIncome1 == 0) & 
+                             (df$iCitizen == 4), "iEnglish"])
+n_cond_and_targ = nrow(df[(df$iEnglish == 4) & (df$dPOB == 4) & 
+                            (df$dIncome1 == 0) & (df$iCitizen == 4), ])
+n_cond_and_notTarg = nrow(df[(df$iEnglish != 4) & (df$dPOB == 4) & 
+                               (df$dIncome1 == 0) & (df$iCitizen == 4), ])
+n_cond_or_targ = nrow(df[(df$iEnglish == 4) | 
+                           ((df$dPOB == 4) & (df$dIncome1 == 0) & (df$iCitizen == 4)), ])
+g = 1
+
+wracc = wracc_f(n_s, n_cond, n_targ, n_cond_and_targ)
+acc = acc_f(n_cond, n_cond_and_targ)
+precision = precision_f(n_cond_and_targ, n_cond_and_notTarg, g)
+lift = lift_f(n_s, n_cond, n_targ, n_cond_or_targ)
+significance = significance_f(n_s, n_cond, t_targ_and_cond, t_targ)
+
+data.frame("WRAcc"=wracc, "Accuracy"=acc, "Precision"=precision, 
+           "Lift"=lift, "Significance"=significance)
+```
+
+<br>
+
+Para la categoría 3 de nivel de inglés, las medidas de calidad son las siguientes:
+
+```{r}
+n_s = nrow(df)
+n_targ = nrow(df[df$iEnglish == 3, ])
+n_cond = nrow(df[(df$dPOB == 3) & (df$dIncome1 == 0) & (df$iCitizen == 4), ])
+t_targ = table(df$iEnglish)
+t_targ_and_cond = table(df[(df$dPOB == 4) & (df$dIncome1 == 0) & 
+                             (df$iCitizen == 4), "iEnglish"])
+n_cond_and_targ = nrow(df[(df$iEnglish == 3) & (df$dPOB == 4) & 
+                            (df$dIncome1 == 0) & (df$iCitizen == 4), ])
+n_cond_and_notTarg = nrow(df[(df$iEnglish != 3) & (df$dPOB == 4) & 
+                               (df$dIncome1 == 0) & (df$iCitizen == 4), ])
+n_cond_or_targ = nrow(df[(df$iEnglish == 3) | 
+                           ((df$dPOB == 4) & (df$dIncome1 == 0) & (df$iCitizen == 4)), ])
+g = 1
+
+wracc = wracc_f(n_s, n_cond, n_targ, n_cond_and_targ)
+acc = acc_f(n_cond, n_cond_and_targ)
+precision = precision_f(n_cond_and_targ, n_cond_and_notTarg, g)
+lift = lift_f(n_s, n_cond, n_targ, n_cond_or_targ)
+significance = significance_f(n_s, n_cond, t_targ_and_cond, t_targ)
+
+data.frame("WRAcc"=wracc, "Accuracy"=acc, "Precision"=precision, 
+           "Lift"=lift, "Significance"=significance)
+```
+
+<br>
+
+Tal y como he comentado, estas condiciones para la categoría 3 de nivel de ingles representan un 40% de *Accuracy* y un 20% para la categoría 4. Por lo tanto, se puede concluir que las personas que no saben hablar nada o casi nada de inglés en EEUU son americanos (excepto Canadá y EEUU) que no tienen ningún tipo de ingreso.
+
+<br>
+
+### Personas nacidas en Europa
+
+La variable **dPOB** muestra la zona del mundo en la que nació cada persona del censo. La variable original mostraba el país o el estado (en caso de que su país fuera EEUU) al que pertenecían, pero estos se han agrupado en las siguientes zonas:
+
+* **0** - EEUU
+
+* **1** - Territorios no incorporados pertenecientes a EEUU
+
+* **2** - Europa
+
+* **3** - Asia
+
+* **4** - América
+
+* **5** - África
+
+* **6** - Otros
+
+<br>
+
+En este caso la categoría objetivo será la europea (categoría 2). Las variables que se usarán para crear los subgrupos son la edad, la clase, el conocimiento de inglés, el salario, el número de hijos, año de inmigración a EEUU, medio de transporte habitual, sexo y nivel de educación escolar alcanzado. En la primera iteración, se añadió también la variable **iMilitary** para conocer si era una característica importante que las personas europeas formaran parte del ejercito americano. No obstante, los subgrupos más importantes que aparecían informaban que **iMilitary=0**, lo que quería decir que prácticamente todos los europeos no están alistados en el ejercito, dando así mucha importancia a esta variable y distorsionando el análisis. Por este motivo, se eliminó esta variable para este descubrimiento de subgrupos.
+
+A continuación, se van a comparar mediante el dataset de muestra los subgrupos creados a partir de la medida de calidad **ps** y **WRAcc**.
+
+<br>
+
+__Personas nacidas en Europa mediante la medida de calidad **ps**__
+
+```{r european_sdmap_ps}
+df_c = df_sampled[, c("dPOB", "dAge", "iClass", "iEnglish","dIncome1", "iFertil", 
+                      "iImmigr", "iMeans", "iSex", "iYearsch")]
+
+result = DiscoverSubgroups(df_c, as.target("dPOB", "2"), 
+                           new("SDTaskConfig", 
+                               qf="ps", 
+                               k=40,
+                               method="sdmap",
+                               attributes=c("dAge", "iClass", "iEnglish","dIncome1", "iFertil", 
+                                            "iImmigr", "iMeans", "iSex", "iYearsch")), 
+                           as.df=TRUE)
+result
+```
+
+<br>
+
+__Personas nacidas en Europa mediante la medida de calidad **WRAcc**__
+
+```{r european_sdmap_wracc}
+df_c = df_sampled[, c("dPOB", "dAge", "iClass", "iEnglish","dIncome1", "iFertil", 
+                      "iImmigr", "iMeans", "iSex", "iYearsch")]
+
+result = DiscoverSubgroups(df_c, as.target("dPOB", "2"), 
+                           new("SDTaskConfig", 
+                               qf="wracc", 
+                               k=40,
+                               method="sdmap",
+                               attributes=c("dAge", "iClass", "iEnglish","dIncome1", "iFertil", 
+                                            "iImmigr", "iMeans", "iSex", "iYearsch")), 
+                           as.df=TRUE)
+result
+```
+
+<br>
+
+Podemos observar que la mayoría de subgrupos con un *Accuracy* de aproximadamente un 60% representan que los europeos en EEUU inmigraron antes de 1950 (**iImmigr = 10**), son de avanzada edad (**dAge = 7**), no tienen ingresos (**dIncome1 = 0**), son mujeres (**iSex = 1**) y no han trabajado nunca (**iClass = 0**). Esto podría deberse a la inmigración que hubo de europeos durante la Segunda Guerra Mundial.
+
+Uno de los subgrupos con mayor *Accuracy* (0.61) es **iImmigr=10**, **dIncome1=0** y **iSex=1**, con el que vamos a calcular a continuación las medidas de calidad con el dataset original:
+
+```{r}
+n_s = nrow(df)
+n_targ = nrow(df[df$dPOB == 2, ])
+n_cond = nrow(df[(df$iImmigr == 10) & (df$iSex == 1) & (df$dIncome1 == 0), ])
+t_targ = table(df$dPOB)
+t_targ_and_cond = table(df[(df$iImmigr == 10) & (df$iSex == 1) & 
+                             (df$dIncome1 == 0), "dPOB"])
+n_cond_and_targ = nrow(df[(df$dPOB == 2) & (df$iImmigr == 10) & 
+                            (df$iSex == 1) & (df$dIncome1 == 0), ])
+n_cond_and_notTarg = nrow(df[(df$dPOB != 2) & (df$iImmigr == 10) & 
+                               (df$iSex == 1) & (df$dIncome1 == 0), ])
+n_cond_or_targ = nrow(df[(df$dPOB == 2) | 
+                           ((df$iImmigr == 10) & (df$iSex == 1) & (df$dIncome1 == 0)), ])
+g = 1
+
+wracc = wracc_f(n_s, n_cond, n_targ, n_cond_and_targ)
+acc = acc_f(n_cond, n_cond_and_targ)
+precision = precision_f(n_cond_and_targ, n_cond_and_notTarg, g)
+lift = lift_f(n_s, n_cond, n_targ, n_cond_or_targ)
+significance = significance_f(n_s, n_cond, t_targ_and_cond, t_targ)
+
+data.frame("WRAcc"=wracc, "Accuracy"=acc, "Precision"=precision, 
+           "Lift"=lift, "Significance"=significance)
+```
+
+<br>
+
+Podemos ver como la precisión sobre pasa el 100%. Esto se debe a que hay más personas que cumplen estas condiciones siendo de Europa, que siendo de cualquier otro lugar. Exactamente, hay `r n_cond_and_targ` personas que cumplen estas condiciones y son de Europa, y `r n_cond_and_notTarg` personas que, bajo estas mismas condiciones, son de otro lugar. Por lo tanto, estas condiciones son muy representativas de las personas que emigraron desde Europa siendo la causante, muy probablemente, la Segunda Guerra Mundial.
+
+<br>
+
+### Conflicto de Corea de 1950
+
+En el dataset también hay variables que representan el alistamiento en el ejército y la participación en varias guerras y conflictos como, por ejemplo, la de Corea entre 1950 a 1953 o la de Vietnam entre 1955 y 1975. En este caso, se va a analizar las características de las personas que participaron en la guerra de Corea y, sobre todo, si participaron posteriormente en la guerra de Vietnam. 
+
+Las categorías de la variable **iKorean** y el número de registros en cada una de ellas son:
+
+* **0** - No sirvió en la guerra de Corea
+
+* **1** - Sirvió en la guerra de Corea
+
+```{r}
+table(df_sampled$iKorean)
+```
+
+<br>
+
+Las categorías de la variable **iVietnam** y el número de registros en cada una de ellas son:
+
+* **0** - No sirvió en la guerra de Vietnam
+
+* **1** - Sirvió en la guerra de Vietnam
+
+```{r}
+table(df_sampled$iVietnam)
+```
+
+<br>
+
+Las variables elegidas para analizar los subgrupos de las personas que participaron en la guerra de Corea son la ciudadanía, el sexo y la participación o no en la guerra de Vietnam.
+
+```{r koreanWar_sdmap_ps}
+df_c = df_sampled[, c("iKorean", "iCitizen", "iSex", "iVietnam")]
+
+result = DiscoverSubgroups(df_c, as.target("iKorean", "1"), 
+                           new("SDTaskConfig", 
+                               qf="ps",
+                               attributes=c("iCitizen", "iSex", "iVietnam")), 
+                           as.df=TRUE)
+result
+```
+
+<br>
+
+Podemos observar como el *Accuracy* para todos los subgrupos tienen un valor muy bajo. Cuando la variable **iVietnam** es igual a 0, no resulta en un subgrupo significativo y que se haya que tener en cuenta, dado que la gran mayoría del dataset está formado por personas que no participaron en la guerra de Vietnam, por lo que para hacer este análisis, habría que tener en cuenta más variables. Cuando la variable **iVietnam** es igual a 1, el *Accuracy* es bajo debido a que hay pocas personas que participaron en ambas guerras. A continuación, calculamos las medidas de calidad para todo el dataset con las variables **iVietnam = 1**, **iCitizen = 0** y **iSex = 0**:
+
+```{r}
+n_s = nrow(df)
+n_targ = nrow(df[df$iKorean == 1, ])
+n_cond = nrow(df[(df$iVietnam == 1) & (df$iCitizen == 0) & (df$iSex == 0), ])
+t_targ = table(df$iKorean)
+t_targ_and_cond = table(df[(df$iVietnam == 1) & (df$iCitizen == 0) & 
+                             (df$iSex == 0), "iKorean"])
+n_cond_and_targ = nrow(df[(df$iKorean == 1) & (df$iVietnam == 1) & 
+                            (df$iCitizen == 0) & (df$iSex == 0), ])
+n_cond_and_notTarg = nrow(df[(df$iKorean != 1) & (df$iVietnam == 1) & 
+                               (df$iCitizen == 0) & (df$iSex == 0), ])
+n_cond_or_targ = nrow(df[(df$iKorean == 1) | 
+                           ((df$iVietnam == 1) & (df$iCitizen == 0) & (df$iSex == 0)), ])
+g = 1
+
+wracc = wracc_f(n_s, n_cond, n_targ, n_cond_and_targ)
+acc = acc_f(n_cond, n_cond_and_targ)
+precision = precision_f(n_cond_and_targ, n_cond_and_notTarg, g)
+lift = lift_f(n_s, n_cond, n_targ, n_cond_or_targ)
+significance = significance_f(n_s, n_cond, t_targ_and_cond, t_targ)
+
+data.frame("WRAcc"=wracc, "Accuracy"=acc, "Precision"=precision, 
+           "Lift"=lift, "Significance"=significance)
+```
+
+<br>
+
+Como podemos ver, hay `r n_cond_and_targ` personas que participaron en la guerra de Corea y de Vietnam de las `r n_cond` personas que hay en el dataset que participaron en la guerra de Vietnam. Por este motivo, el *Accuracy* y la *Precision* son tan bajas. Dado que estos subgrupos no son representativos, a continuación vamos a comprobar qué caracterizan a las personas que participaron en la guerra de Corea. No se ha añadido la variable **edad** dado que el grupo más representativo saldría con personas de entre 60 y 70 años de edad, lo cual es obvio ya que la guerra se produjo entre 1950 y 1953.
+
+```{r korean2_sdmap_ps}
+df_c = df_sampled[, c("iKorean", "iClass",  "iRPOB", "iRspouse", 
+                      "iMarital", "dPOB", "iYearsch")]
+
+result = DiscoverSubgroups(df_c, as.target("iKorean", "1"), 
+                           new("SDTaskConfig", 
+                               qf="ps", 
+                               k=40,
+                               method="sdmap",
+                               attributes=c("iClass", "iRPOB", "iRspouse", 
+                                            "iMarital", "dPOB", "iYearsch")), 
+                           as.df=TRUE)
+result
+```
+
+<br>
+
+El *Accuracy* en este caso vuelve a ser bajo, por lo que se podría decir que las personas que participaron en la guerra de Corea no representan ningún grupo "común" y habría que realizar una búsqueda más concreta para averiguar qué variables representan a este grupo. Podemos ver como los subgrupos creados tienen un tamaño alto, por lo que no son representativos.
+
+<br>
+
+### Conclusiones
+
+Las variables objetivo sobre las que se han descubierto los subgrupos han sido **el salario ganado en EEUU** (*dIncome1*), **el conocimiento para hablar en inglés** (*iEnglish*), **las personas nacidas en Europa** (*dPOB*) y **el conflicto de Corea** (*iKorean*), sobre diferentes variables, medidas de calidad y algoritmos.
+
+Podemos concluir que las personas de EEUU que ganaron más de 60.000 dólares son hombres, casados y sin hijos, aunque se ha visto que este subgrupo no es muy representativo debido a que las demás categorías de salario también lo contienen. No obstante, sí que se ha podido ver que las personas que ganaron menos de 15.000 dólares fueron mujeres, de nacionalidad americana, que trabajaban en una compañía privada y solo sabían inglés con un *Accuracy* de un 55%.
+
+Para las personas que participaron en el conflicto de Corea no se ha encontrado ningún subgrupo representativo y habría que analizar otras variables como, por ejemplo, la veteranía en el ejercito.
+
+En lo que se refiere al conocimiento para hablar en inglés en EEUU, se ha podido observar como las personas que no saben hablar nada o casi nada de inglés en EEUU son americanos (excepto Canadá y EEUU) que no tienen ningún tipo de ingreso.
+
+Por último, las personas europeas que emigraron a EEUU lo hicieron, en su gran mayoría, antes de 1950 debido a la Segunda Guerra Mundial. Además, estas personas solían ser mujeres que no tenían ningún tipo de ingreso. Estas condiciones han resultado en un 62% de *Accuracy* y un 165% de *precisión* debido a que representan en su gran mayoría a personas europeas que a personas de cualquier otro lugar.
+
+<br>
+<br>
+
+
+
+
