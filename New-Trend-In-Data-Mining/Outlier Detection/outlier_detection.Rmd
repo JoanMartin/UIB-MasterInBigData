@@ -1,0 +1,251 @@
+---
+title: "Nuevas tendencias en minería de datos"
+subtitle: "Detección de outliers"
+author: "Juan José Martín"
+output:
+  html_document:
+    number_sections: false
+    highlight: tango
+    toc: no
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+---
+
+
+
+<style type="text/css">
+
+  body {
+    background-color: #f6f7fd; 
+  }
+  
+  a:link {
+    color: #0174DF;
+  }
+  
+  code.r {
+    font-size: 14px;
+  } 
+  
+  div pre {
+    background-color:#E0ECF8;
+  }
+  pre {
+    font-size: 14px 
+  }
+ 
+  p {
+    text-align: justify;
+  }
+ 
+    
+  h1, h2, h3, h4, h5, h6 {
+    color: #737aaa;
+  }
+
+  th {  
+    background-color:#737aaa;
+    color: #FAFAFA;
+    padding:5px;
+  }
+  
+  td {
+    font-size: 11.5pt;
+  } 
+  
+  tr:nth-child(even){
+    background: white;
+  }
+  
+  tr:nth-child(odd){ 
+    background-color: #EFF8FB;
+  }
+</style>
+
+***  
+
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=8, fig.height=6, fig.align="center", echo=TRUE, warning=FALSE, message=FALSE)
+```
+
+```{r}
+library(ggplot2)
+library(data.table)
+library(factoextra)
+```
+
+<br>
+
+```{r}
+df = read.csv("breast-cancer-wisconsin.data", sep=',', header = FALSE)
+colnames(df) = c("id", "clump_thickness", "uniform_cell_size", "uniform_cell_shape", 
+                 "marginal_adhesion", "single_epithelial_cell_size", "bare_nuclei", 
+                 "bland_chromatin", "normal_nucleoli", "mitoses", "class")
+df = df[df$bare_nuclei != '?', ]
+df = data.frame(lapply(df, as.numeric))
+df$id = make.unique(as.character(df$id))
+head(df)
+```
+
+<br>
+
+```{r}
+str(df)
+```
+
+<br>
+
+```{r}
+sum(is.na(df))
+```
+
+<br>
+
+## Análisis de componentes principales
+
+```{r}
+x = df[,3:length(df) - 1]
+y = df[,length(df)]
+
+rownames(x) = df$id
+
+distance_matrix = as.matrix(dist(scale(x)))
+pca = prcomp(distance_matrix)
+
+get_eig(pca)[1:5,]
+```
+
+<br>
+
+```{r}
+fviz_eig(pca, addlabels=TRUE, hjust = -0.3) + 
+  ylim(0, 100) + 
+  labs(title = "Variances - PCA", 
+       x = "Principal Components", y = "% of variances") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+<br>
+
+```{r}
+embedding = data.table(pca$x[, 1:2])
+embedding[, id := df$id]
+embedding[, class := y]
+head(embedding)
+```
+
+<br>
+
+```{r}
+ggplot(embedding, aes(x = PC1, y = PC2)) +
+     geom_point(size = 7, colour = "steelblue", alpha = 0.3) +
+     geom_text(aes(label = class), check_overlap = TRUE) +
+     theme_minimal()
+```
+
+<br>
+
+## MVN
+
+```{r}
+library(MVN)
+
+results = MVN::mvn(data = scale(x), mvnTest = "hz", alpha = 0.6,
+               univariateTest = "AD", univariatePlot = "box", 
+               multivariatePlot = "qq", multivariateOutlierMethod = "quan",
+               showOutliers = TRUE)
+```
+
+<br>
+
+```{r}
+outliers = data.table(id = rownames(results$multivariateOutliers), 
+                      MahalanobisOutlier = results$multivariateOutliers$Outlier)
+outliers = merge(embedding, outliers, by="id")
+
+ggplot(outliers, aes(x = PC1, y = PC2)) +
+  geom_point(size = 7, colour="red", alpha = 0.3) +
+  geom_text(aes(label = class), check_overlap = TRUE) +
+  xlim(min(embedding$PC1), max(embedding$PC1)) +
+  ylim(min(embedding$PC2), max(embedding$PC2)) +
+  theme_minimal() 
+```
+
+<br>
+
+## Algoritmo DBScan
+
+```{r}
+library(dbscan)
+
+df_dbscan = dbscan(scale(x), eps = 2, minPts = 3)
+embedding[, DClusters := df_dbscan$cluster]
+head(embedding)
+```
+
+<br>
+
+```{r}
+ggplot(embedding, aes(x = PC1, y = PC2)) +
+  geom_point(aes(colour = factor(DClusters)), size = 7, alpha = 0.3) +
+  geom_text(aes(label = class), check_overlap = TRUE) +
+  theme_minimal()
+```
+
+<br>
+
+## Algoritmo MClust
+
+```{r}
+library(mclust)
+
+df_em = Mclust(scale(x), G = 4)
+embedding[, EMClusters := df_em$classification]
+head(embedding)
+```
+
+<br>
+
+```{r}
+ggplot(embedding, aes(x = PC1, y = PC2)) +
+  geom_point(aes(colour = factor(EMClusters)), size = 7, alpha = 0.3) +
+  geom_text(aes(label = class), check_overlap = TRUE) +
+  theme_minimal()
+```
+
+<br>
+
+## Algoritmo LOF
+
+```{r}
+library(DMwR)
+
+outlier.scores = lofactor(embedding[, 1:2], k=30)
+plot(density(outlier.scores))
+```
+
+<br>
+
+```{r}
+threshold = quantile(outlier.scores, 0.95)
+outliers_lof = ifelse(outlier.scores >= threshold, 0, 1)
+
+embedding[, LOF := outliers_lof]
+embedding
+```
+
+<br>
+
+```{r}
+ggplot(embedding, aes(x = PC1, y = PC2)) +
+  geom_point(aes(colour = factor(LOF)), size = 7, alpha = 0.3) +
+  geom_text(aes(label = class), check_overlap = TRUE) +
+  theme_minimal()
+```
+
+<br>
+
+
+
