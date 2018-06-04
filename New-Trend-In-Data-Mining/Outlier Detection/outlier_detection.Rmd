@@ -70,6 +70,30 @@ editor_options:
 knitr::opts_chunk$set(fig.width=8, fig.height=6, fig.align="center", echo=TRUE, warning=FALSE, message=FALSE)
 ```
 
+El dataset [Wisconsin Breast Cancer](https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+%28Diagnostic%29) está formado por 699 filas y 10 atributos, más la variable objetivo, la cual puede ser **Benigno (*2*)** o **Maligno (*4*)**. Los atributos son:
+
+* Sample code number
+
+* Clump Thickness
+
+* Uniformity of Cell Size
+
+* Uniformity of Cell Shape
+
+* Marginal Adhesion
+
+* Single Epithelial Cell Size
+
+* Bare Nuclei
+
+* Bland Chromatin
+
+* Normal Nucleoli
+
+* Mitoses
+
+Todos los atributos, execpto el primero, tienen valores del 1 al 10. Hay 16 registros en el atributo **bare_nuclei** que contienen un valor nulo (*'?'*), el cual significa que el resultado no está disponible. Estos registros han sido borrados, ya que representan únicamente un 2% de todo el conjunto de datos.
+
 ```{r}
 library(ggplot2)
 library(data.table)
@@ -77,6 +101,8 @@ library(factoextra)
 ```
 
 <br>
+
+A continuación, cargamos los datos del fichero **breast-cancer-wisconsin.data**, eliminamos los registros que contienen el valor *'?'* en la variable **bare_nuclei** y convertimos todas la columnas a númerico. Además, dado que el atributo de *id* del registro tiene valores duplicados, provocamos que sean únicos con la función **make.unique**.
 
 ```{r}
 df = read.csv("breast-cancer-wisconsin.data", sep=',', header = FALSE)
@@ -91,11 +117,15 @@ head(df)
 
 <br>
 
+Comprobamos el tipo de cada una de las columnas:
+
 ```{r}
 str(df)
 ```
 
 <br>
+
+Comprobamos que no haya otros valores nulos en el dataset:
 
 ```{r}
 sum(is.na(df))
@@ -105,21 +135,18 @@ sum(is.na(df))
 
 ## Análisis de componentes principales
 
+Realizamos un análisis de componentes principales para que el análisis de detección de outliers sea más fácil. Para ello, ponemos en una variable **x** todas las columnas excepto la columna *id*. Dado que la variable objetivo no es una variable numérica, sobre ella se crearán dos variables dummy, **benign** y **malignant**, y de esta forma los algoritmos no le darán más peso al valor **4** que al valor **2**.
+
 ```{r}
-x = df[,3:length(df) - 1]
-y = df[,length(df)]
+x = df[, 3:length(df) - 1]
 
 rownames(x) = df$id
+x$benign = ifelse(df$class == 2, 1, 0)
+x$malignant = ifelse(df$class == 4, 1, 0)
 
 distance_matrix = as.matrix(dist(scale(x)))
 pca = prcomp(distance_matrix)
 
-get_eig(pca)[1:5,]
-```
-
-<br>
-
-```{r}
 fviz_eig(pca, addlabels=TRUE, hjust = -0.3) + 
   ylim(0, 100) + 
   labs(title = "Variances - PCA", 
@@ -129,14 +156,20 @@ fviz_eig(pca, addlabels=TRUE, hjust = -0.3) +
 
 <br>
 
+Podemos observar que con la primera componente principal explicamos el 93.7% de la varianza, y con la segunda componente principal explicamos el 3.4%. Con ambas componentes, ya se explica el 97.1% de la varianza total, por lo que nos quedamos únicamente con estas dos para realizar el análisis.
+
+A continuación, creamos la variable **embedding** con las dos componentes principales, el *id* de cada registro y la variable objetivo:
+
 ```{r}
 embedding = data.table(pca$x[, 1:2])
 embedding[, id := df$id]
-embedding[, class := y]
+embedding[, class := df$class]
 head(embedding)
 ```
 
 <br>
+
+Mostramos gráficamente los registros en base a los dos componentes principales:
 
 ```{r}
 ggplot(embedding, aes(x = PC1, y = PC2)) +
@@ -147,18 +180,26 @@ ggplot(embedding, aes(x = PC1, y = PC2)) +
 
 <br>
 
+Se pueden observar dos grupos bien diferenciados, uno por cada clase. No obstante, hay algunos puntos de una clase que se mezclan con los de la otra clase. Además, hay 3 puntos de la clase **2** que están separados de su grupo en la parte superior, y algunos puntos de la clase **4** en la parte superior derecha que están a una distancia considerable de lo que sería el centroíde de todos los puntos de su clase. Estos puntos mencionados podrían ser perfectamente outliers, los cuales analizaremos con las siguientes técnicas y algoritmos.
+
+<br>
+
 ## MVN
 
 ```{r}
 library(MVN)
 
-results = MVN::mvn(data = scale(x), mvnTest = "hz", alpha = 0.6,
+results = MVN::mvn(data = scale(x), mvnTest = "hz", alpha = 0.55,
                univariateTest = "AD", univariatePlot = "box", 
                multivariatePlot = "qq", multivariateOutlierMethod = "quan",
                showOutliers = TRUE)
 ```
 
 <br>
+
+Podemos observar como mediante este método se han detectado 32 outliers. Además, se puede ver que algunas de las variables del dataset contienen valores por encima del bigote superior.
+
+Los puntos detectados como outliers son los siguientes:
 
 ```{r}
 outliers = data.table(id = rownames(results$multivariateOutliers), 
@@ -175,7 +216,16 @@ ggplot(outliers, aes(x = PC1, y = PC2)) +
 
 <br>
 
+Algunos puntos mencionados anteriormente que podrían ser outliers, han sido detectados por este método. Por ejemplo, algunos de la clase **2** que se mezclaban con los de la clase **4** y algunos de la clase **4** en la parte superior derecha. Además, algunos de los puntos tanto de la clase **2** como de la clase **4** que están más separados de sus respectivos grupos. Lo sorprendente es que ha marcado como outlier puntos de la clase **4** que están situados donde se encuentra mayor cantidad de puntos de la misma clase. Esto podría ser debido a que el valor de alguna de sus variables es un outlier y que, al reducir la dimensionalidad con los dos componentes principales, no se refleje a el pesar de que el algoritmo sí lo ha hecho por utilizar datos reales.
+
+<br>
+
 ## Algoritmo DBScan
+
+DBScan es un algoritmo de clustering basado en densidad. Es necesario definir dos parámetros:
+
+* **eps**: el valor *epsilon* del vecindario.
+* **minPts**: el número mínimo de puntos vecinos necesarios como para decir que un registro es un **core point** y no un outlier.
 
 ```{r}
 library(dbscan)
@@ -196,12 +246,18 @@ ggplot(embedding, aes(x = PC1, y = PC2)) +
 
 <br>
 
+Podemos observar que los puntos de los clusters 0 y 4 son prácticamente los mismos puntos especificados como outliers por el método **MVN**. Además, se ve como claramente se han separado los grupos entre los clusters 1 y 2, habiendo muy pocos puntos en el cluster 3.
+
+<br>
+
 ## Algoritmo MClust
+
+**MClust** es un algoritmo de clustering no supervisado que intenta encontrar *subespacios similares* basados en su orientación y varianza. Se le ha de especificar el parámetro **G**, el cual es un vector de números especificando los clusters para los cuales BIC es calculado.
 
 ```{r}
 library(mclust)
 
-df_em = Mclust(scale(x), G = 4)
+df_em = Mclust(scale(x), G = 5)
 embedding[, EMClusters := df_em$classification]
 head(embedding)
 ```
@@ -217,20 +273,28 @@ ggplot(embedding, aes(x = PC1, y = PC2)) +
 
 <br>
 
+En este caso no se puede detectar un grupo que contenga los mismos puntos que los detectados como outliers por **MVN**.
+
+<br>
+
 ## Algoritmo LOF
+
+LOF (*Local Outlier Factor*) es un algoritmo para identificar outliers locales basados en densidad. Con LOF, la densidad local de un punto se compara con la de sus vecinos. Si el valor de un punto es significantemente mayor que el de su vecino (LOF mayor que 1), el punto está en una región más dispersa que sus vecinos, por lo que podría ser un outlier. El parámetro **k** de la función **lofactor** indica el número de vecinos usados en el cálculo de los factores de outlier locales.
 
 ```{r}
 library(DMwR)
 
-outlier.scores = lofactor(embedding[, 1:2], k=30)
-plot(density(outlier.scores))
+outlier.scores = lofactor(embedding[, 1:2], k=40)
+plot(density(outlier.scores), main="Outlier scores density")
 ```
 
 <br>
 
+Se especifica el valor del 95% como el límite superior para decidir si es un outlier (**1**) o no (**0**).
+
 ```{r}
 threshold = quantile(outlier.scores, 0.95)
-outliers_lof = ifelse(outlier.scores >= threshold, 0, 1)
+outliers_lof = ifelse(outlier.scores >= threshold, 1, 0)
 
 embedding[, LOF := outliers_lof]
 embedding
@@ -247,5 +311,7 @@ ggplot(embedding, aes(x = PC1, y = PC2)) +
 
 <br>
 
+Se puede observar que algunos de los puntos especificados por el método **MVN** también se han detectado como outliers mediante LOF. Por ejemplo, los puntos de la clase **4** en la parte superior derecha, o los puntos de la clase **2** en la parte superior.
 
+<br>
 
