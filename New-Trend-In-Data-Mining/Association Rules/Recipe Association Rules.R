@@ -10,8 +10,7 @@ inspect(fish_trans)
 
 
 
-fish_rules = apriori(fish_trans, parameter=list(support=0.03, confidence=0.01,
-                                                minlen=1, maxlen=1000,
+fish_rules = apriori(fish_trans, parameter=list(support=0.05, minlen=1, maxlen=1000,
                                                 target='frequent itemsets'))
 fish_rules = apriori(fish_trans, parameter=list(support=0.03, confidence=0,
                                                 minlen=1, maxlen=1000,
